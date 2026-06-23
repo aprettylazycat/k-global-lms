@@ -1,11 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Playfair_Display } from 'next/font/google'
 import { supabase } from '@/lib/supabase'
-import type { Lesson, Profile, Progress } from '@/types'
-
-const playfair = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] })
+import type { Profile, Progress } from '@/types'
 
 type ModuleItem = {
   id: number
@@ -21,7 +18,6 @@ type LessonListItem = {
   module_id: number
 }
 
-// FIX 2: Đưa mảng tĩnh này ra ngoài component (hoặc lên trên useEffect) để tránh lỗi ReferenceError
 const badgeDefs = [
   { type: 'bronze', label: 'Apprentice', min: 25, bg: '#F5EDE3', color: '#A3683C',
     desc: 'Bạn đã hoàn thành 25% lộ trình — bước đầu của một hành trình dài.' },
@@ -93,8 +89,6 @@ export default function DashboardPage() {
     load()
   }, [router])
 
-  // ── Tất cả tính toán đặt SAU useEffect ──────────────────────────
-
   const tick1Count = lessons.filter(l => progressMap[l.id]?.tick1).length
   const tick2Count = lessons.filter(l => progressMap[l.id]?.tick2).length
   const done = lessons.filter(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2).length
@@ -128,7 +122,6 @@ export default function DashboardPage() {
     ? currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2).length
     : 0
 
-  // Auto-open module đang học — chạy khi loading đổi sang false
   useEffect(() => {
     if (!loading && currentModuleGroup && openModules.size === 0) {
       setOpenModules(new Set([currentModuleGroup.module.id]))
@@ -136,7 +129,6 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
-  // Hiện popup badge chưa từng thấy khi vào dashboard
   useEffect(() => {
     if (loading || badges.length === 0) return
     const seenKey = 'seen_badges'
@@ -159,21 +151,37 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF8F4' }}>
+
       {/* Top bar */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-5 py-4 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
+
+          {/* Trái: back về trang chủ + avatar + tên */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+            <button
+              onClick={() => router.push('/')}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors flex-shrink-0"
+              title="Về trang chủ"
+            >
+              <i className="ti ti-home" style={{ fontSize: '16px' }} />
+            </button>
+            <div className="w-px h-5 bg-stone-200 flex-shrink-0" />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
               style={{ backgroundColor: branchBg, color: branchText }}>
               {profile?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-tight truncate">{profile?.name}</p>
-              <p className="text-xs text-stone-400">{profile?.branch?.name}</p>
+              <p className="text-sm font-semibold text-stone-800 leading-tight truncate">{profile?.name}</p>
+              <p className="text-xs text-stone-500">{profile?.branch?.name}</p>
             </div>
           </div>
-          <button onClick={() => supabase.auth.signOut().then(() => router.push('/login'))}
-            className="text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-3">
+
+          {/* Phải: đăng xuất */}
+          <button
+            onClick={() => supabase.auth.signOut().then(() => router.push('/login'))}
+            className="text-xs text-stone-500 hover:text-stone-800 transition-colors flex-shrink-0 ml-3 flex items-center gap-1.5"
+          >
+            <i className="ti ti-logout" style={{ fontSize: '14px' }} />
             Đăng xuất
           </button>
         </div>
@@ -186,21 +194,21 @@ export default function DashboardPage() {
 
           {/* Hero tiến độ */}
           <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
-            <p className="text-xs text-stone-400 mb-1 tracking-wide uppercase">Tiến độ học tập</p>
-            <p className={`${playfair.className} text-4xl font-bold text-stone-800 mb-4`}>{pct}%</p>
+            <p className="text-xs text-stone-500 mb-1 tracking-wide uppercase font-medium">Tiến độ học tập</p>
+            <p className="font-heading text-4xl font-bold text-stone-900 mb-4">{pct}%</p>
             <div className="relative h-2 mb-3">
               <div className="absolute inset-0 border-b-2 border-dashed border-stone-200 top-1/2" />
               <div className="absolute left-0 rounded-full transition-all duration-700"
                 style={{ width: `${pct}%`, backgroundColor: branchText, height: '4px', top: '0px' }} />
             </div>
-            <p className="text-xs text-stone-400">{done}/{lessons.length} bài hoàn thành</p>
+            <p className="text-xs text-stone-500 font-medium">{done}/{lessons.length} bài hoàn thành</p>
           </div>
 
           {/* Module hiện tại */}
           {currentModuleGroup && (
             <div className="rounded-3xl p-5" style={{ backgroundColor: branchBg }}>
-              <p className="text-xs mb-1 tracking-wide uppercase" style={{ color: branchText, opacity: 0.7 }}>Đang học</p>
-              <p className={`${playfair.className} text-lg font-semibold mb-3`} style={{ color: branchText }}>
+              <p className="text-xs mb-1 tracking-wide uppercase font-semibold" style={{ color: branchText, opacity: 0.8 }}>Đang học</p>
+              <p className="font-heading text-lg font-semibold mb-3" style={{ color: branchText }}>
                 {currentModuleGroup.module.name}
               </p>
               <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ backgroundColor: `${branchText}30` }}>
@@ -219,7 +227,7 @@ export default function DashboardPage() {
                 ].map((s, i) => (
                   <div key={i} className="rounded-2xl p-2.5 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
                     <p className="text-sm font-bold" style={{ color: branchText }}>{s.value}</p>
-                    <p className="text-xs mt-0.5" style={{ color: branchText, opacity: 0.7 }}>{s.label}</p>
+                    <p className="text-xs mt-0.5 font-medium" style={{ color: branchText, opacity: 0.75 }}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -229,39 +237,37 @@ export default function DashboardPage() {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
-              <p className="text-xl font-semibold" style={{ color: '#27500A' }}>{done}</p>
-              <p className="text-xs text-stone-400 mt-0.5">Hoàn thành</p>
+              <p className="text-xl font-bold" style={{ color: '#27500A' }}>{done}</p>
+              <p className="text-xs text-stone-500 mt-0.5 font-medium">Hoàn thành</p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
-              <p className="text-xl font-semibold" style={{ color: '#A3683C' }}>{pending}</p>
-              <p className="text-xs text-stone-400 mt-0.5">Chờ duyệt</p>
+              <p className="text-xl font-bold" style={{ color: '#A3683C' }}>{pending}</p>
+              <p className="text-xs text-stone-500 mt-0.5 font-medium">Chờ duyệt</p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
-              <p className="text-xl font-semibold text-stone-300">{lessons.length - done - pending}</p>
-              <p className="text-xs text-stone-400 mt-0.5">Chưa học</p>
+              <p className="text-xl font-bold text-stone-400">{lessons.length - done - pending}</p>
+              <p className="text-xs text-stone-500 mt-0.5 font-medium">Chưa học</p>
             </div>
           </div>
 
           {/* Badges */}
           <div className="bg-white rounded-3xl border border-stone-200 p-5 shadow-sm">
-            <p className={`${playfair.className} text-base font-semibold text-stone-800 mb-4`}>Achievement</p>
+            <p className="font-heading text-base font-semibold text-stone-900 mb-4">Achievement</p>
             <div className="space-y-2.5">
               {badgeDefs.map(b => {
                 const earned = badges.includes(b.type)
                 return (
                   <div key={b.type}
-                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${
-                      earned ? 'opacity-100' : 'opacity-30'
-                    }`}
+                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${earned ? 'opacity-100' : 'opacity-35'}`}
                     style={{ backgroundColor: earned ? b.bg : '#F9F9F9' }}>
                     <img src={`/badges/${b.type}.png`} alt={b.label}
                       className="w-10 h-10 object-contain flex-shrink-0"
                       style={{ filter: earned ? 'none' : 'grayscale(1)' }} />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold" style={{ color: earned ? b.color : '#A8A29E' }}>
+                      <p className="text-sm font-semibold" style={{ color: earned ? b.color : '#78716C' }}>
                         {b.label}
                       </p>
-                      <p className="text-xs" style={{ color: earned ? b.color : '#D6D3D1', opacity: earned ? 0.8 : 1 }}>
+                      <p className="text-xs font-medium" style={{ color: earned ? b.color : '#A8A29E', opacity: earned ? 0.85 : 1 }}>
                         {earned ? `Đạt được tại ${b.min}%` : `Hoàn thành ${b.min}% để mở khóa`}
                       </p>
                     </div>
@@ -281,7 +287,7 @@ export default function DashboardPage() {
         <div>
           {lessonsByModule.length === 0 && (
             <div className="bg-white rounded-3xl border border-stone-200 p-10 text-center">
-              <p className="text-sm text-stone-400">Chưa có bài học nào được xuất bản.</p>
+              <p className="text-sm text-stone-500">Chưa có bài học nào được xuất bản.</p>
             </div>
           )}
 
@@ -306,23 +312,23 @@ export default function DashboardPage() {
                     }}
                     className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-stone-50 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                       style={moduleDone
                         ? { backgroundColor: '#EAF3DE', color: '#27500A' }
                         : !moduleUnlocked
                         ? { backgroundColor: '#F5F5F4', color: '#D6D3D1' }
                         : { backgroundColor: branchBg, color: branchText }}>
                       {moduleDone ? <i className="ti ti-check" />
-                        : !moduleUnlocked ? <i className="ti ti-lock" style={{fontSize:'12px'}} />
+                        : !moduleUnlocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} />
                         : module.order_index}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`${playfair.className} text-sm font-semibold text-stone-800 truncate`}>
+                        <p className="font-heading text-sm font-semibold text-stone-900 truncate">
                           {module.name}
                         </p>
-                        <span className="text-xs font-medium flex-shrink-0"
+                        <span className="text-xs font-bold flex-shrink-0"
                           style={{ color: moduleDone ? '#27500A' : !moduleUnlocked ? '#D6D3D1' : branchText }}>
                           {modulePct}%
                         </span>
@@ -331,13 +337,13 @@ export default function DashboardPage() {
                         <div className="h-full rounded-full transition-all duration-500"
                           style={{ width: `${modulePct}%`, backgroundColor: moduleDone ? '#27500A' : branchText }} />
                       </div>
-                      <p className="text-xs text-stone-400 mt-1">
+                      <p className="text-xs text-stone-500 font-medium mt-1">
                         {moduleTick1}/{moduleTotal} quiz · {moduleTick2}/{moduleTotal} duyệt
                       </p>
                     </div>
 
                     <i className={`ti ti-chevron-down text-stone-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                      style={{fontSize:'16px'}} />
+                      style={{ fontSize: '16px' }} />
                   </button>
 
                   {isOpen && (
@@ -352,40 +358,40 @@ export default function DashboardPage() {
                           <div key={lesson.id}
                             onClick={() => { if (!isLocked && !isDone) router.push(`/lesson/${lesson.id}`) }}
                             className={`rounded-xl border p-3.5 flex items-center gap-3 transition-all ${
-                              isLocked ? 'border-stone-100 opacity-50' : 'border-stone-100'
-                            } ${!isLocked && !isDone ? 'cursor-pointer hover:border-stone-200 hover:bg-stone-50' : ''}`}
+                              isLocked ? 'border-stone-100 opacity-50' : 'border-stone-150'
+                            } ${!isLocked && !isDone ? 'cursor-pointer hover:border-stone-300 hover:bg-stone-50' : ''}`}
                           >
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                               style={isDone ? { backgroundColor: '#EAF3DE', color: '#27500A' }
                                 : isInProgress ? { backgroundColor: '#FEF3C7', color: '#92400E' }
                                 : isLocked ? { backgroundColor: '#F5F5F4', color: '#D6D3D1' }
                                 : { backgroundColor: branchText, color: 'white' }}>
-                              {isDone ? <i className="ti ti-check" style={{fontSize:'12px'}} />
-                                : isLocked ? <i className="ti ti-lock" style={{fontSize:'12px'}} />
+                              {isDone ? <i className="ti ti-check" style={{ fontSize: '12px' }} />
+                                : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} />
                                 : lesson.order_index}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-stone-800 truncate">{lesson.title}</p>
+                              <p className="text-sm font-semibold text-stone-800 truncate">{lesson.title}</p>
                               <div className="flex items-center gap-3 mt-0.5">
-                                <span className="text-xs flex items-center gap-1" style={{ color: prog?.tick1 ? '#27500A' : '#D6D3D1' }}>
-                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick1 ? '#27500A' : '#D6D3D1' }} />
+                                <span className="text-xs font-medium flex items-center gap-1" style={{ color: prog?.tick1 ? '#27500A' : '#A8A29E' }}>
+                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick1 ? '#27500A' : '#A8A29E' }} />
                                   Quiz
                                 </span>
-                                <span className="text-xs flex items-center gap-1" style={{ color: prog?.tick2 ? '#27500A' : '#D6D3D1' }}>
-                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick2 ? '#27500A' : '#D6D3D1' }} />
+                                <span className="text-xs font-medium flex items-center gap-1" style={{ color: prog?.tick2 ? '#27500A' : '#A8A29E' }}>
+                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick2 ? '#27500A' : '#A8A29E' }} />
                                   Bài tập
                                 </span>
                               </div>
                             </div>
 
                             {!isLocked && !isDone && (
-                              <span className="text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0 text-white"
+                              <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 text-white"
                                 style={{ backgroundColor: branchText }}>
                                 {isInProgress ? 'Xem' : 'Học'}
                               </span>
                             )}
-                            {isDone && <span className="text-xs flex-shrink-0" style={{ color: '#27500A' }}>Xong</span>}
+                            {isDone && <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#27500A' }}>Xong ✓</span>}
                           </div>
                         )
                       })}
@@ -397,6 +403,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
       {/* Badge popup */}
       {badgePopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -408,14 +415,12 @@ export default function DashboardPage() {
               <img src={`/badges/${badgePopup.type}.png`} alt={badgePopup.label}
                 className="w-16 h-16 object-contain" />
             </div>
-            <p className="text-xs tracking-[0.2em] uppercase mb-2"
+            <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold"
               style={{ color: badgePopup.color }}>Achievement Unlocked</p>
-            <p className={`${playfair.className} text-2xl font-bold text-stone-800 mb-2`}>
-              {badgePopup.label}
-            </p>
-            <p className="text-sm text-stone-500 mb-6">{badgePopup.desc}</p>
+            <p className="font-heading text-2xl font-bold text-stone-900 mb-2">{badgePopup.label}</p>
+            <p className="text-sm text-stone-600 mb-6">{badgePopup.desc}</p>
             <button onClick={() => setBadgePopup(null)}
-              className="w-full py-3 rounded-2xl text-sm font-medium text-white transition-colors"
+              className="w-full py-3 rounded-2xl text-sm font-semibold text-white transition-colors"
               style={{ backgroundColor: badgePopup.color }}>
               Tiếp tục học →
             </button>
@@ -424,5 +429,5 @@ export default function DashboardPage() {
       )}
       <div className="h-10 lg:h-0" />
     </div>
-  ) // FIX 1: Chuyển '}' thành ')' ở đây
+  )
 }
