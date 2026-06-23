@@ -2,10 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Playfair_Display } from 'next/font/google'
 import { supabase } from '@/lib/supabase'
-
-const playfair = Playfair_Display({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 type ModuleItem = {
   id: number
@@ -108,7 +105,8 @@ export default function Home() {
               style={{ height: '32px', width: 'auto' }} priority />
           </a>
           <div className="flex items-center gap-5">
-            <a href="tel:+84855555722" className="text-sm text-[#6B6760] hover:text-[#1C1917] transition-colors hidden md:block">
+            <a href="tel:+84855555722"
+              className="text-sm text-[#6B6760] hover:text-[#1C1917] transition-colors hidden md:block">
               +84 85 555 5722
             </a>
             <a href="https://www.facebook.com/kglobalvn/" target="_blank" rel="noreferrer"
@@ -117,11 +115,12 @@ export default function Home() {
                 <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z"/>
               </svg>
             </a>
-            <Link href="/login" className="text-sm text-[#6B6760] hover:text-[#1C1917] transition-colors hidden sm:block">
+            <Link href="/login"
+              className="text-sm text-[#6B6760] hover:text-[#1C1917] transition-colors hidden sm:block">
               Đăng nhập
             </Link>
             <Link href="/register"
-              className="text-sm bg-[#1C1917] text-[#FAF8F4] px-5 py-2.5 rounded hover:bg-[#2A2520] transition-colors font-medium">
+              className="text-sm bg-[#1C1917] text-[#FAF8F4] px-5 py-2.5 rounded hover:bg-[#2A2520] transition-colors font-semibold">
               Bắt đầu học
             </Link>
           </div>
@@ -137,11 +136,15 @@ export default function Home() {
             style={{ background: 'linear-gradient(180deg,rgba(28,25,23,.5) 0%,rgba(28,25,23,.72) 55%,rgba(28,25,23,.92) 100%)' }} />
         </div>
         <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
-          <p className="text-xs tracking-[0.22em] uppercase text-[#E8C9A0] mb-5">Đào tạo nội bộ — K-Global</p>
-          <h1 className={`${playfair.className} text-4xl sm:text-5xl lg:text-[56px] font-normal leading-[1.2] mb-6 text-[#FAF8F4]`}>
+          <p className="text-xs tracking-[0.22em] uppercase text-[#E8C9A0] mb-5 font-medium">
+            Đào tạo nội bộ — K-Global
+          </p>
+          <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.2] mb-6"
+            style={{ color: '#FAF8F4' }}>
             Làm chủ tay nghề<br />theo cách của K-Global
           </h1>
-          <p className="text-sm sm:text-base text-[#E8E2D6] max-w-lg mx-auto leading-relaxed mb-10">
+          <p className="text-sm sm:text-base leading-relaxed mb-10 max-w-lg mx-auto"
+            style={{ color: '#E8E2D6' }}>
             Lộ trình đào tạo từng nhánh sản phẩm — từ kỹ thuật nền tảng đến tiêu chuẩn xuất khẩu,
             được đội ngũ sản xuất trực tiếp kiểm duyệt.
           </p>
@@ -151,7 +154,8 @@ export default function Home() {
               Bắt đầu học ngay
             </Link>
             <Link href="/login"
-              className="border border-[#FAF8F4]/40 text-[#FAF8F4] px-8 py-3.5 rounded text-sm hover:bg-white/10 transition-colors">
+              className="border text-sm px-8 py-3.5 rounded hover:bg-white/10 transition-colors font-medium"
+              style={{ borderColor: 'rgba(250,248,244,0.4)', color: '#FAF8F4' }}>
               Tôi đã có tài khoản
             </Link>
           </div>
@@ -165,10 +169,12 @@ export default function Home() {
             <div key={i} className="stat-box relative overflow-hidden rounded-xl text-center py-7 px-2"
               style={{ background: '#1C1917', border: '1px solid #2A2520' }}>
               <div className="stat-shimmer" aria-hidden="true" />
-              <p className={`${playfair.className} text-3xl sm:text-4xl text-[#FAF8F4] mb-1.5 relative`}>
+              <p className="text-3xl sm:text-4xl font-bold relative" style={{ color: '#FAF8F4' }}>
                 {loading ? '—' : s.value}
               </p>
-              <p className="text-xs text-[#C9A87C] tracking-wide relative">{s.label}</p>
+              <p className="text-xs tracking-wide relative font-medium" style={{ color: '#C9A87C' }}>
+                {s.label}
+              </p>
             </div>
           ))}
         </div>
@@ -176,8 +182,11 @@ export default function Home() {
 
       {/* ── Branch + Module 2-col ── */}
       <div className="max-w-7xl mx-auto px-6 pt-24 pb-20 w-full">
-        <p className="text-xs tracking-[0.2em] uppercase text-[#9A5B3F] text-center mb-3">Lộ trình theo nhánh</p>
-        <h2 className={`${playfair.className} text-2xl sm:text-3xl lg:text-4xl text-center mb-12`}>
+        <p className="text-xs tracking-[0.2em] uppercase text-[#9A5B3F] text-center mb-3 font-semibold">
+          Lộ trình theo nhánh
+        </p>
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-12"
+          style={{ color: '#1C1917' }}>
           Chọn nhánh đào tạo của bạn
         </h2>
 
@@ -185,26 +194,24 @@ export default function Home() {
 
           {/* Cột trái: branch cards */}
           <div className="space-y-3 mb-8 lg:mb-0 lg:sticky lg:top-24">
-            {loading ? [1,2,3].map(i => (
+            {loading ? [1, 2, 3].map(i => (
               <div key={i} className="bg-white rounded-2xl border h-28 animate-pulse" style={{ borderColor: '#E8E2D6' }} />
             )) : branches.map(b => {
               const isActive = selectedBranch === b.id
               return (
                 <button key={b.id} onClick={() => setSelectedBranch(b.id)}
                   className="w-full text-left bg-white rounded-2xl p-6 relative overflow-hidden transition-all hover:shadow-md"
-                  style={{
-                    border: isActive ? `2px solid ${b.color_text}` : '1px solid #E8E2D6',
-                  }}>
+                  style={{ border: isActive ? `2px solid ${b.color_text}` : '1px solid #E8E2D6' }}>
                   <div className="absolute top-0 left-0 w-6 h-6 rounded-br-xl"
                     style={{ backgroundColor: b.color_text }} />
                   <div className="flex items-center justify-between mt-1">
                     <div>
-                      <p className="text-[11px] tracking-[0.15em] uppercase mb-1.5"
+                      <p className="text-[11px] tracking-[0.15em] uppercase mb-1.5 font-semibold"
                         style={{ color: b.color_text }}>{b.name}</p>
-                      <p className={`${playfair.className} text-2xl text-[#1C1917]`}>
+                      <p className="text-2xl font-bold" style={{ color: '#1C1917' }}>
                         {b.lessonCount} bài học
                       </p>
-                      <p className="text-xs text-[#9A9590] mt-1">{b.modules.length} module</p>
+                      <p className="text-xs text-[#9A9590] mt-1 font-medium">{b.modules.length} module</p>
                     </div>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: isActive ? b.color_text : b.color_bg }}>
@@ -227,16 +234,16 @@ export default function Home() {
               {!activeBranch ? (
                 <div className="bg-white rounded-3xl border p-16 text-center min-h-[420px] flex flex-col items-center justify-center"
                   style={{ borderColor: '#E8E2D6' }}>
-                  <p className={`${playfair.className} text-xl text-[#9A9590]`}>Chọn nhánh để xem lộ trình</p>
+                  <p className="text-xl font-medium" style={{ color: '#9A9590' }}>Chọn nhánh để xem lộ trình</p>
                 </div>
               ) : (
                 <div className="bg-white rounded-3xl border overflow-hidden" style={{ borderColor: '#E8E2D6' }}>
                   <div className="px-8 py-6 border-b flex items-center gap-4"
                     style={{ borderColor: '#F0EBE3', backgroundColor: activeBranch.color_bg }}>
                     <div>
-                      <p className="text-xs tracking-[0.15em] uppercase mb-1"
-                        style={{ color: activeBranch.color_text, opacity: 0.7 }}>{activeBranch.name}</p>
-                      <p className={`${playfair.className} text-2xl font-semibold`}
+                      <p className="text-xs tracking-[0.15em] uppercase mb-1 font-semibold"
+                        style={{ color: activeBranch.color_text, opacity: 0.8 }}>{activeBranch.name}</p>
+                      <p className="text-2xl font-bold"
                         style={{ color: activeBranch.color_text }}>
                         {activeBranch.modules.length} module · {activeBranch.lessonCount} bài học
                       </p>
@@ -245,31 +252,32 @@ export default function Home() {
                   <div className="p-8">
                     {activeBranch.modules.length === 0 ? (
                       <div className="py-12 text-center">
-                        <p className="text-sm text-[#9A9590]">Chưa có module nào trong nhánh này.</p>
+                        <p className="text-sm font-medium" style={{ color: '#9A9590' }}>Chưa có module nào trong nhánh này.</p>
                       </div>
                     ) : (
                       <div className="space-y-0">
                         {activeBranch.modules.map((m, idx) => (
                           <div key={m.id} className="flex items-start gap-6">
                             <div className="flex flex-col items-center flex-shrink-0">
-                              <div className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-semibold"
+                              <div className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold"
                                 style={{ borderColor: activeBranch.color_text, color: activeBranch.color_text, backgroundColor: activeBranch.color_bg }}>
                                 {m.order_index}
                               </div>
                               {idx < activeBranch.modules.length - 1 && (
-                                <div className="w-0.5 flex-1 my-2" style={{ backgroundColor: activeBranch.color_bg, minHeight: '32px' }} />
+                                <div className="w-0.5 flex-1 my-2"
+                                  style={{ backgroundColor: activeBranch.color_bg, minHeight: '32px' }} />
                               )}
                             </div>
                             <div className="pt-1.5 pb-6 min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-4 mb-1">
-                                <p className="text-base font-semibold text-[#1C1917]">{m.name}</p>
-                                <span className="text-xs px-3 py-1 rounded-full flex-shrink-0 font-medium"
+                                <p className="text-base font-semibold" style={{ color: '#1C1917' }}>{m.name}</p>
+                                <span className="text-xs px-3 py-1 rounded-full flex-shrink-0 font-semibold"
                                   style={{ backgroundColor: activeBranch.color_bg, color: activeBranch.color_text }}>
                                   {m.lessonCount} bài
                                 </span>
                               </div>
                               {m.description && (
-                                <p className="text-sm text-[#9A9590]">{m.description}</p>
+                                <p className="text-sm font-medium" style={{ color: '#6B6760' }}>{m.description}</p>
                               )}
                             </div>
                           </div>
@@ -281,29 +289,35 @@ export default function Home() {
               )}
             </div>
 
-            {/* Mobile: hiện module của nhánh đang chọn */}
+            {/* Mobile */}
             <div className="lg:hidden">
               {!loading && activeBranch && (
-                <div className="bg-white rounded-2xl border p-5" style={{ borderColor: activeBranch.color_text }}>
+                <div className="bg-white rounded-2xl border p-5"
+                  style={{ borderColor: activeBranch.color_text }}>
                   {activeBranch.modules.length === 0 ? (
-                    <p className="text-sm text-[#9A9590] text-center py-2">Chưa có module nào.</p>
+                    <p className="text-sm font-medium text-center py-2" style={{ color: '#9A9590' }}>Chưa có module nào.</p>
                   ) : (
                     <div className="space-y-1">
                       {activeBranch.modules.map((m, idx) => (
                         <div key={m.id} className="flex items-start gap-3">
                           <div className="flex flex-col items-center flex-shrink-0">
-                            <span className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-semibold"
+                            <span className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold"
                               style={{ borderColor: activeBranch.color_text, color: activeBranch.color_text }}>
                               {m.order_index}
                             </span>
                             {idx < activeBranch.modules.length - 1 && (
-                              <div className="w-px mt-1" style={{ backgroundColor: activeBranch.color_bg, minHeight: '16px' }} />
+                              <div className="w-px mt-1"
+                                style={{ backgroundColor: activeBranch.color_bg, minHeight: '16px' }} />
                             )}
                           </div>
                           <div className="pt-0.5 pb-3 min-w-0">
-                            <p className="text-sm font-medium text-[#1C1917]">{m.name}</p>
-                            {m.description && <p className="text-xs text-[#9A9590] mt-0.5">{m.description}</p>}
-                            <p className="text-xs mt-0.5" style={{ color: activeBranch.color_text }}>{m.lessonCount} bài học</p>
+                            <p className="text-sm font-semibold" style={{ color: '#1C1917' }}>{m.name}</p>
+                            {m.description && (
+                              <p className="text-xs mt-0.5 font-medium" style={{ color: '#6B6760' }}>{m.description}</p>
+                            )}
+                            <p className="text-xs mt-0.5 font-medium" style={{ color: activeBranch.color_text }}>
+                              {m.lessonCount} bài học
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -319,11 +333,14 @@ export default function Home() {
       {/* ── Closing note ── */}
       <div style={{ backgroundColor: '#1C1917' }}>
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-          <p className="text-xs tracking-[0.2em] uppercase text-[#C9A87C] mb-6">Lời nhắn từ ban lãnh đạo</p>
-          <h3 className={`${playfair.className} text-2xl sm:text-3xl lg:text-[36px] text-[#FAF8F4] leading-snug mb-6`}>
+          <p className="text-xs tracking-[0.2em] uppercase mb-6 font-semibold" style={{ color: '#C9A87C' }}>
+            Lời nhắn từ ban lãnh đạo
+          </p>
+          <h3 className="text-2xl sm:text-3xl lg:text-[36px] font-bold leading-snug mb-6"
+            style={{ color: '#FAF8F4' }}>
             Bắt đầu lộ trình của bạn<br />tại K-Global ngay hôm nay.
           </h3>
-          <p className="text-sm text-[#9A9590] leading-relaxed max-w-xl mx-auto">
+          <p className="text-sm leading-relaxed max-w-xl mx-auto font-medium" style={{ color: '#9A9590' }}>
             Bước đầu tiên không phải là làm thật nhanh — mà là hiểu thật đúng.
             Mỗi bài học trong hệ thống này được ban lãnh đạo trực tiếp biên soạn,
             đúc kết từ nhiều năm làm nghề và xuất khẩu thực chiến.
@@ -334,7 +351,9 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <div className="text-center py-6" style={{ backgroundColor: '#1C1917', borderTop: '1px solid #2A2520' }}>
-        <p className="text-xs text-[#4A4540]">© {new Date().getFullYear()} K-Global — Hệ thống đào tạo nội bộ</p>
+        <p className="text-xs font-medium" style={{ color: '#4A4540' }}>
+          © {new Date().getFullYear()} K-Global — Hệ thống đào tạo nội bộ
+        </p>
       </div>
 
       <style jsx>{`
