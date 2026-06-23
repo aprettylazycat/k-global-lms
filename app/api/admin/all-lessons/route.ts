@@ -28,8 +28,9 @@ export async function GET(req: Request) {
   const { data, error } = await supabaseAdmin
     .from('lessons')
     .select(`
-      id, title, order_index, is_published,
-      branch:branches(name, slug)
+      id, title, order_index, is_published, module_id, branch_id,
+      branch:branches(name, slug),
+      module:modules(id, name, order_index)
     `)
     .order('branch_id')
     .order('order_index')
