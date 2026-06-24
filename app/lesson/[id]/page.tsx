@@ -36,14 +36,14 @@ useEffect(() => {
       // Ghi started_at nếu chưa có
       await supabase.from('lesson_timestamps').upsert(
         { user_id: session.user.id, lesson_id: lessonId, started_at: new Date().toISOString() },
-        { onConflict: 'user_id,lesson_id', ignoreDuplicates: true }
+        { onConflict: 'user_id,lesson_id' }
       )
 
       // Ghi quiz_started_at nếu chưa làm quiz
       if (!prog?.tick1) {
         await supabase.from('lesson_timestamps').upsert(
           { user_id: session.user.id, lesson_id: lessonId, quiz_started_at: new Date().toISOString() },
-          { onConflict: 'user_id,lesson_id', ignoreDuplicates: true }
+          { onConflict: 'user_id,lesson_id' }
         )
       }
 
@@ -407,6 +407,15 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
     setLoading(false)
   }
 
+
+  useEffect(() => {
+    if (!tick1Done || tick2Done) return
+    supabase.from('lesson_timestamps').upsert(
+      { user_id: userId, lesson_id: lessonId, practice_started_at: new Date().toISOString() },
+      { onConflict: 'user_id,lesson_id' }
+    )
+  }, [tick1Done]) // eslint-disable-line react-hooks/exhaustive-deps
+  
   const isLocked = !tick1Done
 
   return (
