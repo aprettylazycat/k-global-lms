@@ -38,12 +38,7 @@ useEffect(() => {
         { user_id: session.user.id, lesson_id: lessonId, started_at: new Date().toISOString() },
         { onConflict: 'user_id,lesson_id' }
       )
-      // Ghi started_at
-      const { error: tsError } = await supabase.from('lesson_timestamps').upsert(
-        { user_id: session.user.id, lesson_id: lessonId, started_at: new Date().toISOString() },
-        { onConflict: 'user_id,lesson_id' }
-      )
-      console.log('lesson_timestamps upsert error:', tsError)
+      
 
       // Ghi quiz_started_at nếu chưa làm quiz
       if (!prog?.tick1) {
