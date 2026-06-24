@@ -52,6 +52,15 @@ export default function ReportPanel() {
   const [error, setError] = useState('')
   const [filterBranch, setFilterBranch] = useState('all')
   const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null)
+  const [openModuleKeys, setOpenModuleKeys] = useState<Set<string>>(new Set())
+
+function toggleModuleKey(key: string) {
+  setOpenModuleKeys(prev => {
+    const next = new Set(prev)
+    next.has(key) ? next.delete(key) : next.add(key)
+    return next
+  })
+}
 
   async function load() {
     setLoading(true)
@@ -404,49 +413,65 @@ export default function ReportPanel() {
                   const sorted = Object.values(moduleGroups).sort((a, b) => a.moduleOrder - b.moduleOrder)
 
                   return (
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                       {sorted.map((group, gi) => {
                         const done = group.lessons.filter(l => l.tick1 && l.tick2).length
                         const total = group.lessons.length
                         const allDone = done === total
+                        const key = `module-${gi}`
+                        const isOpen = openModuleKeys.has(key)
+
                         return (
-                          <div key={gi}>
-                            {/* Module header */}
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                                  allDone ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
-                                }`}>
-                                  {allDone ? '✓' : gi + 1}
-                                </div>
-                                <p className="text-xs font-semibold text-stone-700">{group.moduleName}</p>
+                          <div key={gi} className="border border-stone-200 rounded-xl overflow-hidden">
+                            {/* Module header — nhấn để mở/đóng */}
+                            <button
+                              onClick={() => toggleModuleKey(key)}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-stone-50 transition-colors text-left"
+                            >
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                allDone ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
+                              }`}>
+                                {allDone ? '✓' : gi + 1}
                               </div>
-                              <p className="text-xs text-stone-400">{done}/{total} hoàn thành</p>
-                            </div>
-                            {/* Lessons in module */}
-                            <div className="ml-7 space-y-1.5">
-                              {group.lessons.map(l => (
-                                <div key={l.lessonId} className="flex items-center gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
-                                  <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">
-                                    {l.orderIndex}
-                                  </span>
-                                  <p className="text-xs text-gray-700 flex-1 truncate">{l.title}</p>
-                                  <div className="flex gap-1.5 flex-shrink-0">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                      l.tick1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
-                                    }`}>Quiz</span>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                      l.tick2 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
-                                    }`}>Bài tập</span>
-                                  </div>
-                                  {l.completedAt && (
-                                    <span className="text-[10px] text-gray-400 flex-shrink-0">
-                                      {new Date(l.completedAt).toLocaleDateString('vi-VN')}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-stone-700 truncate">{group.moduleName}</p>
+                                <p className="text-[10px] text-stone-400 mt-0.5">{done}/{total} hoàn thành</p>
+                              </div>
+                              {/* Progress mini bar */}
+                              <div className="w-16 h-1.5 bg-stone-100 rounded-full overflow-hidden flex-shrink-0">
+                                <div className="h-full rounded-full bg-stone-400 transition-all"
+                                  style={{ width: `${Math.round(done/total*100)}%`, backgroundColor: selectedLearner.branch?.color_text || '#374151' }} />
+                              </div>
+                              <i className={`ti ti-chevron-down text-stone-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                                style={{ fontSize: '13px' }} />
+                            </button>
+
+                            {/* Lesson rows */}
+                            {isOpen && (
+                              <div className="border-t border-stone-100 divide-y divide-stone-50">
+                                {group.lessons.map(l => (
+                                  <div key={l.lessonId} className="flex items-center gap-2.5 px-3 py-2">
+                                    <span className="w-5 h-5 rounded-full bg-stone-100 flex items-center justify-center text-[10px] text-stone-500 flex-shrink-0">
+                                      {l.orderIndex}
                                     </span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                                    <p className="text-xs text-stone-700 flex-1 truncate">{l.title}</p>
+                                    <div className="flex gap-1.5 flex-shrink-0">
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                        l.tick1 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'
+                                      }`}>Quiz</span>
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                        l.tick2 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'
+                                      }`}>Bài tập</span>
+                                    </div>
+                                    {l.completedAt && (
+                                      <span className="text-[10px] text-stone-400 flex-shrink-0">
+                                        {new Date(l.completedAt).toLocaleDateString('vi-VN')}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )
                       })}
