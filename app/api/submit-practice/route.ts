@@ -7,15 +7,22 @@ export async function POST(req: Request) {
   const { data: submission } = await supabaseAdmin
     .from('submissions')
     .insert({ user_id: userId, lesson_id: lessonId, answer_text, file_url, status: 'pending' })
-    .select()
-    .single()
+    .select().single()
+
+  // Ghi timestamp: practice_submitted_at
+  await supabaseAdmin
+    .from('lesson_timestamps')
+    .upsert({
+      user_id: userId,
+      lesson_id: lessonId,
+      practice_submitted_at: new Date().toISOString()
+    }, { onConflict: 'user_id,lesson_id' })
 
   if (process.env.APPS_SCRIPT_WEBHOOK_URL) {
     const { data: profile } = await supabaseAdmin
       .from('profiles').select('name, email').eq('id', userId).single()
     const { data: lesson } = await supabaseAdmin
       .from('lessons').select('title').eq('id', lessonId).single()
-
     await fetch(process.env.APPS_SCRIPT_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

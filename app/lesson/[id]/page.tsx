@@ -15,7 +15,7 @@ export default function LessonPage() {
   const [userId, setUserId] = useState<string>('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
@@ -32,6 +32,20 @@ export default function LessonPage() {
         .eq('lesson_id', lessonId)
         .single()
       setProgress(prog)
+
+      // Ghi started_at nếu chưa có
+      await supabase.from('lesson_timestamps').upsert(
+        { user_id: session.user.id, lesson_id: lessonId, started_at: new Date().toISOString() },
+        { onConflict: 'user_id,lesson_id', ignoreDuplicates: true }
+      )
+
+      // Ghi quiz_started_at nếu chưa làm quiz
+      if (!prog?.tick1) {
+        await supabase.from('lesson_timestamps').upsert(
+          { user_id: session.user.id, lesson_id: lessonId, quiz_started_at: new Date().toISOString() },
+          { onConflict: 'user_id,lesson_id', ignoreDuplicates: true }
+        )
+      }
 
       setLoading(false)
     }
@@ -179,6 +193,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   const [slideState, setSlideState] = useState<'idle' | 'correct' | 'wrong'>('idle')
   const [submitted, setSubmitted] = useState(tick1Done)
   const [submitting, setSubmitting] = useState(false)
+  // Track tất cả lần thử của từng câu: { [questionId]: [{selectedOption, isCorrect}] }
+  const [attemptLog, setAttemptLog] = useState<Record<string, { selectedOption: number; isCorrect: boolean }[]>>({})
 
   const q = mcqs[currentSlide]
   const isLastSlide = currentSlide === mcqs.length - 1
@@ -189,6 +205,11 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     const isCorrect = optionIdx === q.correct
     setAnswers(prev => ({ ...prev, [q.id]: optionIdx }))
     setSlideState(isCorrect ? 'correct' : 'wrong')
+    // Ghi lại attempt này
+    setAttemptLog(prev => ({
+      ...prev,
+      [q.id]: [...(prev[q.id] || []), { selectedOption: optionIdx, isCorrect }]
+    }))
   }
 
   function handleRetry() {
@@ -202,7 +223,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
       const res = await fetch('/api/submit-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, userId, answers })
+        body: JSON.stringify({ lessonId, userId, answers, attempts: attemptLog })
       })
       const data = await res.json()
       setSubmitting(false)
