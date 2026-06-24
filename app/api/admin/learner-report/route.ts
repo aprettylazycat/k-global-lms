@@ -44,12 +44,12 @@ export async function GET(req: Request) {
     .select('user_id, badge_type')
     .in('user_id', learnerIds)
 
-  const { data: allModules } = await supabaseAdmin
+const { data: allModules } = await supabaseAdmin
     .from('modules')
     .select('id, name, order_index')
 
-  const moduleMap: Record<number, string> = {}
-  allModules?.forEach(m => { moduleMap[m.id] = m.name })
+  const moduleMap: Record<number, { name: string; order: number }> = {}
+  allModules?.forEach(m => { moduleMap[m.id] = { name: m.name, order: m.order_index } })
 
   const result = learners.map(learner => {
     const branchLessons = (allLessons || []).filter(l => l.branch_id === learner.branch_id)
@@ -69,11 +69,13 @@ export async function GET(req: Request) {
       lessonId: l.id,
       title: l.title,
       orderIndex: l.order_index,
-      moduleName: l.module_id ? (moduleMap[l.module_id] || 'Không có module') : 'Không có module',
+      moduleId: l.module_id ?? null,
+      moduleName: l.module_id ? (moduleMap[l.module_id]?.name || 'Không có module') : 'Không có module',
+      moduleOrder: l.module_id ? (moduleMap[l.module_id]?.order ?? 999) : 999,
       tick1: progMap[l.id]?.tick1 ?? false,
       tick2: progMap[l.id]?.tick2 ?? false,
       completedAt: progMap[l.id]?.completed_at ?? null,
-    }))
+    })).sort((a, b) => a.moduleOrder - b.moduleOrder || a.orderIndex - b.orderIndex)
 
     return {
       id: learner.id,

@@ -389,31 +389,68 @@ export default function ReportPanel() {
               {/* Tiến độ bài học */}
               <div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Tiến độ bài học</p>
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                  {selectedLearner.lessonProgress.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-4">Chưa bắt đầu bài học nào.</p>
-                  ) : (
-                    selectedLearner.lessonProgress.map(l => (
-                      <div key={l.lessonId} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                        <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
-                          {l.orderIndex}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-700 truncate">{l.title}</p>
-                          <p className="text-xs text-gray-400">{l.moduleName}</p>
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${l.tick1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-                            Quiz
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${l.tick2 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-                            Bài tập
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                {selectedLearner.lessonProgress.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Chưa bắt đầu bài học nào.</p>
+                ) : (() => {
+                  // Group theo module
+                  const moduleGroups: Record<string, { moduleName: string; moduleOrder: number; lessons: typeof selectedLearner.lessonProgress }> = {}
+                  selectedLearner.lessonProgress.forEach(l => {
+                    const key = l.moduleId ? String(l.moduleId) : 'none'
+                    if (!moduleGroups[key]) moduleGroups[key] = { moduleName: l.moduleName, moduleOrder: (l as any).moduleOrder ?? 999, lessons: [] }
+                    moduleGroups[key].lessons.push(l)
+                  })
+                  const sorted = Object.values(moduleGroups).sort((a, b) => a.moduleOrder - b.moduleOrder)
+
+                  return (
+                    <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+                      {sorted.map((group, gi) => {
+                        const done = group.lessons.filter(l => l.tick1 && l.tick2).length
+                        const total = group.lessons.length
+                        const allDone = done === total
+                        return (
+                          <div key={gi}>
+                            {/* Module header */}
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                  allDone ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
+                                }`}>
+                                  {allDone ? '✓' : gi + 1}
+                                </div>
+                                <p className="text-xs font-semibold text-stone-700">{group.moduleName}</p>
+                              </div>
+                              <p className="text-xs text-stone-400">{done}/{total} hoàn thành</p>
+                            </div>
+                            {/* Lessons in module */}
+                            <div className="ml-7 space-y-1.5">
+                              {group.lessons.map(l => (
+                                <div key={l.lessonId} className="flex items-center gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                                  <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">
+                                    {l.orderIndex}
+                                  </span>
+                                  <p className="text-xs text-gray-700 flex-1 truncate">{l.title}</p>
+                                  <div className="flex gap-1.5 flex-shrink-0">
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                      l.tick1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                                    }`}>Quiz</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                      l.tick2 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                                    }`}>Bài tập</span>
+                                  </div>
+                                  {l.completedAt && (
+                                    <span className="text-[10px] text-gray-400 flex-shrink-0">
+                                      {new Date(l.completedAt).toLocaleDateString('vi-VN')}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           </div>
