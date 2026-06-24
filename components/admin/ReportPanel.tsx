@@ -8,7 +8,9 @@ type LessonProgress = {
   lessonId: number
   title: string
   orderIndex: number
+  moduleId: number | null
   moduleName: string
+  moduleOrder: number
   tick1: boolean
   tick2: boolean
   completedAt: string | null
