@@ -385,6 +385,7 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
   const [file, setFile] = useState<File | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showCongrats, setShowCongrats] = useState(false)
 
   async function handleSubmit() {
     setLoading(true)
@@ -406,7 +407,7 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lessonId, userId, answer_text: combinedText, file_url: fileUrl })
     })
-    if (res.ok) setSubmitted(true)
+    if (res.ok) { setSubmitted(true); setShowCongrats(true) }
     setLoading(false)
   }
 
@@ -419,7 +420,77 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
     )
   }, [tick1Done]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!showCongrats) return
+    const canvas = document.getElementById('congrats-canvas') as HTMLCanvasElement
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+    const colors = ['#E63946','#F4A261','#2A9D8F','#E9C46A','#264653','#A8DADC','#F7B731','#6C5CE7','#00B894','#FD79A8','#FDCB6E','#0984E3','#E17055','#55EFC4']
+    const particles: any[] = []
+    function spawnBurst(x: number) {
+      for (let i = 0; i < 14; i++) {
+        particles.push({ x, y: -8, vx: (Math.random()-0.5)*4, vy: Math.random()*2.5+1, size: Math.random()*7+3, color: colors[Math.floor(Math.random()*colors.length)], rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.25, alpha: 1, shape: Math.random()>0.4?'rect':'circle', wobbleSpeed: Math.random()*0.1, wobbleOffset: Math.random()*Math.PI*2 })
+      }
+    }
+    let tick = 0
+    const spawnTicks = [0,5,10,18,25,35,45,55,68,80,95,110]
+    let rafId: number
+    function animate() {
+      ctx.clearRect(0,0,canvas.width,canvas.height)
+      if (spawnTicks.includes(tick)) spawnBurst(20+Math.random()*(canvas.width-40))
+      for (let i = particles.length-1; i >= 0; i--) {
+        const p = particles[i]
+        p.x += p.vx + Math.sin(tick*p.wobbleSpeed+p.wobbleOffset)*0.6
+        p.vy += 0.06; p.y += p.vy; p.rotation += p.rotSpeed
+        if (p.y > canvas.height+10) { particles.splice(i,1); continue }
+        if (p.y > canvas.height*0.7) p.alpha -= 0.02
+        if (p.alpha <= 0) { particles.splice(i,1); continue }
+        ctx.save(); ctx.globalAlpha = Math.max(0,p.alpha); ctx.translate(p.x,p.y); ctx.rotate(p.rotation); ctx.fillStyle = p.color
+        if (p.shape==='rect') ctx.fillRect(-p.size/2,-p.size/3,p.size,p.size*0.45)
+        else { ctx.beginPath(); ctx.arc(0,0,p.size/2.2,0,Math.PI*2); ctx.fill() }
+        ctx.restore()
+      }
+      tick++
+      if (tick < 180 || particles.length > 0) rafId = requestAnimationFrame(animate)
+    }
+    animate()
+    return () => cancelAnimationFrame(rafId)
+  }, [showCongrats])
+
   const isLocked = !tick1Done
+
+  if (showCongrats) return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="relative bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl">
+        <canvas id="congrats-canvas" className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
+        <div className="relative p-8 text-center" style={{ zIndex: 1 }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: '#27500A' }}>
+            <i className="ti ti-trophy" style={{ color: '#EAF3DE', fontSize: '28px' }} />
+          </div>
+          <p className="font-heading text-2xl font-bold mb-2" style={{ color: '#173404' }}>Chúc mừng!</p>
+          <p className="text-sm font-medium mb-8" style={{ color: '#3D6B1E' }}>
+            Bài tập đã được nộp thành công —<br />đang chờ admin duyệt.
+          </p>
+          <button
+            onClick={() => window.location.href = `/lesson/${lessonId + 1}`}
+            className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 mb-3 hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: '#1C1917' }}>
+            Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} />
+          </button>
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors"
+            style={{ border: '1px solid #E7E5E4', color: '#78716C' }}>
+            <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
+            Về Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className={`bg-white rounded-3xl border border-stone-200 p-6 shadow-sm transition-opacity ${isLocked ? 'opacity-50' : ''}`}>
@@ -432,7 +503,10 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
           }>
           {tick2Done ? <i className="ti ti-check" /> : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} /> : '2'}
         </span>
-        <h2 className="font-heading font-semibold text-stone-900">Bài tập thực hành</h2>
+        <div>
+          <h2 className="font-heading font-semibold text-stone-900">Bài tập thực hành</h2>
+          <p className="text-xs text-stone-400 font-medium mt-0.5">Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
+        </div>
       </div>
 
       {isLocked ? (
@@ -514,10 +588,7 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
             <div className="space-y-3 mb-4">
               {essays.map((q: any, qi: number) => (
                 <div key={q.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-100">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Câu hỏi tự luận {qi + 1}</p>
-                    <span className="text-xs text-stone-400 font-medium">Tối thiểu {MIN_ESSAY_CHARS} ký tự</span>
-                  </div>
+                  <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">Câu hỏi tự luận {qi + 1}</p>
                   <p className="text-sm font-semibold text-stone-800 mb-2">{q.question}</p>
                   <textarea rows={3}
                     className="w-full text-sm border border-stone-200 rounded-xl px-3.5 py-2.5 bg-white text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
