@@ -7,19 +7,31 @@ import type { Branch } from '@/types'
 function branchIcon(slug: string) {
   if (slug === 'k-embroidery') return 'ti-needle'
   if (slug === 'lotus-smock') return 'ti-flower'
+  if (slug === 'office') return 'ti-building'
   return 'ti-scissors'
 }
 
 function branchDesc(slug: string) {
   if (slug === 'k-embroidery') return 'Thêu tay, OEM'
   if (slug === 'lotus-smock') return 'Smock, đầm trẻ em'
+  if (slug === 'office') return 'Hành chính, vận hành'
   return 'Tóc, xuất khẩu, B2B'
+}
+
+// Card "ảo" gom 2 nhánh Smock
+const SMOCK_CARD = {
+  id: '__smock__',
+  name: 'Smock',
+  slug: '__smock__',
+  color_bg: '#FAF0F5',
+  color_text: '#7A2748',
 }
 
 export default function RegisterPage() {
   const router = useRouter()
   const [branches, setBranches] = useState<Branch[]>([])
   const [selectedBranch, setSelectedBranch] = useState<string>('')
+  const [smockExpanded, setSmockExpanded] = useState(false)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -38,6 +50,15 @@ export default function RegisterPage() {
       if (data) setBranches(data)
     })
   }, [])
+
+  // Tách nhánh smock và non-smock
+  const smockBranches = branches.filter(b => b.slug === 'k-embroidery' || b.slug === 'lotus-smock')
+  const nonSmockBranches = branches.filter(b => b.slug !== 'k-embroidery' && b.slug !== 'lotus-smock')
+
+  // Card hiển thị: non-smock + 1 card smock ảo
+  const displayCards = [...nonSmockBranches, SMOCK_CARD as Branch]
+
+  const isSmockSelected = smockBranches.some(b => b.id === selectedBranch)
 
   async function handleRegister() {
     if (!selectedBranch) { setError('Vui lòng chọn nhánh đào tạo'); return }
@@ -81,7 +102,6 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ backgroundColor: '#FAF8F4' }}>
       <div className="w-full max-w-md">
 
-        {/* Back về trang chủ */}
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition-colors mb-6"
@@ -92,7 +112,6 @@ export default function RegisterPage() {
 
         <div className="bg-white rounded-3xl border border-stone-200 p-8 shadow-sm">
 
-          {/* Tiêu đề */}
           <div className="mb-7">
             <h1 className="font-heading text-2xl font-bold text-stone-900 mb-1">Tạo tài khoản</h1>
             <p className="text-sm text-stone-500">Học viên Đào tạo K-Global</p>
@@ -123,13 +142,24 @@ export default function RegisterPage() {
           {/* ── PHẦN 2: Chọn nhánh ── */}
           <div className="mb-6">
             <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Nhánh đào tạo</p>
-            <div className="grid grid-cols-3 gap-2">
-              {branches.map(b => {
-                const isSelected = selectedBranch === b.id
+
+            {/* 3 card chính */}
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {displayCards.map(b => {
+                const isSmockCard = b.slug === '__smock__'
+                const isSelected = isSmockCard ? isSmockSelected : selectedBranch === b.id
                 return (
                   <button
                     key={b.id}
-                    onClick={() => setSelectedBranch(b.id)}
+                    onClick={() => {
+                      if (isSmockCard) {
+                        setSmockExpanded(true)
+                        // Chưa set selectedBranch — chờ chọn sub
+                      } else {
+                        setSelectedBranch(b.id)
+                        setSmockExpanded(false)
+                      }
+                    }}
                     className={`relative border-2 rounded-2xl p-3 text-left transition-all ${
                       isSelected ? 'border-stone-700' : 'border-stone-200 hover:border-stone-300 bg-white'
                     }`}
@@ -142,19 +172,61 @@ export default function RegisterPage() {
                     )}
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2"
                       style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.5)' : b.color_bg }}>
-                      <i className={`ti ${branchIcon(b.slug)} text-xl`} style={{ color: b.color_text }} />
+                      <i className={`ti ${isSmockCard ? 'ti-shirt' : branchIcon(b.slug)} text-xl`}
+                        style={{ color: b.color_text }} />
                     </div>
                     <p className="font-semibold text-xs mb-0.5"
                       style={{ color: isSelected ? b.color_text : '#1C1917' }}>
                       {b.name}
                     </p>
-                    <p className="text-[11px]" style={{ color: isSelected ? b.color_text : '#78716C', opacity: isSelected ? 0.8 : 1 }}>
-                      {branchDesc(b.slug)}
+                    <p className="text-[11px]"
+                      style={{ color: isSelected ? b.color_text : '#78716C', opacity: isSelected ? 0.8 : 1 }}>
+                      {isSmockCard ? 'KE · Lotus' : branchDesc(b.slug)}
                     </p>
                   </button>
                 )
               })}
             </div>
+
+            {/* Sub-option Smock — expand khi click card Smock */}
+            {smockExpanded && (
+              <div className="border border-stone-200 rounded-2xl p-3 bg-stone-50">
+                <p className="text-xs font-semibold text-stone-500 mb-2 uppercase tracking-wide">Chọn nhánh Smock</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {smockBranches.map(b => {
+                    const isSub = selectedBranch === b.id
+                    return (
+                      <button
+                        key={b.id}
+                        onClick={() => setSelectedBranch(b.id)}
+                        className={`relative border-2 rounded-xl p-3 text-left transition-all ${
+                          isSub ? 'border-stone-700' : 'border-stone-200 hover:border-stone-300 bg-white'
+                        }`}
+                        style={isSub ? { backgroundColor: b.color_bg } : undefined}
+                      >
+                        {isSub && (
+                          <span className="absolute top-2 right-2 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm">
+                            <i className="ti ti-check" style={{ fontSize: '10px', color: b.color_text }} />
+                          </span>
+                        )}
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-1.5"
+                          style={{ backgroundColor: isSub ? 'rgba(255,255,255,0.5)' : b.color_bg }}>
+                          <i className={`ti ${branchIcon(b.slug)}`} style={{ color: b.color_text, fontSize: '14px' }} />
+                        </div>
+                        <p className="font-semibold text-xs mb-0.5"
+                          style={{ color: isSub ? b.color_text : '#1C1917' }}>
+                          {b.name}
+                        </p>
+                        <p className="text-[11px]"
+                          style={{ color: isSub ? b.color_text : '#78716C', opacity: isSub ? 0.8 : 1 }}>
+                          {branchDesc(b.slug)}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── PHẦN 3: Thông tin onboarding ── */}
