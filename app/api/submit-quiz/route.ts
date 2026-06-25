@@ -54,29 +54,9 @@ export async function POST(req: Request) {
 
   const newBadge = await checkAndAwardBadges(userId)
   return NextResponse.json({ success: true, allCorrect, results, newBadge })
-
-  // allCorrect = true — ghi progress + timestamp song song
-  writePromises.push(
-    supabaseAdmin.from('progress').upsert(
-      { user_id: userId, lesson_id: lessonId, tick1: true },
-      { onConflict: 'user_id,lesson_id' }
-    ).then(),
-    supabaseAdmin.from('lesson_timestamps').upsert(
-      { user_id: userId, lesson_id: lessonId, quiz_completed_at: new Date().toISOString() },
-      { onConflict: 'user_id,lesson_id' }
-    ).then()
-  )
-
-  await Promise.all(writePromises)
-
-  // Check badges — gộp thành 1 function, chạy 1 lần duy nhất
-  const newBadge = await checkAndAwardBadges(userId)
-
-  return NextResponse.json({ success: true, allCorrect, results, newBadge })
 }
 
 async function checkAndAwardBadges(userId: string): Promise<string | null> {
-  // Fetch song song profile + existing badges
   const [profileRes, badgesRes] = await Promise.all([
     supabaseAdmin.from('profiles').select('branch_id').eq('id', userId).single(),
     supabaseAdmin.from('badges').select('badge_type').eq('user_id', userId)
@@ -85,7 +65,6 @@ async function checkAndAwardBadges(userId: string): Promise<string | null> {
   const branchId = profileRes.data?.branch_id
   if (!branchId) return null
 
-  // Fetch song song lessons + progress
   const [lessonsRes, progressRes] = await Promise.all([
     supabaseAdmin.from('lessons').select('id').eq('branch_id', branchId).eq('is_published', true),
     supabaseAdmin.from('progress').select('lesson_id, tick1, tick2').eq('user_id', userId)
@@ -108,7 +87,6 @@ async function checkAndAwardBadges(userId: string): Promise<string | null> {
     { min: 100, type: 'diamond' },
   ]
 
-  // Award tất cả badges đủ điều kiện song song
   const toAward = thresholds.filter(b => pct >= b.min)
   if (toAward.length > 0) {
     await Promise.all(toAward.map(b =>
@@ -119,7 +97,6 @@ async function checkAndAwardBadges(userId: string): Promise<string | null> {
     ))
   }
 
-  // Trả về badge mới nhất vừa đạt
   const newBadge = thresholds.slice().reverse().find(b => pct >= b.min && !existing.has(b.type))
   return newBadge?.type ?? null
 }
