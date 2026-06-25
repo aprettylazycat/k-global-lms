@@ -26,7 +26,6 @@ export default function RegisterPage() {
     password: '',
     position: '',
     onboarding_date: '',
-    mentor_name: '',
     goal_after_onboarding: '',
     expectation: '',
   })
@@ -43,7 +42,7 @@ export default function RegisterPage() {
   async function handleRegister() {
     if (!selectedBranch) { setError('Vui lòng chọn nhánh đào tạo'); return }
     if (!form.name || !form.email || !form.password) { setError('Vui lòng điền đầy đủ thông tin tài khoản'); return }
-    if (!form.position || !form.onboarding_date || !form.mentor_name || !form.goal_after_onboarding || !form.expectation) {
+    if (!form.position || !form.onboarding_date || !form.goal_after_onboarding || !form.expectation) {
       setError('Vui lòng điền đầy đủ thông tin onboarding'); return
     }
     if (!committed) { setError('Vui lòng xác nhận cam kết onboarding trước khi tạo tài khoản'); return }
@@ -66,7 +65,6 @@ export default function RegisterPage() {
       branch_id: selectedBranch,
       position: form.position,
       onboarding_date: form.onboarding_date,
-      mentor_name: form.mentor_name,
       goal_after_onboarding: form.goal_after_onboarding,
       expectation: form.expectation,
     })
@@ -97,7 +95,7 @@ export default function RegisterPage() {
           {/* Tiêu đề */}
           <div className="mb-7">
             <h1 className="font-heading text-2xl font-bold text-stone-900 mb-1">Tạo tài khoản</h1>
-            <p className="text-sm text-stone-500">Hệ thống đào tạo nội bộ K-Global</p>
+            <p className="text-sm text-stone-500">Hệ thống Training Thực tế K-Global</p>
           </div>
 
           {/* ── PHẦN 1: Thông tin tài khoản ── */}
@@ -172,11 +170,6 @@ export default function RegisterPage() {
                 <label className={labelClass}>Ngày onboarding</label>
                 <input type="date" className={inputClass}
                   value={form.onboarding_date} onChange={e => setForm({ ...form, onboarding_date: e.target.value })} />
-              </div>
-              <div>
-                <label className={labelClass}>Leader / Mentor / Người phụ trách</label>
-                <input className={inputClass} placeholder="Tên người phụ trách bạn"
-                  value={form.mentor_name} onChange={e => setForm({ ...form, mentor_name: e.target.value })} />
               </div>
               <div>
                 <label className={labelClass}>Mục tiêu sau Onboarding</label>
