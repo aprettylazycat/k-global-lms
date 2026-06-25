@@ -109,6 +109,33 @@ export default function ReportPanel() {
   const [searchText, setSearchText] = useState('')
   const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null)
   const [openModuleKeys, setOpenModuleKeys] = useState<Set<string>>(new Set())
+  const [resetTargetId, setResetTargetId] = useState<string | null>(null)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetMsg, setResetMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  async function handleResetPassword() {
+    if (!resetTargetId || !resetPassword) return
+    setResetLoading(true)
+    setResetMsg(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ userId: resetTargetId, newPassword: resetPassword }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setResetMsg({ ok: true, text: 'Đặt lại mật khẩu thành công!' })
+      setResetPassword('')
+    } else {
+      setResetMsg({ ok: false, text: data.error || 'Có lỗi xảy ra' })
+    }
+    setResetLoading(false)
+  }
 
   function toggleModuleKey(key: string) {
     setOpenModuleKeys(prev => {
@@ -397,6 +424,50 @@ export default function ReportPanel() {
                     <p className="text-xs text-stone-400 mb-0.5">Kỳ vọng</p>
                     <p className="text-sm text-stone-800">{selectedLearner.expectation}</p>
                   </div>
+                )}
+              </div>
+
+              {/* Reset mật khẩu */}
+              <div className="border border-stone-200 rounded-2xl p-4">
+                <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3">Đặt lại mật khẩu</p>
+                {resetTargetId === selectedLearner.id ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
+                      value={resetPassword}
+                      onChange={e => { setResetPassword(e.target.value); setResetMsg(null) }}
+                      className="w-full border border-stone-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-stone-400 transition-colors"
+                    />
+                    {resetMsg && (
+                      <p className={`text-xs px-3 py-2 rounded-lg ${resetMsg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                        {resetMsg.text}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleResetPassword}
+                        disabled={resetLoading || resetPassword.length < 6}
+                        className="flex-1 bg-stone-900 text-white text-xs rounded-xl py-2 font-semibold disabled:opacity-40 hover:bg-stone-700 transition-colors"
+                      >
+                        {resetLoading ? 'Đang xử lý...' : 'Xác nhận đặt lại'}
+                      </button>
+                      <button
+                        onClick={() => { setResetTargetId(null); setResetPassword(''); setResetMsg(null) }}
+                        className="px-4 text-xs text-stone-500 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors"
+                      >
+                        Huỷ
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setResetTargetId(selectedLearner.id); setResetPassword(''); setResetMsg(null) }}
+                    className="text-xs border border-stone-200 rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-stone-50 transition-colors font-medium text-stone-700"
+                  >
+                    <i className="ti ti-key" style={{ fontSize: '13px' }} />
+                    Đặt lại mật khẩu cho học viên này
+                  </button>
                 )}
               </div>
 
