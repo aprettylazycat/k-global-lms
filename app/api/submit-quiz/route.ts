@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       }))
     )
     if (attemptRows.length > 0) {
-      writePromises.push(supabaseAdmin.from('quiz_attempts').insert(attemptRows))
+      writePromises.push(supabaseAdmin.from('quiz_attempts').insert(attemptRows).then())
     }
   }
 
@@ -48,11 +48,11 @@ export async function POST(req: Request) {
     supabaseAdmin.from('progress').upsert(
       { user_id: userId, lesson_id: lessonId, tick1: true },
       { onConflict: 'user_id,lesson_id' }
-    ),
+    ).then(),
     supabaseAdmin.from('lesson_timestamps').upsert(
       { user_id: userId, lesson_id: lessonId, quiz_completed_at: new Date().toISOString() },
       { onConflict: 'user_id,lesson_id' }
-    )
+    ).then()
   )
 
   await Promise.all(writePromises)
