@@ -95,7 +95,7 @@ export default function RegisterPage() {
           {/* Tiêu đề */}
           <div className="mb-7">
             <h1 className="font-heading text-2xl font-bold text-stone-900 mb-1">Tạo tài khoản</h1>
-            <p className="text-sm text-stone-500">Hệ thống Training Thực tế K-Global</p>
+            <p className="text-sm text-stone-500">Học viên Đào tạo K-Global</p>
           </div>
 
           {/* ── PHẦN 1: Thông tin tài khoản ── */}
