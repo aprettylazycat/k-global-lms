@@ -143,7 +143,7 @@ useEffect(() => {
           <PracticeSection
             lessonId={lessonId}
             prompt={lesson.practice_prompt}
-            essays={lesson.questions.filter((q: any) => q.type === 'essay')}
+            essays={lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim())}
             tick1Done={tick1Done}
             tick2Done={tick2Done}
             userId={userId}

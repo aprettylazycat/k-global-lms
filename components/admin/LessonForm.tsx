@@ -19,7 +19,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
   const [mcqs, setMcqs] = useState([
     { question: '', options: ['', '', '', ''], correct: 0 }
   ])
-  const [essays, setEssays] = useState([{ question: '' }])
+  const [essays, setEssays] = useState<{ question: string }[]>([])
   const [isPublished, setIsPublished] = useState(true)
   const [attachmentUrl, setAttachmentUrl] = useState('')
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
@@ -74,7 +74,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
         const loadedMcqs = (l.questions || []).filter((q: any) => q.type === 'mcq')
         const loadedEssays = (l.questions || []).filter((q: any) => q.type === 'essay')
         setMcqs(loadedMcqs.length > 0 ? loadedMcqs : [{ question: '', options: ['', '', '', ''], correct: 0 }])
-        setEssays(loadedEssays.length > 0 ? loadedEssays : [{ question: '' }])
+        setEssays(loadedEssays.length > 0 ? loadedEssays : [])
         setIsPublished(!!l.is_published)
         setAttachmentUrl(l.attachment_url || '')
       } else {
