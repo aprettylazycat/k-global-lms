@@ -52,7 +52,18 @@ export async function POST(req: Request) {
     ).then(),
   ])
 
-  const newBadge = await checkAndAwardBadges(userId)
+  // Chạy badge check ngầm — không block response
+  const newBadgePromise = checkAndAwardBadges(userId)
+
+  // Return ngay, badge check chạy song song
+  const newBadge = await Promise.race([
+    newBadgePromise,
+    new Promise<null>(resolve => setTimeout(() => resolve(null), 1000))
+  ])
+
+  // Tiếp tục badge check ngầm dù đã return
+  newBadgePromise.catch(() => {})
+
   return NextResponse.json({ success: true, allCorrect, results, newBadge })
 }
 
