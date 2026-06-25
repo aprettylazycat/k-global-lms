@@ -118,7 +118,6 @@ export async function GET(req: Request) {
       branch: learner.branch,
       position: learner.position,
       onboardingDate: learner.onboarding_date,
-      mentorName: learner.mentor_name,
       goal: learner.goal_after_onboarding,
       expectation: learner.expectation,
       pct,
