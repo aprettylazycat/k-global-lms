@@ -19,9 +19,7 @@ export async function POST(req: Request) {
   }))
   const allCorrect = results.every(r => r.correct)
 
-  // Ghi quiz_attempts song song với các việc khác
-  const writePromises: Promise<any>[] = []
-
+  // Ghi quiz_attempts
   if (attempts && Object.keys(attempts).length > 0) {
     const attemptRows = Object.entries(attempts).flatMap(([questionId, tryList]: [string, any]) =>
       (tryList as any[]).map((t: any, idx: number) => ({
@@ -34,14 +32,28 @@ export async function POST(req: Request) {
       }))
     )
     if (attemptRows.length > 0) {
-      writePromises.push(supabaseAdmin.from('quiz_attempts').insert(attemptRows).then())
+      await supabaseAdmin.from('quiz_attempts').insert(attemptRows)
     }
   }
 
   if (!allCorrect) {
-    await Promise.all(writePromises)
     return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
   }
+
+  // allCorrect — ghi progress + timestamp song song
+  await Promise.all([
+    supabaseAdmin.from('progress').upsert(
+      { user_id: userId, lesson_id: lessonId, tick1: true },
+      { onConflict: 'user_id,lesson_id' }
+    ).then(),
+    supabaseAdmin.from('lesson_timestamps').upsert(
+      { user_id: userId, lesson_id: lessonId, quiz_completed_at: new Date().toISOString() },
+      { onConflict: 'user_id,lesson_id' }
+    ).then(),
+  ])
+
+  const newBadge = await checkAndAwardBadges(userId)
+  return NextResponse.json({ success: true, allCorrect, results, newBadge })
 
   // allCorrect = true — ghi progress + timestamp song song
   writePromises.push(
