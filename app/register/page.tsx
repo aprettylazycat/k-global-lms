@@ -73,7 +73,7 @@ export default function RegisterPage() {
 
     if (profileError) { setError(profileError.message || 'Không thể lưu hồ sơ'); setLoading(false); return }
 
-    router.push('/dashboard')
+    router.push('/verify-email')
   }
 
   const inputClass = "w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
