@@ -40,11 +40,12 @@ export default function DashboardPage() {
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
 
-  useEffect(() => {
+useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
 
+      // Fetch profile trước để lấy branch_id
       const { data: prof } = await supabase
         .from('profiles')
         .select('*, branch:branches(*)')
@@ -52,37 +53,42 @@ export default function DashboardPage() {
         .single()
       setProfile(prof)
 
-      const { data: lessonList } = await supabase
-        .from('lessons')
-        .select('id, title, order_index, module_id')
-        .eq('branch_id', prof.branch_id)
-        .eq('is_published', true)
-        .order('order_index')
-      setLessons((lessonList ?? []) as LessonListItem[])
+      if (!prof?.branch_id) { setLoading(false); return }
 
-      const { data: moduleList } = await supabase
-        .from('modules')
-        .select('id, name, description, order_index')
-        .eq('branch_id', prof.branch_id)
-        .order('order_index')
-      setModules((moduleList ?? []) as ModuleItem[])
+      // Fetch lessons + modules + badges song song
+      const [lessonsRes, modulesRes, badgesRes] = await Promise.all([
+        supabase.from('lessons')
+          .select('id, title, order_index, module_id')
+          .eq('branch_id', prof.branch_id)
+          .eq('is_published', true)
+          .order('order_index'),
+        supabase.from('modules')
+          .select('id, name, description, order_index')
+          .eq('branch_id', prof.branch_id)
+          .order('order_index'),
+        supabase.from('badges')
+          .select('badge_type')
+          .eq('user_id', session.user.id),
+      ])
 
-      const ids = lessonList?.map((l: { id: number }) => l.id) ?? []
-      const { data: progList } = await supabase
-        .from('progress')
-        .select('lesson_id, tick1, tick2, completed_at')
-        .eq('user_id', session.user.id)
-        .in('lesson_id', ids)
+      const lessonList = lessonsRes.data ?? []
+      setLessons(lessonList as LessonListItem[])
+      setModules((modulesRes.data ?? []) as ModuleItem[])
+      setBadges(badgesRes.data?.map((b: any) => b.badge_type) ?? [])
 
-      const map: Record<number, Progress> = {}
-      progList?.forEach((p: any) => { map[p.lesson_id] = p })
-      setProgressMap(map)
+      // Fetch progress sau khi có lesson ids
+      const ids = lessonList.map((l: { id: number }) => l.id)
+      if (ids.length > 0) {
+        const { data: progList } = await supabase
+          .from('progress')
+          .select('lesson_id, tick1, tick2, completed_at')
+          .eq('user_id', session.user.id)
+          .in('lesson_id', ids)
 
-      const { data: badgeData } = await supabase
-        .from('badges')
-        .select('badge_type')
-        .eq('user_id', session.user.id)
-      setBadges(badgeData?.map((b: any) => b.badge_type) ?? [])
+        const map: Record<number, Progress> = {}
+        progList?.forEach((p: any) => { map[p.lesson_id] = p })
+        setProgressMap(map)
+      }
 
       setLoading(false)
     }
