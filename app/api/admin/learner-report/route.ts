@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
   const { data: learners } = await supabaseAdmin
     .from('profiles')
-    .select('id, name, email, branch_id, position, onboarding_date, mentor_name, goal_after_onboarding, expectation, branch:branches(name, slug, color_bg, color_text)')
+    .select('id, name, email, branch_id, position, onboarding_date, goal_after_onboarding, expectation, branch:branches(name, slug, color_bg, color_text)')
     .eq('role', 'learner')
     .order('created_at', { ascending: false })
 
