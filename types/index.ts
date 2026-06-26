@@ -41,6 +41,7 @@ export type Progress = {
   tick1: boolean
   tick2: boolean
   completed_at: string | null
+  perfect_score?: boolean
 }
 
 export type Profile = {
@@ -52,7 +53,6 @@ export type Profile = {
   branch?: Branch
   position: string | null
   onboarding_date: string | null
-  mentor_name: string | null
   goal_after_onboarding: string | null
   expectation: string | null
 }

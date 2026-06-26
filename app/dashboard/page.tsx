@@ -81,7 +81,7 @@ useEffect(() => {
       if (ids.length > 0) {
         const { data: progList } = await supabase
           .from('progress')
-          .select('lesson_id, tick1, tick2, completed_at')
+          .select('lesson_id, tick1, tick2, completed_at, perfect_score')
           .eq('user_id', session.user.id)
           .in('lesson_id', ids)
 
@@ -379,15 +379,20 @@ useEffect(() => {
 
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-stone-800 truncate">{lesson.title}</p>
-                              <div className="flex items-center gap-3 mt-0.5">
+                              <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                                 <span className="text-xs font-medium flex items-center gap-1" style={{ color: prog?.tick1 ? '#27500A' : '#A8A29E' }}>
                                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick1 ? '#27500A' : '#A8A29E' }} />
-                                  Quiz
+                                  Đã nộp
                                 </span>
                                 <span className="text-xs font-medium flex items-center gap-1" style={{ color: prog?.tick2 ? '#27500A' : '#A8A29E' }}>
                                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick2 ? '#27500A' : '#A8A29E' }} />
-                                  Bài tập
+                                  Đạt lý thuyết
                                 </span>
+                                {prog?.perfect_score && (
+                                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#B8860B' }}>
+                                    ⭐ Perfect
+                                  </span>
+                                )}
                               </div>
                             </div>
 

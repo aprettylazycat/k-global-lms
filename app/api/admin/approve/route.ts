@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { submissionId, userId, lessonId } = await req.json()
+  const { submissionId, userId, lessonId, perfectScore } = await req.json()
 
   await supabaseAdmin
     .from('submissions')
@@ -16,7 +16,8 @@ export async function POST(req: Request) {
       user_id: userId,
       lesson_id: lessonId,
       tick2: true,
-      completed_at: new Date().toISOString()
+      completed_at: new Date().toISOString(),
+      ...(perfectScore ? { perfect_score: true } : {}),
     }, { onConflict: 'user_id,lesson_id' })
 
   await checkBadges(userId)

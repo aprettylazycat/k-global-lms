@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 export default function ReviewPanel() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [perfectScores, setPerfectScores] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     loadSubmissions()
@@ -29,14 +30,15 @@ export default function ReviewPanel() {
     setLoading(false)
   }
 
-  async function handleApprove(sub: any) {
+  async function handleApprove(sub: any, perfectScore: boolean = false) {
     const res = await fetch('/api/admin/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         submissionId: sub.id,
         userId: sub.user_id,
-        lessonId: sub.lesson_id
+        lessonId: sub.lesson_id,
+        perfectScore,
       })
     })
     if (res.ok) {
@@ -93,8 +95,17 @@ export default function ReviewPanel() {
             </a>
           )}
 
+          <label className="flex items-center gap-2 mb-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={perfectScores[sub.id] ?? false}
+              onChange={e => setPerfectScores(prev => ({ ...prev, [sub.id]: e.target.checked }))}
+              className="w-4 h-4 rounded"
+            />
+            <span className="text-sm font-medium text-stone-700">⭐ Perfect Score</span>
+          </label>
           <div className="flex gap-2">
-            <button onClick={() => handleApprove(sub)}
+            <button onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
               className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm font-medium">
               ✓ Duyệt
             </button>
