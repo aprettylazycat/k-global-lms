@@ -5,6 +5,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Lesson, Progress } from '@/types'
 
+const NAVY = '#466898'
+const GOLD = '#C9A84C'
+const BLUE = '#0E62B1'
+const CREAM = '#F5F0E8'
+const BORDER = '#E2D8C8'
+
 export default function LessonPage() {
   const params = useParams()
   const router = useRouter()
@@ -15,7 +21,7 @@ export default function LessonPage() {
   const [userId, setUserId] = useState<string>('')
   const [loading, setLoading] = useState(true)
 
-useEffect(() => {
+  useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
@@ -33,14 +39,11 @@ useEffect(() => {
         .single()
       setProgress(prog)
 
-      // Ghi started_at nếu chưa có
       await supabase.from('lesson_timestamps').upsert(
         { user_id: session.user.id, lesson_id: lessonId, started_at: new Date().toISOString() },
         { onConflict: 'user_id,lesson_id' }
       )
-      
 
-      // Ghi quiz_started_at nếu chưa làm quiz
       if (!prog?.tick1) {
         await supabase.from('lesson_timestamps').upsert(
           { user_id: session.user.id, lesson_id: lessonId, quiz_started_at: new Date().toISOString() },
@@ -55,14 +58,14 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#FAF8F4' }}>
-        <div className="w-6 h-6 border-2 border-stone-200 border-t-stone-700 rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: CREAM }}>
+        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: BORDER, borderTopColor: NAVY }} />
       </div>
     )
   }
   if (!lesson) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-sm text-stone-500" style={{ backgroundColor: '#FAF8F4' }}>
+      <div className="flex items-center justify-center min-h-screen text-sm" style={{ backgroundColor: CREAM, color: NAVY }}>
         Không tìm thấy bài học.
       </div>
     )
@@ -73,13 +76,15 @@ useEffect(() => {
   const currentStep = !tick1Done ? 1 : !tick2Done ? 2 : 3
 
   return (
-    <div className="min-h-screen pb-16" style={{ backgroundColor: '#FAF8F4' }}>
-      {/* Top bar */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-5 py-3.5 sticky top-0 z-10">
+    <div className="min-h-screen pb-16" style={{ backgroundColor: CREAM }}>
+
+      {/* Top bar — navy */}
+      <div className="px-5 py-3.5 sticky top-0 z-10" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-sm text-stone-600 hover:text-stone-900 flex items-center gap-1.5 font-medium transition-colors"
+            className="flex items-center gap-1.5 font-medium transition-opacity hover:opacity-70"
+            style={{ color: 'white', fontSize: '14px' }}
           >
             <i className="ti ti-arrow-left" style={{ fontSize: '14px' }} />
             Dashboard
@@ -88,32 +93,32 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Body — 2 cột trên PC */}
+      {/* Body */}
       <div className="max-w-6xl mx-auto px-5 pt-6 lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start">
 
-        {/* Cột trái: Video + intro + Quiz */}
+        {/* Cột trái */}
         <div className="space-y-5">
-          <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
-            <h1 className="font-heading text-xl lg:text-2xl font-bold text-stone-900 mb-4">
+          <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+            <h1 className="text-xl lg:text-2xl font-bold mb-4" style={{ color: NAVY }}>
               {lesson.title}
             </h1>
             {lesson.youtube_id && (
-              <div className="aspect-video bg-stone-100 rounded-2xl overflow-hidden mb-4">
+              <div className="aspect-video rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: CREAM }}>
                 <iframe
                   src={`https://www.youtube.com/embed/${lesson.youtube_id}`}
                   className="w-full h-full" allowFullScreen
                 />
               </div>
             )}
-            <p className="text-sm text-stone-700 leading-relaxed">{lesson.intro_text}</p>
+            <p className="text-sm leading-relaxed" style={{ color: '#4A5568' }}>{lesson.intro_text}</p>
 
             {(lesson as any).attachment_url && (
               <div className="mt-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <i className="ti ti-file-type-pdf text-stone-500" style={{ fontSize: '14px' }} />
-                  <p className="text-xs font-semibold text-stone-600 uppercase tracking-wide">Tài liệu đính kèm</p>
+                  <i className="ti ti-file-type-pdf" style={{ fontSize: '14px', color: NAVY }} />
+                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: NAVY }}>Tài liệu đính kèm</p>
                 </div>
-                <div className="rounded-2xl overflow-hidden border border-stone-200" style={{ height: '520px' }}>
+                <div className="rounded-2xl overflow-hidden" style={{ height: '520px', border: `1px solid ${BORDER}` }}>
                   <iframe
                     src={`https://docs.google.com/viewer?url=${encodeURIComponent((lesson as any).attachment_url)}&embedded=true`}
                     className="w-full h-full"
@@ -121,7 +126,8 @@ useEffect(() => {
                   />
                 </div>
                 <a href={(lesson as any).attachment_url} target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2 text-xs text-stone-500 hover:text-stone-700 font-medium transition-colors">
+                  className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium transition-opacity hover:opacity-70"
+                  style={{ color: BLUE }}>
                   <i className="ti ti-external-link" style={{ fontSize: '12px' }} />
                   Mở PDF trong tab mới
                 </a>
@@ -138,8 +144,8 @@ useEffect(() => {
           />
         </div>
 
-        {/* Cột phải: Bài tập */}
-        <div className="mt-5 lg:mt-0 lg:sticky lg:top-24">
+        {/* Cột phải */}
+        <div className="mt-5 lg:mt-0 lg:sticky lg:top-20">
           <PracticeSection
             lessonId={lessonId}
             prompt={lesson.practice_prompt}
@@ -167,16 +173,21 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
         return (
           <div key={s.n} className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                isDone ? 'bg-stone-800 text-white' : isActive ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-400'
-              }`}>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                style={{
+                  backgroundColor: isDone || isActive ? GOLD : 'rgba(255,255,255,0.15)',
+                  color: isDone || isActive ? NAVY : 'rgba(255,255,255,0.4)',
+                }}>
                 {isDone ? <i className="ti ti-check" style={{ fontSize: '10px' }} /> : s.n}
               </span>
-              <span className={`text-xs hidden sm:inline font-medium ${isActive ? 'text-stone-900' : 'text-stone-400'}`}>
+              <span className="text-xs hidden sm:inline font-medium"
+                style={{ color: isActive ? 'white' : 'rgba(255,255,255,0.5)' }}>
                 {s.label}
               </span>
             </div>
-            {i < steps.length - 1 && <span className="w-4 border-t border-dashed border-stone-300" />}
+            {i < steps.length - 1 && (
+              <span className="w-4 border-t border-dashed" style={{ borderColor: 'rgba(255,255,255,0.25)' }} />
+            )}
           </div>
         )
       })}
@@ -188,13 +199,11 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   lessonId: number; questions: any[]; tick1Done: boolean; userId: string; onDone: () => void
 }) {
   const mcqs = questions.filter(q => q.type === 'mcq')
-
   const [currentSlide, setCurrentSlide] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [slideState, setSlideState] = useState<'idle' | 'correct' | 'wrong'>('idle')
   const [submitted, setSubmitted] = useState(tick1Done)
   const [submitting, setSubmitting] = useState(false)
-  // Track tất cả lần thử của từng câu: { [questionId]: [{selectedOption, isCorrect}] }
   const [attemptLog, setAttemptLog] = useState<Record<string, { selectedOption: number; isCorrect: boolean }[]>>({})
 
   const q = mcqs[currentSlide]
@@ -206,7 +215,6 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     const isCorrect = optionIdx === q.correct
     setAnswers(prev => ({ ...prev, [q.id]: optionIdx }))
     setSlideState(isCorrect ? 'correct' : 'wrong')
-    // Ghi lại attempt này
     setAttemptLog(prev => ({
       ...prev,
       [q.id]: [...(prev[q.id] || []), { selectedOption: optionIdx, isCorrect }]
@@ -228,10 +236,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
       })
       const data = await res.json()
       setSubmitting(false)
-      if (res.ok && data.allCorrect) {
-        setSubmitted(true)
-        onDone()
-      }
+      if (res.ok && data.allCorrect) { setSubmitted(true); onDone() }
     } else {
       setCurrentSlide(prev => prev + 1)
       setSlideState('idle')
@@ -240,13 +245,13 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 
   if (submitted) {
     return (
-      <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
+      <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
         <div className="flex items-center gap-2.5 mb-4">
           <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ backgroundColor: '#EAF3DE', color: '#27500A' }}>
+            style={{ backgroundColor: GOLD, color: NAVY }}>
             <i className="ti ti-check" />
           </span>
-          <h2 className="font-heading font-semibold text-stone-900">Bài kiểm tra</h2>
+          <h2 className="font-semibold" style={{ color: NAVY }}>Bài kiểm tra</h2>
         </div>
         <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
           <i className="ti ti-check" style={{ color: '#27500A' }} />
@@ -259,33 +264,32 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   if (!q) return null
 
   return (
-    <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
+    <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
       {/* Header */}
-      <div className="px-6 pt-5 pb-4 border-b border-stone-100">
+      <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2.5">
             <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ backgroundColor: '#1C1917', color: 'white' }}>1</span>
-            <h2 className="font-heading font-semibold text-stone-900">Bài kiểm tra</h2>
+              style={{ backgroundColor: NAVY, color: 'white' }}>1</span>
+            <h2 className="font-semibold" style={{ color: NAVY }}>Bài kiểm tra</h2>
           </div>
-          <span className="text-xs font-semibold text-stone-500">Câu {currentSlide + 1}/{mcqs.length}</span>
+          <span className="text-xs font-semibold" style={{ color: '#8AABC8' }}>Câu {currentSlide + 1}/{mcqs.length}</span>
         </div>
-        <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: CREAM }}>
           <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${((currentSlide + (slideState === 'correct' ? 1 : 0)) / mcqs.length) * 100}%`, backgroundColor: '#27500A' }} />
+            style={{ width: `${((currentSlide + (slideState === 'correct' ? 1 : 0)) / mcqs.length) * 100}%`, backgroundColor: GOLD }} />
         </div>
       </div>
 
-      {/* Slide câu hỏi */}
+      {/* Slide */}
       <div className="px-6 py-5">
-        <p className="text-base font-semibold text-stone-900 mb-4 leading-snug">{q.question}</p>
+        <p className="text-base font-semibold mb-4 leading-snug" style={{ color: NAVY }}>{q.question}</p>
 
         <div className="space-y-2.5 mb-5">
           {q.options.map((opt: string, i: number) => {
             const isSelected = selectedAnswer === i
-
-            let optStyle: React.CSSProperties = { borderColor: '#E7E5E4', backgroundColor: 'white' }
-            let labelStyle: React.CSSProperties = { backgroundColor: '#F5F5F4', color: '#57534E' }
+            let optStyle: React.CSSProperties = { borderColor: BORDER, backgroundColor: 'white' }
+            let labelStyle: React.CSSProperties = { backgroundColor: CREAM, color: NAVY }
 
             if (slideState !== 'idle') {
               if (isSelected && slideState === 'wrong') {
@@ -295,12 +299,12 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                 optStyle = { borderColor: '#27500A', backgroundColor: '#EAF3DE' }
                 labelStyle = { backgroundColor: '#27500A', color: 'white' }
               } else {
-                optStyle = { borderColor: '#F0EFEE', backgroundColor: '#FAFAF9', opacity: 0.5 }
-                labelStyle = { backgroundColor: '#F5F5F4', color: '#A8A29E' }
+                optStyle = { borderColor: BORDER, backgroundColor: '#FAFAF9', opacity: 0.5 }
+                labelStyle = { backgroundColor: CREAM, color: '#A8A29E' }
               }
             } else if (isSelected) {
-              optStyle = { borderColor: '#1C1917', backgroundColor: '#F5F5F4' }
-              labelStyle = { backgroundColor: '#1C1917', color: 'white' }
+              optStyle = { borderColor: NAVY, backgroundColor: '#EFF4F9' }
+              labelStyle = { backgroundColor: NAVY, color: 'white' }
             }
 
             return (
@@ -316,7 +320,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                     ? <i className="ti ti-x" style={{ fontSize: '11px' }} />
                     : ['A', 'B', 'C', 'D'][i]}
                 </span>
-                <span className="flex-1 text-stone-800 font-medium">{opt}</span>
+                <span className="flex-1 font-medium" style={{ color: NAVY }}>{opt}</span>
               </button>
             )
           })}
@@ -330,7 +334,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
             </div>
             <button onClick={handleNext} disabled={submitting}
               className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#1C1917' }}>
+              style={{ backgroundColor: NAVY }}>
               {submitting ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
               ) : isLastSlide ? (
@@ -349,7 +353,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
               <p className="text-sm font-semibold text-red-700">Chưa đúng — thử lại nhé!</p>
             </div>
             <button onClick={handleRetry}
-              className="w-full text-sm font-semibold py-3 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50 transition-colors">
+              className="w-full text-sm font-semibold py-3 rounded-xl transition-colors"
+              style={{ border: `1px solid ${BORDER}`, color: NAVY, backgroundColor: 'white' }}>
               Chọn lại đáp án
             </button>
           </div>
@@ -366,7 +371,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
               style={{
                 width: isCurrent ? '20px' : '6px',
                 height: '6px',
-                backgroundColor: isDone ? '#27500A' : isCurrent ? '#1C1917' : '#E7E5E4',
+                backgroundColor: isDone ? GOLD : isCurrent ? NAVY : BORDER,
               }} />
           )
         })}
@@ -410,7 +415,6 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
     if (res.ok) { setSubmitted(true); setShowCongrats(true) }
     setLoading(false)
   }
-
 
   useEffect(() => {
     if (!tick1Done || tick2Done) return
@@ -468,23 +472,23 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
         <canvas id="congrats-canvas" className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
         <div className="relative p-8 text-center" style={{ zIndex: 1 }}>
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: '#27500A' }}>
-            <i className="ti ti-trophy" style={{ color: '#EAF3DE', fontSize: '28px' }} />
+            style={{ backgroundColor: NAVY }}>
+            <i className="ti ti-trophy" style={{ color: GOLD, fontSize: '28px' }} />
           </div>
-          <p className="font-heading text-2xl font-bold mb-2" style={{ color: '#173404' }}>Chúc mừng!</p>
-          <p className="text-sm font-medium mb-8" style={{ color: '#3D6B1E' }}>
+          <p className="text-2xl font-bold mb-2" style={{ color: NAVY }}>Chúc mừng!</p>
+          <p className="text-sm font-medium mb-8" style={{ color: '#8AABC8' }}>
             Bài tập đã được nộp thành công —<br />đang chờ admin duyệt.
           </p>
           <button
             onClick={() => window.location.href = `/lesson/${lessonId + 1}`}
             className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 mb-3 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#1C1917' }}>
+            style={{ backgroundColor: NAVY }}>
             Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} />
           </button>
           <button
             onClick={() => window.location.href = '/dashboard'}
-            className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors"
-            style={{ border: '1px solid #E7E5E4', color: '#78716C' }}>
+            className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
+            style={{ border: `1px solid ${BORDER}`, color: '#8AABC8' }}>
             <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
             Về Dashboard
           </button>
@@ -494,113 +498,58 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
   )
 
   return (
-    <div className={`bg-white rounded-3xl border border-stone-200 p-6 shadow-sm transition-opacity ${isLocked ? 'opacity-50' : ''}`}>
+    <div className={`rounded-3xl p-6 transition-opacity ${isLocked ? 'opacity-50' : ''}`}
+      style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
       <div className="flex items-center gap-2.5 mb-5">
         <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
           style={
             tick2Done ? { backgroundColor: '#EAF3DE', color: '#27500A' } :
-            isLocked ? { backgroundColor: '#F5F5F4', color: '#A8A29E' } :
-            { backgroundColor: '#FEF3C7', color: '#92400E' }
+            isLocked ? { backgroundColor: CREAM, color: '#A8A29E' } :
+            { backgroundColor: GOLD, color: NAVY }
           }>
           {tick2Done ? <i className="ti ti-check" /> : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} /> : '2'}
         </span>
         <div>
-          <h2 className="font-heading font-semibold text-stone-900">Bài tập thực hành</h2>
-          <p className="text-xs text-stone-400 font-medium mt-0.5">Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
+          <h2 className="font-semibold" style={{ color: NAVY }}>Bài tập thực hành</h2>
+          <p className="text-xs font-medium mt-0.5" style={{ color: '#8AABC8' }}>Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
         </div>
       </div>
 
       {isLocked ? (
-        <p className="text-sm text-stone-500 font-medium">Hoàn thành bài kiểm tra để mở phần này.</p>
+        <p className="text-sm font-medium" style={{ color: '#8AABC8' }}>Hoàn thành bài kiểm tra để mở phần này.</p>
       ) : tick2Done ? (
         <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
           <i className="ti ti-check" style={{ color: '#27500A' }} />
           <p className="text-sm font-semibold" style={{ color: '#27500A' }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
         </div>
       ) : submitted ? (
-        <div className="relative overflow-hidden">
-          <canvas id="confetti-canvas" className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
-          <div className="relative space-y-3" style={{ zIndex: 1 }}>
-            <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: '#EAF3DE' }}>
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
-                style={{ backgroundColor: '#27500A' }}>
-                <i className="ti ti-trophy" style={{ color: '#EAF3DE', fontSize: '24px' }} />
-              </div>
-              <p className="font-heading text-lg font-bold mb-1" style={{ color: '#173404' }}>Chúc mừng!</p>
-              <p className="text-sm font-medium" style={{ color: '#3D6B1E' }}>
-                Bài tập đã được nộp thành công — đang chờ admin duyệt.
-              </p>
-            </div>
-            <button
-              onClick={() => window.location.href = `/lesson/${lessonId + 1}`}
-              className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#1C1917' }}>
-              Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} />
-            </button>
-            <button
-              onClick={() => window.location.href = '/dashboard'}
-              className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors"
-              style={{ border: '1px solid #E7E5E4', color: '#78716C' }}>
-              <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
-              Về Dashboard
-            </button>
+        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: '#EAF3DE' }}>
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+            style={{ backgroundColor: '#27500A' }}>
+            <i className="ti ti-trophy" style={{ color: '#EAF3DE', fontSize: '24px' }} />
           </div>
-          <script dangerouslySetInnerHTML={{ __html: `
-            (function() {
-              const canvas = document.getElementById('confetti-canvas');
-              if (!canvas) return;
-              const ctx = canvas.getContext('2d');
-              canvas.width = canvas.offsetWidth;
-              canvas.height = canvas.offsetHeight;
-              const colors = ['#E63946','#F4A261','#2A9D8F','#E9C46A','#264653','#A8DADC','#F7B731','#6C5CE7','#00B894','#FD79A8','#FDCB6E','#0984E3','#E17055','#55EFC4'];
-              const particles = [];
-              function spawnBurst(x) {
-                for (let i = 0; i < 12; i++) {
-                  particles.push({ x, y: -8, vx: (Math.random()-0.5)*3.5, vy: Math.random()*2+1, size: Math.random()*7+3, color: colors[Math.floor(Math.random()*colors.length)], rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.25, alpha: 1, shape: Math.random()>0.4?'rect':'circle', wobbleSpeed: Math.random()*0.1, wobbleOffset: Math.random()*Math.PI*2 });
-                }
-              }
-              let tick = 0;
-              const spawnTicks = [0,5,10,18,25,35,45,55,68,80,95,110];
-              function animate() {
-                ctx.clearRect(0,0,canvas.width,canvas.height);
-                if (spawnTicks.includes(tick)) spawnBurst(20+Math.random()*(canvas.width-40));
-                for (let i = particles.length-1; i >= 0; i--) {
-                  const p = particles[i];
-                  p.x += p.vx + Math.sin(tick*p.wobbleSpeed+p.wobbleOffset)*0.6;
-                  p.vy += 0.06; p.y += p.vy; p.rotation += p.rotSpeed;
-                  if (p.y > canvas.height+10) { particles.splice(i,1); continue; }
-                  if (p.y > canvas.height*0.7) p.alpha -= 0.025;
-                  if (p.alpha <= 0) { particles.splice(i,1); continue; }
-                  ctx.save(); ctx.globalAlpha = Math.max(0,p.alpha); ctx.translate(p.x,p.y); ctx.rotate(p.rotation); ctx.fillStyle = p.color;
-                  if (p.shape==='rect') ctx.fillRect(-p.size/2,-p.size/3,p.size,p.size*0.45);
-                  else { ctx.beginPath(); ctx.arc(0,0,p.size/2.2,0,Math.PI*2); ctx.fill(); }
-                  ctx.restore();
-                }
-                tick++;
-                if (tick < 180 || particles.length > 0) requestAnimationFrame(animate);
-              }
-              animate();
-            })();
-          ` }} />
+          <p className="text-lg font-bold mb-1" style={{ color: '#173404' }}>Chúc mừng!</p>
+          <p className="text-sm font-medium" style={{ color: '#3D6B1E' }}>
+            Bài tập đã được nộp thành công — đang chờ admin duyệt.
+          </p>
         </div>
       ) : (
         <>
           {essays.length > 0 && (
             <div className="space-y-3 mb-4">
               {essays.map((q: any, qi: number) => (
-                <div key={q.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-100">
-                  <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">Câu hỏi tự luận {qi + 1}</p>
-                  <p className="text-sm font-semibold text-stone-800 mb-2">{q.question}</p>
+                <div key={q.id} className="p-4 rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#8AABC8' }}>Câu hỏi tự luận {qi + 1}</p>
+                  <p className="text-sm font-semibold mb-2" style={{ color: NAVY }}>{q.question}</p>
                   <textarea rows={3}
-                    className="w-full text-sm border border-stone-200 rounded-xl px-3.5 py-2.5 bg-white text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
+                    className="w-full text-sm rounded-xl px-3.5 py-2.5 focus:outline-none transition-colors resize-none"
+                    style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
                     placeholder="Nhập câu trả lời..."
                     value={essayAnswers[q.id] || ''}
                     onChange={e => setEssayAnswers({ ...essayAnswers, [q.id]: e.target.value })} />
                   <div className="flex justify-end mt-1">
-                    <span className={`text-xs font-medium ${
-                      (essayAnswers[q.id] || '').length >= MIN_ESSAY_CHARS
-                        ? 'text-green-600' : 'text-stone-400'
-                    }`}>
+                    <span className="text-xs font-medium"
+                      style={{ color: (essayAnswers[q.id] || '').length >= MIN_ESSAY_CHARS ? '#27500A' : '#8AABC8' }}>
                       {(essayAnswers[q.id] || '').length}/{MIN_ESSAY_CHARS} ký tự
                     </span>
                   </div>
@@ -609,25 +558,28 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
             </div>
           )}
 
-          <p className="text-sm text-stone-700 font-medium mb-3">{prompt}</p>
+          <p className="text-sm font-medium mb-3" style={{ color: NAVY }}>{prompt}</p>
           <textarea rows={4}
-            className="w-full text-sm border border-stone-200 rounded-xl px-3.5 py-2.5 mb-3 text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
+            className="w-full text-sm rounded-xl px-3.5 py-2.5 mb-3 focus:outline-none transition-colors resize-none"
+            style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
             placeholder="Mô tả bài làm của bạn..."
             value={text} onChange={e => setText(e.target.value)} />
 
-          <label className="block border border-dashed border-stone-300 rounded-xl px-4 py-3 mb-1 cursor-pointer hover:border-stone-400 transition-colors">
-            <div className="flex items-center gap-2 text-sm text-stone-600 font-medium">
+          <label className="block rounded-xl px-4 py-3 mb-1 cursor-pointer transition-colors"
+            style={{ border: `1.5px dashed ${BORDER}`, backgroundColor: 'white' }}>
+            <div className="flex items-center gap-2 text-sm font-medium" style={{ color: '#8AABC8' }}>
               <i className="ti ti-paperclip" />
               {file ? file.name : 'Đính kèm ảnh hoặc file PDF (tùy chọn)'}
             </div>
             <input type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden"
               onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </label>
-          <p className="text-xs text-stone-500 font-medium mb-4">jpg, png, pdf — tối đa 10MB</p>
+          <p className="text-xs font-medium mb-4" style={{ color: '#8AABC8' }}>jpg, png, pdf — tối đa 10MB</p>
 
-          <button onClick={handleSubmit} disabled={loading || !text || essays.some((q: any) => (essayAnswers[q.id] || '').length < MIN_ESSAY_CHARS)}
+          <button onClick={handleSubmit}
+            disabled={loading || !text || essays.some((q: any) => (essayAnswers[q.id] || '').length < MIN_ESSAY_CHARS)}
             className="w-full text-sm font-semibold text-white px-5 py-3 rounded-xl disabled:opacity-40 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#1C1917' }}>
+            style={{ backgroundColor: NAVY }}>
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
