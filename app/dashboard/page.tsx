@@ -19,15 +19,22 @@ type LessonListItem = {
 }
 
 const badgeDefs = [
-  { type: 'bronze', label: 'Apprentice', min: 25, bg: '#F5EDE3', color: '#A3683C',
+  { type: 'bronze', label: 'Apprentice', min: 25, bg: '#FBF7EE', color: '#C9A84C',
     desc: 'Bạn đã hoàn thành 25% lộ trình — bước đầu của một hành trình dài.' },
-  { type: 'silver', label: 'Artisan', min: 50, bg: '#F4F4F5', color: '#71717A',
+  { type: 'silver', label: 'Artisan', min: 50, bg: '#F0F4F8', color: '#4A6FA5',
     desc: 'Nửa chặng đường — bạn đang xây dựng tay nghề thật sự.' },
-  { type: 'gold', label: 'Craftsman', min: 75, bg: '#FBF3DA', color: '#B8860B',
+  { type: 'gold', label: 'Craftsman', min: 75, bg: '#FBF7EE', color: '#B8860B',
     desc: '75% hoàn thành — kỹ năng của bạn đang được tôi luyện.' },
-  { type: 'diamond', label: 'Master', min: 100, bg: '#E0F7FA', color: '#0E7490',
+  { type: 'diamond', label: 'Master', min: 100, bg: '#EFF6FF', color: '#0E62B1',
     desc: 'Xuất sắc! Bạn đã làm chủ toàn bộ lộ trình đào tạo.' },
 ]
+
+const NAVY = '#0D2B55'
+const GOLD = '#C9A84C'
+const BLUE = '#0E62B1'
+const CREAM = '#F5F0E8'
+const BORDER = '#E2D8C8'
+const MUTED = '#7BA4CC'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -40,12 +47,11 @@ export default function DashboardPage() {
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
 
-useEffect(() => {
+  useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
 
-      // Fetch profile trước để lấy branch_id
       const { data: prof } = await supabase
         .from('profiles')
         .select('*, branch:branches(*)')
@@ -55,7 +61,6 @@ useEffect(() => {
 
       if (!prof?.branch_id) { setLoading(false); return }
 
-      // Fetch lessons + modules + badges song song
       const [lessonsRes, modulesRes, badgesRes] = await Promise.all([
         supabase.from('lessons')
           .select('id, title, order_index, module_id')
@@ -76,7 +81,6 @@ useEffect(() => {
       setModules((modulesRes.data ?? []) as ModuleItem[])
       setBadges(badgesRes.data?.map((b: any) => b.badge_type) ?? [])
 
-      // Fetch progress sau khi có lesson ids
       const ids = lessonList.map((l: { id: number }) => l.id)
       if (ids.length > 0) {
         const { data: progList } = await supabase
@@ -99,12 +103,10 @@ useEffect(() => {
   const tick2Count = lessons.filter(l => progressMap[l.id]?.tick2).length
   const done = lessons.filter(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2).length
   const pending = lessons.filter(l => progressMap[l.id]?.tick1 && !progressMap[l.id]?.tick2).length
+  const perfectCount = lessons.filter(l => progressMap[l.id]?.perfect_score).length
   const pct = lessons.length
     ? Math.round(((tick1Count / lessons.length) + (tick2Count / lessons.length)) / 2 * 100)
     : 0
-
-  const branchBg = profile?.branch?.color_bg || '#F4F4F5'
-  const branchText = profile?.branch?.color_text || '#374151'
 
   const lessonsByModule = modules.map(mod => ({
     module: mod,
@@ -149,43 +151,41 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#FAF8F4' }}>
-        <div className="w-6 h-6 border-2 border-stone-200 border-t-stone-700 rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: CREAM }}>
+        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: BORDER, borderTopColor: NAVY }} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF8F4' }}>
+    <div className="min-h-screen" style={{ backgroundColor: CREAM }}>
 
-      {/* Top bar */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-5 py-4 sticky top-0 z-10">
+      {/* Top bar — navy */}
+      <div className="px-5 py-3.5 sticky top-0 z-10" style={{ backgroundColor: NAVY, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-
-          {/* Trái: back về trang chủ + avatar + tên */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors flex-shrink-0"
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
               title="Về trang chủ"
             >
               <i className="ti ti-home" style={{ fontSize: '16px' }} />
             </button>
-            <div className="w-px h-5 bg-stone-200 flex-shrink-0" />
+            <div className="w-px h-5 flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
-              style={{ backgroundColor: branchBg, color: branchText }}>
+              style={{ backgroundColor: GOLD, color: NAVY }}>
               {profile?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-stone-800 leading-tight truncate">{profile?.name}</p>
-              <p className="text-xs text-stone-500">{profile?.branch?.name}</p>
+              <p className="text-sm font-semibold leading-tight truncate" style={{ color: 'white' }}>{profile?.name}</p>
+              <p className="text-xs" style={{ color: MUTED }}>{profile?.branch?.name}</p>
             </div>
           </div>
-
-          {/* Phải: đăng xuất */}
           <button
             onClick={() => supabase.auth.signOut().then(() => router.push('/login'))}
-            className="text-xs text-stone-500 hover:text-stone-800 transition-colors flex-shrink-0 ml-3 flex items-center gap-1.5"
+            className="text-xs flex-shrink-0 ml-3 flex items-center gap-1.5 transition-opacity hover:opacity-70"
+            style={{ color: MUTED }}
           >
             <i className="ti ti-logout" style={{ fontSize: '14px' }} />
             Đăng xuất
@@ -195,77 +195,74 @@ useEffect(() => {
 
       <div className="max-w-6xl mx-auto px-5 py-6 lg:grid lg:grid-cols-[340px_1fr] lg:gap-8 lg:items-start">
 
-        {/* ===== SIDEBAR TRÁI ===== */}
-        <div className="space-y-4 mb-6 lg:mb-0 lg:sticky lg:top-24">
+        {/* ===== SIDEBAR ===== */}
+        <div className="space-y-4 mb-6 lg:mb-0 lg:sticky lg:top-20">
 
-          {/* Hero tiến độ */}
-          <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
-            <p className="text-xs text-stone-500 mb-1 tracking-wide uppercase font-medium">Tiến độ học tập</p>
-            <p className="font-heading text-4xl font-bold text-stone-900 mb-4">{pct}%</p>
-            <div className="relative h-2 mb-3">
-              <div className="absolute inset-0 border-b-2 border-dashed border-stone-200 top-1/2" />
-              <div className="absolute left-0 rounded-full transition-all duration-700"
-                style={{ width: `${pct}%`, backgroundColor: branchText, height: '4px', top: '0px' }} />
+          {/* Hero tiến độ — navy */}
+          <div className="rounded-3xl p-6" style={{ backgroundColor: NAVY }}>
+            <p className="text-xs mb-1 tracking-widest uppercase font-semibold" style={{ color: GOLD }}>Tiến độ học tập</p>
+            <p className="text-5xl font-bold mb-4" style={{ color: 'white' }}>{pct}%</p>
+            <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: GOLD }} />
             </div>
-            <p className="text-xs text-stone-500 font-medium">{done}/{lessons.length} bài hoàn thành</p>
+            <p className="text-xs font-medium" style={{ color: MUTED }}>{done}/{lessons.length} bài hoàn thành</p>
           </div>
 
-          {/* Module hiện tại */}
+          {/* Module hiện tại — white card */}
           {currentModuleGroup && (
-            <div className="rounded-3xl p-5" style={{ backgroundColor: branchBg }}>
-              <p className="text-xs mb-1 tracking-wide uppercase font-semibold" style={{ color: branchText, opacity: 0.8 }}>Đang học</p>
-              <p className="font-heading text-lg font-semibold mb-3" style={{ color: branchText }}>
+            <div className="rounded-3xl p-5" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+              <p className="text-xs mb-1 tracking-widest uppercase font-semibold" style={{ color: GOLD }}>Đang học</p>
+              <p className="text-base font-semibold mb-3" style={{ color: NAVY }}>
                 {currentModuleGroup.module.name}
               </p>
-              <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ backgroundColor: `${branchText}30` }}>
+              <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ backgroundColor: CREAM }}>
                 <div className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${currentModuleGroup.lessons.length > 0
                       ? Math.round((currentModuleDone / currentModuleGroup.lessons.length) * 100) : 0}%`,
-                    backgroundColor: branchText
+                    backgroundColor: BLUE
                   }} />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick1).length}/${currentModuleGroup.lessons.length}`, label: 'Đã nộp' },
-                  { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick2).length}/${currentModuleGroup.lessons.length}`, label: 'Đạt lý thuyết' },
-                  { value: `${currentModuleGroup.lessons.length > 0 ? Math.round((currentModuleDone / currentModuleGroup.lessons.length) * 100) : 0}%`, label: 'Hoàn thành' },
+                  { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick2).length}/${currentModuleGroup.lessons.length}`, label: 'Đạt LT' },
+                  { value: `${currentModuleGroup.lessons.length > 0 ? Math.round((currentModuleDone / currentModuleGroup.lessons.length) * 100) : 0}%`, label: 'Xong' },
                 ].map((s, i) => (
-                  <div key={i} className="rounded-2xl p-2.5 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
-                    <p className="text-sm font-bold" style={{ color: branchText }}>{s.value}</p>
-                    <p className="text-xs mt-0.5 font-medium" style={{ color: branchText, opacity: 0.75 }}>{s.label}</p>
+                  <div key={i} className="rounded-xl p-2.5 text-center" style={{ backgroundColor: CREAM }}>
+                    <p className="text-sm font-bold" style={{ color: NAVY }}>{s.value}</p>
+                    <p className="text-xs mt-0.5 font-medium" style={{ color: MUTED }}>{s.label}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
-              <p className="text-xl font-bold" style={{ color: '#27500A' }}>{done}</p>
-              <p className="text-xs text-stone-500 mt-0.5 font-medium">Đạt lý thuyết</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
-              <p className="text-xl font-bold" style={{ color: '#A3683C' }}>{pending}</p>
-              <p className="text-xs text-stone-500 mt-0.5 font-medium">Chờ duyệt</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
-              <p className="text-xl font-bold text-stone-400">{lessons.length - done - pending}</p>
-              <p className="text-xs text-stone-500 mt-0.5 font-medium">Chưa học</p>
-            </div>
+          {/* Stats 2x2 */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: done, label: 'Đạt lý thuyết', color: '#27500A' },
+              { value: pending, label: 'Chờ duyệt', color: GOLD },
+              { value: lessons.length - done - pending, label: 'Chưa học', color: MUTED },
+              { value: perfectCount, label: '⭐ Perfect', color: '#B8860B' },
+            ].map((s, i) => (
+              <div key={i} className="rounded-2xl p-3 text-center" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+                <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-xs mt-0.5 font-medium" style={{ color: MUTED }}>{s.label}</p>
+              </div>
+            ))}
           </div>
 
           {/* Badges */}
-          <div className="bg-white rounded-3xl border border-stone-200 p-5 shadow-sm">
-            <p className="font-heading text-base font-semibold text-stone-900 mb-4">Achievement</p>
+          <div className="rounded-3xl p-5" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+            <p className="text-base font-semibold mb-4" style={{ color: NAVY }}>Achievement</p>
             <div className="space-y-2.5">
               {badgeDefs.map(b => {
                 const earned = badges.includes(b.type)
                 return (
                   <div key={b.type}
                     className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${earned ? 'opacity-100' : 'opacity-35'}`}
-                    style={{ backgroundColor: earned ? b.bg : '#F9F9F9' }}>
+                    style={{ backgroundColor: earned ? b.bg : '#F9F9F9', border: `1px solid ${earned ? BORDER : 'transparent'}` }}>
                     <img src={`/badges/${b.type}.png`} alt={b.label}
                       className="w-10 h-10 object-contain flex-shrink-0"
                       style={{ filter: earned ? 'none' : 'grayscale(1)' }} />
@@ -289,11 +286,11 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* ===== CỘT PHẢI: Accordion module ===== */}
+        {/* ===== CỘT PHẢI: Accordion ===== */}
         <div>
           {lessonsByModule.length === 0 && (
-            <div className="bg-white rounded-3xl border border-stone-200 p-10 text-center">
-              <p className="text-sm text-stone-500">Chưa có bài học nào được xuất bản.</p>
+            <div className="rounded-3xl p-10 text-center" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+              <p className="text-sm" style={{ color: MUTED }}>Chưa có bài học nào được xuất bản.</p>
             </div>
           )}
 
@@ -309,21 +306,25 @@ useEffect(() => {
                 ? Math.round(((moduleTick1 / moduleTotal) + (moduleTick2 / moduleTotal)) / 2 * 100) : 0
 
               return (
-                <div key={module.id} className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+                <div key={module.id} className="rounded-2xl overflow-hidden"
+                  style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
                   <button
                     onClick={() => {
                       const next = new Set(openModules)
                       isOpen ? next.delete(module.id) : next.add(module.id)
                       setOpenModules(next)
                     }}
-                    className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-stone-50 transition-colors"
+                    className="w-full px-5 py-4 flex items-center gap-3 text-left transition-colors"
+                    style={{ backgroundColor: isOpen ? NAVY : 'white' }}
                   >
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                       style={moduleDone
                         ? { backgroundColor: '#EAF3DE', color: '#27500A' }
                         : !moduleUnlocked
-                        ? { backgroundColor: '#F5F5F4', color: '#D6D3D1' }
-                        : { backgroundColor: branchBg, color: branchText }}>
+                        ? { backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' }
+                        : isOpen
+                        ? { backgroundColor: GOLD, color: NAVY }
+                        : { backgroundColor: CREAM, color: NAVY }}>
                       {moduleDone ? <i className="ti ti-check" />
                         : !moduleUnlocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} />
                         : module.order_index}
@@ -331,29 +332,32 @@ useEffect(() => {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-heading text-sm font-semibold text-stone-900 truncate">
+                        <p className="text-sm font-semibold truncate"
+                          style={{ color: isOpen ? 'white' : NAVY }}>
                           {module.name}
                         </p>
                         <span className="text-xs font-bold flex-shrink-0"
-                          style={{ color: moduleDone ? '#27500A' : !moduleUnlocked ? '#D6D3D1' : branchText }}>
+                          style={{ color: isOpen ? GOLD : moduleDone ? '#27500A' : MUTED }}>
                           {modulePct}%
                         </span>
                       </div>
-                      <div className="h-1 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
+                      <div className="h-1 rounded-full mt-1.5 overflow-hidden"
+                        style={{ backgroundColor: isOpen ? 'rgba(255,255,255,0.15)' : CREAM }}>
                         <div className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${modulePct}%`, backgroundColor: moduleDone ? '#27500A' : branchText }} />
+                          style={{ width: `${modulePct}%`, backgroundColor: isOpen ? GOLD : moduleDone ? '#27500A' : BLUE }} />
                       </div>
-                      <p className="text-xs text-stone-500 font-medium mt-1">
-                        {moduleTick1}/{moduleTotal} quiz · {moduleTick2}/{moduleTotal} duyệt
+                      <p className="text-xs font-medium mt-1"
+                        style={{ color: isOpen ? MUTED : '#A8A29E' }}>
+                        {moduleTick1}/{moduleTotal} đã nộp · {moduleTick2}/{moduleTotal} đạt LT
                       </p>
                     </div>
 
-                    <i className={`ti ti-chevron-down text-stone-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                      style={{ fontSize: '16px' }} />
+                    <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      style={{ fontSize: '16px', color: isOpen ? GOLD : MUTED }} />
                   </button>
 
                   {isOpen && (
-                    <div className="border-t border-stone-100 px-4 py-3 space-y-2">
+                    <div className="px-4 py-3 space-y-2" style={{ borderTop: `1px solid rgba(255,255,255,0.08)` }}>
                       {moduleLessons.map(lesson => {
                         const prog = progressMap[lesson.id]
                         const isLocked = !isLessonUnlocked(lesson.id)
@@ -363,33 +367,40 @@ useEffect(() => {
                         return (
                           <div key={lesson.id}
                             onClick={() => { if (!isLocked && !isDone) router.push(`/lesson/${lesson.id}`) }}
-                            className={`rounded-xl border p-3.5 flex items-center gap-3 transition-all ${
-                              isLocked ? 'border-stone-100 opacity-50' : 'border-stone-150'
-                            } ${!isLocked && !isDone ? 'cursor-pointer hover:border-stone-300 hover:bg-stone-50' : ''}`}
+                            className={`rounded-xl p-3.5 flex items-center gap-3 transition-all ${!isLocked && !isDone ? 'cursor-pointer' : ''}`}
+                            style={{
+                              backgroundColor: isDone ? '#EAF3DE' : isInProgress ? '#FFFBEB' : isLocked ? '#F9FAFB' : 'white',
+                              border: `1px solid ${isDone ? '#C0DD97' : isInProgress ? '#FDE68A' : BORDER}`,
+                              opacity: isLocked ? 0.5 : 1,
+                            }}
                           >
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={isDone ? { backgroundColor: '#EAF3DE', color: '#27500A' }
-                                : isInProgress ? { backgroundColor: '#FEF3C7', color: '#92400E' }
-                                : isLocked ? { backgroundColor: '#F5F5F4', color: '#D6D3D1' }
-                                : { backgroundColor: branchText, color: 'white' }}>
+                              style={isDone ? { backgroundColor: '#27500A', color: 'white' }
+                                : isInProgress ? { backgroundColor: GOLD, color: NAVY }
+                                : isLocked ? { backgroundColor: '#E5E7EB', color: '#9CA3AF' }
+                                : { backgroundColor: BLUE, color: 'white' }}>
                               {isDone ? <i className="ti ti-check" style={{ fontSize: '12px' }} />
                                 : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} />
                                 : lesson.order_index}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-stone-800 truncate">{lesson.title}</p>
+                              <p className="text-sm font-semibold truncate" style={{ color: NAVY }}>{lesson.title}</p>
                               <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                                <span className="text-xs font-medium flex items-center gap-1" style={{ color: prog?.tick1 ? '#27500A' : '#A8A29E' }}>
-                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick1 ? '#27500A' : '#A8A29E' }} />
+                                <span className="text-xs font-medium flex items-center gap-1"
+                                  style={{ color: prog?.tick1 ? '#27500A' : '#A8A29E' }}>
+                                  <span className="w-1.5 h-1.5 rounded-full"
+                                    style={{ backgroundColor: prog?.tick1 ? '#27500A' : '#A8A29E' }} />
                                   Đã nộp
                                 </span>
-                                <span className="text-xs font-medium flex items-center gap-1" style={{ color: prog?.tick2 ? '#27500A' : '#A8A29E' }}>
-                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prog?.tick2 ? '#27500A' : '#A8A29E' }} />
+                                <span className="text-xs font-medium flex items-center gap-1"
+                                  style={{ color: prog?.tick2 ? '#27500A' : '#A8A29E' }}>
+                                  <span className="w-1.5 h-1.5 rounded-full"
+                                    style={{ backgroundColor: prog?.tick2 ? '#27500A' : '#A8A29E' }} />
                                   Đạt lý thuyết
                                 </span>
                                 {prog?.perfect_score && (
-                                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#B8860B' }}>
+                                  <span className="text-xs font-medium" style={{ color: '#B8860B' }}>
                                     ⭐ Perfect
                                   </span>
                                 )}
@@ -398,11 +409,13 @@ useEffect(() => {
 
                             {!isLocked && !isDone && (
                               <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 text-white"
-                                style={{ backgroundColor: branchText }}>
+                                style={{ backgroundColor: BLUE }}>
                                 {isInProgress ? 'Xem' : 'Học'}
                               </span>
                             )}
-                            {isDone && <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#27500A' }}>Xong ✓</span>}
+                            {isDone && (
+                              <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#27500A' }}>Xong ✓</span>
+                            )}
                           </div>
                         )
                       })}
@@ -417,9 +430,10 @@ useEffect(() => {
 
       {/* Badge popup */}
       {badgePopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
           onClick={() => setBadgePopup(null)}>
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+          <div className="rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+            style={{ backgroundColor: 'white' }}
             onClick={e => e.stopPropagation()}>
             <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{ backgroundColor: badgePopup.bg }}>
@@ -427,12 +441,12 @@ useEffect(() => {
                 className="w-16 h-16 object-contain" />
             </div>
             <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold"
-              style={{ color: badgePopup.color }}>Achievement Unlocked</p>
-            <p className="font-heading text-2xl font-bold text-stone-900 mb-2">{badgePopup.label}</p>
-            <p className="text-sm text-stone-600 mb-6">{badgePopup.desc}</p>
+              style={{ color: GOLD }}>Achievement Unlocked</p>
+            <p className="text-2xl font-bold mb-2" style={{ color: NAVY }}>{badgePopup.label}</p>
+            <p className="text-sm mb-6" style={{ color: MUTED }}>{badgePopup.desc}</p>
             <button onClick={() => setBadgePopup(null)}
               className="w-full py-3 rounded-2xl text-sm font-semibold text-white transition-colors"
-              style={{ backgroundColor: badgePopup.color }}>
+              style={{ backgroundColor: NAVY }}>
               Tiếp tục học →
             </button>
           </div>
