@@ -12,11 +12,9 @@ export async function POST(req: Request) {
   // Ghi timestamp: practice_submitted_at
   await supabaseAdmin
     .from('lesson_timestamps')
-    .upsert({
-      user_id: userId,
-      lesson_id: lessonId,
-      practice_submitted_at: new Date().toISOString()
-    }, { onConflict: 'user_id,lesson_id' })
+    .update({ practice_submitted_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('lesson_id', lessonId)
 
   if (process.env.APPS_SCRIPT_WEBHOOK_URL) {
     const { data: profile } = await supabaseAdmin

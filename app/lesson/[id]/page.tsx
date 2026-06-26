@@ -414,10 +414,11 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
 
   useEffect(() => {
     if (!tick1Done || tick2Done) return
-    supabase.from('lesson_timestamps').upsert(
-      { user_id: userId, lesson_id: lessonId, practice_started_at: new Date().toISOString() },
-      { onConflict: 'user_id,lesson_id' }
-    )
+    supabase.from('lesson_timestamps')
+      .update({ practice_started_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('lesson_id', lessonId)
+      .then(() => {})
   }, [tick1Done]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
