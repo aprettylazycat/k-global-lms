@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     { data: allAttempts },
   ] = await Promise.all([
     supabaseAdmin.from('lessons').select('id, title, branch_id, order_index, module_id').eq('is_published', true).order('order_index'),
-    supabaseAdmin.from('progress').select('user_id, lesson_id, tick1, tick2, completed_at').in('user_id', learnerIds),
+    supabaseAdmin.from('progress').select('user_id, lesson_id, tick1, tick2, completed_at, perfect_score').in('user_id', learnerIds),
     supabaseAdmin.from('badges').select('user_id, badge_type').in('user_id', learnerIds),
     supabaseAdmin.from('modules').select('id, name, order_index'),
     supabaseAdmin.from('lesson_timestamps').select('user_id, lesson_id, started_at, quiz_started_at, quiz_completed_at, practice_started_at, practice_submitted_at').in('user_id', learnerIds),
@@ -52,8 +52,8 @@ export async function GET(req: Request) {
     const total = branchLessons.length || 1
 
     const progList = (allProgress || []).filter(p => p.user_id === learner.id)
-    const progMap: Record<number, { tick1: boolean; tick2: boolean; completed_at: string | null }> = {}
-    progList.forEach(p => { progMap[p.lesson_id] = { tick1: p.tick1, tick2: p.tick2, completed_at: p.completed_at } })
+    const progMap: Record<number, { tick1: boolean; tick2: boolean; completed_at: string | null; perfect_score: boolean }> = {}
+    progList.forEach(p => { progMap[p.lesson_id] = { tick1: p.tick1, tick2: p.tick2, completed_at: p.completed_at, perfect_score: p.perfect_score ?? false } })
 
     // Timestamps map theo lesson
     const tsMap: Record<number, any> = {}
@@ -102,6 +102,7 @@ export async function GET(req: Request) {
         moduleOrder: l.module_id ? (moduleMap[l.module_id]?.order ?? 999) : 999,
         tick1: progMap[l.id]?.tick1 ?? false,
         tick2: progMap[l.id]?.tick2 ?? false,
+        perfectScore: progMap[l.id]?.perfect_score ?? false,
         completedAt: progMap[l.id]?.completed_at ?? null,
         quizMinutes: quizMins,
         practiceMinutes: practiceMins,
@@ -110,6 +111,12 @@ export async function GET(req: Request) {
           ? Math.round((att.firstCorrect / att.total) * 100) : null,
       }
     }).sort((a, b) => a.moduleOrder - b.moduleOrder || a.orderIndex - b.orderIndex)
+
+    const totalMinutesAll = Object.values(tsMap).reduce((s, ts) => {
+      const m = minutesBetween(ts.started_at, ts.practice_submitted_at)
+      return s + (m ?? 0)
+    }, 0)
+    const perfectScoreCount = lessonProgress.filter(l => l.perfectScore).length
 
     return {
       id: learner.id,
@@ -123,6 +130,8 @@ export async function GET(req: Request) {
       pct,
       badges,
       firstAttemptRate,
+      totalMinutesAll,
+      perfectScoreCount,
       lessonProgress,
     }
   })

@@ -64,11 +64,16 @@ function LessonRow({ l }: { l: LessonProgress }) {
         <p className="text-xs text-stone-700 flex-1 truncate">{l.title}</p>
         <div className="flex gap-1.5 flex-shrink-0">
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${l.tick1 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'}`}>
-            Quiz
+            Đã nộp
           </span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${l.tick2 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'}`}>
-            Bài tập
+            Đạt LT
           </span>
+          {(l as any).perfectScore && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
+              ⭐
+            </span>
+          )}
         </div>
         <i className={`ti ti-chevron-down text-stone-300 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           style={{ fontSize: '11px' }} />
@@ -492,12 +497,26 @@ export default function ReportPanel() {
                     </div>
                   </div>
                 </div>
-                {selectedLearner.firstAttemptRate != null && (
-                  <div className="flex items-center gap-2 pt-2 border-t border-stone-200">
-                    <span className="text-xs text-stone-500">🎯 Tỷ lệ đúng lần đầu (toàn bộ):</span>
-                    <span className="text-sm font-bold text-stone-800">{selectedLearner.firstAttemptRate}%</span>
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-200">
+                  <div className="bg-white rounded-xl p-2.5 text-center border border-stone-100">
+                    <p className="text-xs text-stone-400 mb-0.5">🎯 Đúng lần đầu</p>
+                    <p className="text-sm font-bold text-stone-800">
+                      {selectedLearner.firstAttemptRate != null ? `${selectedLearner.firstAttemptRate}%` : '—'}
+                    </p>
                   </div>
-                )}
+                  <div className="bg-white rounded-xl p-2.5 text-center border border-stone-100">
+                    <p className="text-xs text-stone-400 mb-0.5">⏱ Tổng thời gian</p>
+                    <p className="text-sm font-bold text-stone-800">
+                      {(selectedLearner as any).totalMinutesAll > 0 ? `${(selectedLearner as any).totalMinutesAll} phút` : '—'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-2.5 text-center border border-stone-100">
+                    <p className="text-xs text-stone-400 mb-0.5">⭐ Perfect Score</p>
+                    <p className="text-sm font-bold text-stone-800">
+                      {(selectedLearner as any).perfectScoreCount ?? 0} bài
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Tiến độ bài học theo module */}

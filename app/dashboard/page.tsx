@@ -227,8 +227,8 @@ useEffect(() => {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick1).length}/${currentModuleGroup.lessons.length}`, label: 'Đã quiz' },
-                  { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick2).length}/${currentModuleGroup.lessons.length}`, label: 'Đã duyệt' },
+                  { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick1).length}/${currentModuleGroup.lessons.length}`, label: 'Đã nộp' },
+                  { value: `${currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick2).length}/${currentModuleGroup.lessons.length}`, label: 'Đạt lý thuyết' },
                   { value: `${currentModuleGroup.lessons.length > 0 ? Math.round((currentModuleDone / currentModuleGroup.lessons.length) * 100) : 0}%`, label: 'Hoàn thành' },
                 ].map((s, i) => (
                   <div key={i} className="rounded-2xl p-2.5 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
@@ -244,7 +244,7 @@ useEffect(() => {
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
               <p className="text-xl font-bold" style={{ color: '#27500A' }}>{done}</p>
-              <p className="text-xs text-stone-500 mt-0.5 font-medium">Hoàn thành</p>
+              <p className="text-xs text-stone-500 mt-0.5 font-medium">Đạt lý thuyết</p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-3 text-center">
               <p className="text-xl font-bold" style={{ color: '#A3683C' }}>{pending}</p>
