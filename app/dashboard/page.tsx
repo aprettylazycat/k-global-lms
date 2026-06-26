@@ -29,12 +29,12 @@ const badgeDefs = [
     desc: 'Xuất sắc! Bạn đã làm chủ toàn bộ lộ trình đào tạo.' },
 ]
 
-const NAVY = '#0D2B55'
+const NAVY = '#466898'
 const GOLD = '#C9A84C'
 const BLUE = '#0E62B1'
 const CREAM = '#F5F0E8'
 const BORDER = '#E2D8C8'
-const MUTED = '#7BA4CC'
+const MUTED = '#8AABC8'
 
 export default function DashboardPage() {
   const router = useRouter()
