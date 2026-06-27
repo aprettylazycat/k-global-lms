@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function ReviewPanel() {
@@ -10,8 +10,14 @@ export default function ReviewPanel() {
   const [searchText, setSearchText] = useState('')
   const [openUsers, setOpenUsers] = useState<Set<string>>(new Set())
   const [openSubs, setOpenSubs] = useState<Set<string>>(new Set())
+  // Chỉ fetch 1 lần khi mount — bấm "Làm mới" mới fetch lại
+  const hasFetched = useRef(false)
 
-  useEffect(() => { loadSubmissions() }, [])
+  useEffect(() => {
+    if (hasFetched.current) return
+    hasFetched.current = true
+    loadSubmissions()
+  }, [])
 
   async function loadSubmissions() {
     setLoading(true)
@@ -28,6 +34,7 @@ export default function ReviewPanel() {
     }
     setLoading(false)
   }
+  
 
   async function handleApprove(sub: any, perfectScore: boolean = false) {
     const res = await fetch('/api/admin/approve', {
