@@ -103,14 +103,16 @@ export default function Home() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: CREAM, color: NAVY }}>
 
       {/* ── Header ── */}
-      <div className="sticky top-0 z-20" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative">
+      <div className="sticky top-0 z-20 relative" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer">
             <Image src="/logo-kglobal.png" alt="K-Global" width={160} height={48}
               style={{ height: '42px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
           </a>
-          <span className="absolute left-1/2 -translate-x-1/2 text-xs font-semibold tracking-widest uppercase hidden sm:block leading-none"
-            style={{ color: GOLD, top: '50%', transform: 'translate(-50%, -50%)' }}>Học viên Đào tạo K-Global</span>
+          <span className="text-xs font-semibold tracking-widest uppercase hidden sm:block"
+            style={{ color: GOLD, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            Học viên Đào tạo K-Global
+          </span>
           <div className="flex items-center gap-5">
             <a href="tel:+84855555722"
               className="text-sm hidden md:block transition-opacity hover:opacity-70"
