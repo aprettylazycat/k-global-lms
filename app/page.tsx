@@ -112,19 +112,19 @@ export default function Home() {
           <div className="flex items-center gap-5">
             <a href="tel:+84855555722"
               className="text-sm hidden md:block transition-opacity hover:opacity-70"
-              style={{ color: MUTED }}>
+              style={{ color: 'rgba(255,255,255,0.85)' }}>
               +84 85 555 5722
             </a>
             <a href="https://www.facebook.com/kglobalvn/" target="_blank" rel="noreferrer"
               className="transition-opacity hover:opacity-70"
-              style={{ color: MUTED }}>
+              style={{ color: 'rgba(255,255,255,0.85)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z"/>
               </svg>
             </a>
             <Link href="/login"
               className="text-sm hidden sm:block transition-opacity hover:opacity-70"
-              style={{ color: MUTED }}>
+              style={{ color: 'rgba(255,255,255,0.85)' }}>
               Đăng nhập
             </Link>
             <Link href="/register"
@@ -146,7 +146,7 @@ export default function Home() {
         </div>
         <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
           <p className="text-xs tracking-[0.22em] uppercase mb-5 font-semibold"
-            style={{ color: GOLD }}>
+            style={{ color: 'white', opacity: 0.9 }}>
             Học viên Đào tạo K-Global
           </p>
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.2] mb-6"
@@ -161,12 +161,12 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link href="/register"
               className="text-sm font-bold px-8 py-3.5 rounded-lg transition-opacity hover:opacity-90"
-              style={{ backgroundColor: GOLD, color: NAVY }}>
+              style={{ backgroundColor: GOLD, color: '#0D0D0D' }}>
               Bắt đầu học ngay
             </Link>
             <Link href="/login"
               className="text-sm font-medium px-8 py-3.5 rounded-lg transition-colors hover:bg-white/10"
-              style={{ border: '1.5px solid rgba(255,255,255,0.35)', color: 'white' }}>
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.7)', color: 'white' }}>
               Tôi đã có tài khoản
             </Link>
           </div>
