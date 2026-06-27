@@ -104,13 +104,13 @@ export default function Home() {
 
       {/* ── Header ── */}
       <div className="sticky top-0 z-20" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer" className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative">
+          <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer">
             <Image src="/logo-kglobal.png" alt="K-Global" width={120} height={36}
               style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
-            <span className="text-xs font-semibold tracking-widest uppercase hidden sm:block"
-              style={{ color: GOLD }}>Học viên Đào tạo K-Global</span>
           </a>
+          <span className="absolute left-1/2 -translate-x-1/2 text-xs font-semibold tracking-widest uppercase hidden sm:block"
+            style={{ color: GOLD }}>Học viên Đào tạo K-Global</span>
           <div className="flex items-center gap-5">
             <a href="tel:+84855555722"
               className="text-sm hidden md:block transition-opacity hover:opacity-70"
@@ -144,9 +144,9 @@ export default function Home() {
           <Image src="/banner-kglobal.png" alt="Đội ngũ K-Global" fill
             style={{ objectFit: 'cover', objectPosition: 'center 25%' }} priority />
           <div className="absolute inset-0"
-            style={{ background: `linear-gradient(180deg, rgba(70,104,152,0.15) 0%, rgba(70,104,152,0.55) 45%, rgba(70,104,152,0.92) 100%)` }} />
+            style={{ background: `linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.75) 100%)` }} />
         </div>
-        <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
+        <div className="relative max-w-7xl mx-auto px-6 pt-32 pb-28 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.2] mb-6"
             style={{ color: 'white' }}>
             Làm chủ tay nghề<br />theo cách của K-Global
