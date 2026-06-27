@@ -375,7 +375,7 @@ export default function Home() {
         </p>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .stat-shimmer {
           position: absolute; inset: 0;
           background: linear-gradient(120deg, transparent 20%, rgba(201,168,76,0.12) 50%, transparent 80%);
@@ -388,6 +388,3 @@ export default function Home() {
         }
         @media (prefers-reduced-motion: reduce) { .stat-shimmer { animation: none; } }
       `}</style>
-    </div>
-  )
-}
