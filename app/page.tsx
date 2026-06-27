@@ -107,7 +107,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer">
             <Image src="/logo-kglobal.png" alt="K-Global" width={120} height={36}
-              style={{ height: '32px', width: 'auto' }} priority />
+              style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
           </a>
           <div className="flex items-center gap-5">
             <a href="tel:+84855555722"
@@ -154,7 +154,7 @@ export default function Home() {
             Làm chủ tay nghề<br />theo cách của K-Global
           </h1>
           <p className="text-sm sm:text-base leading-relaxed mb-10 max-w-lg mx-auto"
-            style={{ color: 'rgba(255,255,255,0.75)' }}>
+            style={{ color: 'rgba(255,255,255,0.95)' }}>
             Lộ trình đào tạo từng nhánh sản phẩm — từ kỹ thuật nền tảng đến tiêu chuẩn xuất khẩu,
             được đội ngũ sản xuất trực tiếp kiểm duyệt.
           </p>
@@ -369,8 +369,8 @@ export default function Home() {
       </div>
 
       {/* ── Footer ── */}
-      <div className="text-center py-6" style={{ backgroundColor: NAVY, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
+      <div className="text-center py-6" style={{ backgroundColor: '#0D0D0D', borderTop: '1px solid #222' }}>
+        <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
           © {new Date().getFullYear()} K-Global — Học viên Đào tạo K-Global
         </p>
       </div>
