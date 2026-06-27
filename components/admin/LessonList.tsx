@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import LessonForm from './LessonForm'
 
@@ -11,12 +11,13 @@ export default function LessonList() {
   const [publishingId, setPublishingId] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [openModules, setOpenModules] = useState<Set<string>>(new Set())
+  const [activeBranch, setActiveBranch] = useState<string>('all')
+  const hasFetched = useRef(false)
 
   async function loadData() {
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setLoading(false); return }
-
     const res = await fetch('/api/admin/all-lessons', {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     })
@@ -25,7 +26,11 @@ export default function LessonList() {
     setLoading(false)
   }
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => {
+    if (hasFetched.current) return
+    hasFetched.current = true
+    loadData()
+  }, [])
 
   async function handleDelete(lesson: any) {
     const confirmed = window.confirm(
@@ -55,12 +60,25 @@ export default function LessonList() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
       body: JSON.stringify({ lessonId: lesson.id, publish: newState })
     })
-    if (res.ok) {
-      setLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, is_published: newState } : l))
-    } else {
-      const d = await res.json(); alert(`Lỗi: ${d.error || 'không rõ'}`)
-    }
+    if (res.ok) setLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, is_published: newState } : l))
+    else { const d = await res.json(); alert(`Lỗi: ${d.error || 'không rõ'}`) }
     setPublishingId(null)
+  }
+
+  async function handlePublishAll(modLessons: any[]) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const unpublished = modLessons.filter(l => !l.is_published)
+    await Promise.all(unpublished.map(l =>
+      fetch('/api/admin/publish-lesson', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ lessonId: l.id, publish: true })
+      })
+    ))
+    setLessons(prev => prev.map(l =>
+      modLessons.find(ml => ml.id === l.id) ? { ...l, is_published: true } : l
+    ))
   }
 
   function toggleModule(key: string) {
@@ -76,11 +94,10 @@ export default function LessonList() {
     loadData()
   }
 
-  if (loading) return <p className="text-sm text-stone-400 py-4 text-center">Đang tải...</p>
-  if (lessons.length === 0) return (
-    <p className="text-sm text-stone-400 bg-stone-50 rounded-xl p-6 text-center">
-      Chưa có bài học nào được tạo.
-    </p>
+  if (loading) return (
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+    </div>
   )
 
   // Nhóm: branch → module → lessons
@@ -95,11 +112,8 @@ export default function LessonList() {
     const mId = l.module?.id ? String(l.module.id) : 'no-module'
     const mName = l.module?.name || 'Chưa gán module'
     const mOrder = l.module?.order_index ?? 999
-
     if (!branchMap[bId]) branchMap[bId] = { branchName: bName, modules: {} }
-    if (!branchMap[bId].modules[mId]) {
-      branchMap[bId].modules[mId] = { modName: mName, modOrder: mOrder, lessons: [] }
-    }
+    if (!branchMap[bId].modules[mId]) branchMap[bId].modules[mId] = { modName: mName, modOrder: mOrder, lessons: [] }
     branchMap[bId].modules[mId].lessons.push(l)
   })
 
@@ -109,115 +123,174 @@ export default function LessonList() {
     })
   })
 
-  // Sort modules by order_index
-  Object.values(branchMap).forEach(branch => {
-    Object.values(branch.modules).forEach(mg => {
-      mg.lessons.sort((a, b) => a.order_index - b.order_index)
-    })
-  })
+  const allBranches = Object.entries(branchMap)
+  const filteredBranches = activeBranch === 'all'
+    ? allBranches
+    : allBranches.filter(([bId]) => bId === activeBranch)
+
+  const totalAll = lessons.length
+  const publishedAll = lessons.filter(l => l.is_published).length
+
+  if (lessons.length === 0) return (
+    <div className="bg-white rounded-2xl p-12 text-center" style={{ border: '2px solid #E7EDF3' }}>
+      <i className="ti ti-books-off" style={{ fontSize: '40px', color: '#8AABC8' }} />
+      <p className="text-sm mt-3 font-medium" style={{ color: '#8AABC8' }}>Chưa có bài học nào được tạo.</p>
+    </div>
+  )
 
   return (
     <>
-      <div className="space-y-8">
-        {Object.entries(branchMap).map(([bId, { branchName, modules: modulesInBranch }]) => {
-          const sortedModules = Object.values(modulesInBranch)
-            .sort((a, b) => a.modOrder - b.modOrder)
-          const totalLessons = sortedModules.reduce((s, m) => s + m.lessons.length, 0)
-          const publishedLessons = sortedModules.reduce((s, m) => s + m.lessons.filter(l => l.is_published).length, 0)
+      <div className="space-y-5">
+
+        {/* Header stats */}
+        <div className="rounded-2xl p-5 flex items-center justify-between"
+          style={{ backgroundColor: '#466898' }}>
+          <div>
+            <p className="text-2xl font-bold text-white">{publishedAll}/{totalAll} bài đã xuất bản</p>
+            <p className="text-sm mt-0.5" style={{ color: '#8AABC8' }}>
+              {allBranches.length} nhánh · {Object.values(branchMap).reduce((s, b) => s + Object.keys(b.modules).length, 0)} module
+            </p>
+          </div>
+          <button onClick={loadData}
+            className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+            <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
+            Làm mới
+          </button>
+        </div>
+
+        {/* Filter nhánh */}
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setActiveBranch('all')}
+            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={{
+              backgroundColor: activeBranch === 'all' ? '#466898' : 'white',
+              color: activeBranch === 'all' ? 'white' : '#466898',
+              border: '2px solid #466898'
+            }}>
+            Tất cả
+          </button>
+          {allBranches.map(([bId, { branchName }]) => (
+            <button key={bId}
+              onClick={() => setActiveBranch(bId)}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                backgroundColor: activeBranch === bId ? '#466898' : 'white',
+                color: activeBranch === bId ? 'white' : '#466898',
+                border: '2px solid #466898'
+              }}>
+              {branchName}
+            </button>
+          ))}
+        </div>
+
+        {/* Danh sách theo nhánh */}
+        {filteredBranches.map(([bId, { branchName, modules: modulesInBranch }]) => {
+          const sortedModules = Object.entries(modulesInBranch)
+            .sort(([, a], [, b]) => a.modOrder - b.modOrder)
+          const totalLessons = sortedModules.reduce((s, [, m]) => s + m.lessons.length, 0)
+          const publishedLessons = sortedModules.reduce((s, [, m]) => s + m.lessons.filter(l => l.is_published).length, 0)
 
           return (
             <div key={bId}>
+              {/* Branch header */}
               <div className="flex items-center justify-between mb-3 px-1">
-                <p className="text-xs font-bold text-stone-500 uppercase tracking-widest">{branchName}</p>
-                <p className="text-xs text-stone-400">{publishedLessons}/{totalLessons} đã xuất bản</p>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#466898' }}>
+                  {branchName}
+                </p>
+                <p className="text-xs font-medium" style={{ color: '#8AABC8' }}>
+                  {publishedLessons}/{totalLessons} đã xuất bản
+                </p>
               </div>
 
               <div className="space-y-2">
-                {sortedModules.map((modData, modIdx) => {
-                  const openKey = `${bId}-${modIdx}`
+                {sortedModules.map(([mKey, modData]) => {
+                  const openKey = `${bId}-${mKey}`
                   const isOpen = openModules.has(openKey)
                   const published = modData.lessons.filter(l => l.is_published).length
                   const total = modData.lessons.length
                   const allPublished = published === total
 
                   return (
-                    <div key={openKey} className="border border-stone-200 rounded-2xl overflow-hidden bg-white">
+                    <div key={openKey} className="rounded-2xl overflow-hidden bg-white shadow-sm"
+                      style={{ border: '2px solid #E7EDF3' }}>
+
+                      {/* Module header */}
                       <button
                         onClick={() => toggleModule(openKey)}
-                        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-stone-50 transition-colors"
-                      >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
-                          allPublished ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
-                        }`}>
-                          {allPublished ? <i className="ti ti-check" style={{fontSize:'11px'}} /> : modData.modOrder}
+                        className="w-full px-5 py-4 flex items-center gap-3 text-left transition-colors"
+                        style={{ backgroundColor: isOpen ? '#F0F4F8' : 'white' }}>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{
+                            backgroundColor: allPublished ? '#E8F5E9' : '#EEF2F7',
+                            color: allPublished ? '#2E7D32' : '#466898'
+                          }}>
+                          {allPublished
+                            ? <i className="ti ti-check" style={{ fontSize: '12px' }} />
+                            : modData.modOrder}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-stone-800 truncate">{modData.modName}</p>
-                          <p className="text-xs text-stone-400 mt-0.5">{published}/{total} bài đã xuất bản</p>
+                          <p className="text-sm font-semibold truncate" style={{ color: '#1E3A5F' }}>
+                            {modData.modName}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: '#8AABC8' }}>
+                            {published}/{total} bài đã xuất bản
+                          </p>
                         </div>
                         {!allPublished && (
-                          <span
-                            onClick={async e => {
-                              e.stopPropagation()
-                              const unpublished = modData.lessons.filter(l => !l.is_published)
-                              const { data: { session } } = await supabase.auth.getSession()
-                              if (!session) return
-                              await Promise.all(unpublished.map(l =>
-                                fetch('/api/admin/publish-lesson', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-                                  body: JSON.stringify({ lessonId: l.id, publish: true })
-                                })
-                              ))
-                              setLessons(prev => prev.map(l =>
-                                modData.lessons.find(ml => ml.id === l.id) ? { ...l, is_published: true } : l
-                              ))
-                            }}
-                            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition-colors flex-shrink-0 cursor-pointer"
-                          >
+                          <button
+                            onClick={e => { e.stopPropagation(); handlePublishAll(modData.lessons) }}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
+                            style={{ backgroundColor: '#466898', color: 'white' }}>
                             Xuất bản tất cả
-                          </span>
+                          </button>
                         )}
-                        <i className={`ti ti-chevron-down text-stone-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                          style={{fontSize:'14px'}} />
+                        <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                          style={{ fontSize: '16px', color: '#8AABC8' }} />
                       </button>
 
+                      {/* Lesson rows */}
                       {isOpen && (
-                        <div className="border-t border-stone-100 divide-y divide-stone-100">
-                          {modData.lessons.map(lesson => (
-                            <div key={lesson.id} className="px-4 py-3 flex items-center gap-3">
-                              <span className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center text-[11px] font-semibold flex-shrink-0 text-stone-500">
+                        <div style={{ borderTop: '2px solid #EEF2F7' }}>
+                          {modData.lessons.map((lesson, idx) => (
+                            <div key={lesson.id}
+                              className="px-5 py-3.5 flex items-center gap-3"
+                              style={{ borderTop: idx > 0 ? '1px solid #EEF2F7' : 'none' }}>
+                              <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                style={{ backgroundColor: '#EEF2F7', color: '#466898' }}>
                                 {lesson.order_index}
                               </span>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-stone-800 truncate">{lesson.title}</p>
-                                <p className={`text-xs font-medium mt-0.5 ${lesson.is_published ? 'text-green-600' : 'text-amber-600'}`}>
-                                  {lesson.is_published ? 'Đã xuất bản' : 'Chưa xuất bản'}
+                                <p className="text-sm font-semibold truncate" style={{ color: '#1E3A5F' }}>
+                                  {lesson.title}
+                                </p>
+                                <p className="text-xs font-medium mt-0.5"
+                                  style={{ color: lesson.is_published ? '#2E7D32' : '#B45309' }}>
+                                  {lesson.is_published ? '● Đã xuất bản' : '○ Chưa xuất bản'}
                                 </p>
                               </div>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
                                 <button
                                   onClick={() => handleTogglePublish(lesson)}
                                   disabled={publishingId === lesson.id}
-                                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-40 ${
-                                    lesson.is_published
-                                      ? 'border-stone-200 text-stone-500 hover:bg-stone-50'
-                                      : 'border-green-200 text-green-700 hover:bg-green-50'
-                                  }`}
-                                >
+                                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-40"
+                                  style={lesson.is_published
+                                    ? { borderColor: '#E7EDF3', color: '#466898' }
+                                    : { borderColor: '#BBF7D0', color: '#15803D', backgroundColor: '#F0FDF4' }}>
                                   {publishingId === lesson.id ? '...' : lesson.is_published ? 'Bỏ XB' : 'Xuất bản'}
                                 </button>
                                 <button
                                   onClick={() => setEditingId(lesson.id)}
-                                  className="text-[11px] text-stone-600 border border-stone-200 rounded-lg px-2.5 py-1 hover:bg-stone-50 font-medium"
-                                >
+                                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
+                                  style={{ borderColor: '#E7EDF3', color: '#466898' }}>
                                   Sửa
                                 </button>
                                 <button
                                   onClick={() => handleDelete(lesson)}
                                   disabled={deletingId === lesson.id}
-                                  className="text-[11px] text-red-600 border border-red-200 rounded-lg px-2.5 py-1 disabled:opacity-40 hover:bg-red-50 font-medium"
-                                >
+                                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-40"
+                                  style={{ borderColor: '#FECACA', color: '#DC2626' }}>
                                   {deletingId === lesson.id ? '...' : 'Xóa'}
                                 </button>
                               </div>
@@ -234,12 +307,17 @@ export default function LessonList() {
         })}
       </div>
 
+      {/* Modal sửa bài */}
       {editingId !== null && (
         <div className="fixed inset-0 bg-black/40 flex items-start justify-center p-4 overflow-y-auto z-50">
           <div className="bg-stone-50 rounded-2xl max-w-2xl w-full my-8 p-5 relative">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-stone-800">Sửa bài học</p>
-              <button onClick={() => setEditingId(null)} className="text-stone-400 hover:text-stone-700 text-sm">✕ Đóng</button>
+              <p className="text-sm font-semibold" style={{ color: '#1E3A5F' }}>Sửa bài học</p>
+              <button onClick={() => setEditingId(null)}
+                className="text-sm font-medium"
+                style={{ color: '#8AABC8' }}>
+                ✕ Đóng
+              </button>
             </div>
             <LessonForm lessonId={editingId} onSaved={handleEditSaved} />
           </div>
