@@ -143,6 +143,7 @@ export default function Home() {
             style={{ objectFit: 'cover', objectPosition: 'center 25%' }} priority />
           <div className="absolute inset-0"
             style={{ background: `linear-gradient(180deg, rgba(70,104,152,0.15) 0%, rgba(70,104,152,0.55) 45%, rgba(70,104,152,0.92) 100%)` }} />
+        </div>
         <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
           <p className="text-xs tracking-[0.22em] uppercase mb-5 font-semibold"
             style={{ color: GOLD }}>
@@ -229,8 +230,7 @@ export default function Home() {
                     </div>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: isActive ? GOLD : CREAM }}>
-                      <i className="ti ti-arrow-right text-sm"
-                        style={{ color: isActive ? NAVY : NAVY }} />
+                      <i className="ti ti-arrow-right text-sm" style={{ color: NAVY }} />
                     </div>
                   </div>
                   <div className="mt-4 h-1 rounded-full overflow-hidden"
@@ -375,7 +375,7 @@ export default function Home() {
         </p>
       </div>
 
-      <style>{`
+      <style jsx>{`
         .stat-shimmer {
           position: absolute; inset: 0;
           background: linear-gradient(120deg, transparent 20%, rgba(201,168,76,0.12) 50%, transparent 80%);
@@ -388,3 +388,6 @@ export default function Home() {
         }
         @media (prefers-reduced-motion: reduce) { .stat-shimmer { animation: none; } }
       `}</style>
+    </div>
+  )
+}
