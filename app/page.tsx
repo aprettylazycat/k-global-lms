@@ -142,8 +142,7 @@ export default function Home() {
           <Image src="/banner-kglobal.png" alt="Đội ngũ K-Global" fill
             style={{ objectFit: 'cover', objectPosition: 'center 25%' }} priority />
           <div className="absolute inset-0"
-            style={{ background: `linear-gradient(180deg, rgba(70,104,152,0.75) 0%, rgba(70,104,152,0.88) 55%, rgba(70,104,152,0.97) 100%)` }} />
-        </div>
+            style={{ background: `linear-gradient(180deg, rgba(70,104,152,0.15) 0%, rgba(70,104,152,0.55) 45%, rgba(70,104,152,0.92) 100%)` }} />
         <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
           <p className="text-xs tracking-[0.22em] uppercase mb-5 font-semibold"
             style={{ color: GOLD }}>
