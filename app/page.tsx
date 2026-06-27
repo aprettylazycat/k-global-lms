@@ -106,11 +106,11 @@ export default function Home() {
       <div className="sticky top-0 z-20" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative">
           <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer">
-            <Image src="/logo-kglobal.png" alt="K-Global" width={120} height={36}
-              style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
+            <Image src="/logo-kglobal.png" alt="K-Global" width={160} height={48}
+              style={{ height: '42px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
           </a>
-          <span className="absolute left-1/2 -translate-x-1/2 text-xs font-semibold tracking-widest uppercase hidden sm:block"
-            style={{ color: GOLD }}>Học viên Đào tạo K-Global</span>
+          <span className="absolute left-1/2 -translate-x-1/2 text-xs font-semibold tracking-widest uppercase hidden sm:block leading-none"
+            style={{ color: GOLD, top: '50%', transform: 'translate(-50%, -50%)' }}>Học viên Đào tạo K-Global</span>
           <div className="flex items-center gap-5">
             <a href="tel:+84855555722"
               className="text-sm hidden md:block transition-opacity hover:opacity-70"
@@ -342,8 +342,14 @@ export default function Home() {
       </div>
 
       {/* ── Closing note ── */}
-      <div style={{ backgroundColor: NAVY }}>
-        <div className="max-w-7xl mx-auto px-6 py-20 text-center">
+      <div className="relative overflow-hidden" style={{ backgroundColor: NAVY }}>
+        <div className="absolute inset-0">
+          <Image src="k-global-footer-banner." alt="" fill
+            style={{ objectFit: 'cover', objectPosition: 'center 60%' }} />
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(180deg, rgba(70,104,152,0.88) 0%, rgba(70,104,152,0.92) 100%)' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6 py-20 text-center" style={{ zIndex: 1 }}>
           <p className="text-xs tracking-[0.2em] uppercase mb-6 font-semibold" style={{ color: GOLD }}>
             Lời nhắn từ ban lãnh đạo
           </p>
