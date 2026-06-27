@@ -132,9 +132,9 @@ export default function LessonList() {
   const publishedAll = lessons.filter(l => l.is_published).length
 
   if (lessons.length === 0) return (
-    <div className="bg-white rounded-2xl p-12 text-center" style={{ border: '2px solid #E7EDF3' }}>
-      <i className="ti ti-books-off" style={{ fontSize: '40px', color: '#8AABC8' }} />
-      <p className="text-sm mt-3 font-medium" style={{ color: '#8AABC8' }}>Chưa có bài học nào được tạo.</p>
+    <div className="bg-white rounded-2xl p-12 text-center" style={{ border: '2px solid #BFDBFE' }}>
+      <i className="ti ti-books-off" style={{ fontSize: '40px', color: '#BFDBFE' }} />
+      <p className="text-sm mt-3 font-medium" style={{ color: '#BFDBFE' }}>Chưa có bài học nào được tạo.</p>
     </div>
   )
 
@@ -144,10 +144,10 @@ export default function LessonList() {
 
         {/* Header stats */}
         <div className="rounded-2xl p-5 flex items-center justify-between"
-          style={{ backgroundColor: '#466898' }}>
+          style={{ backgroundColor: '#0E62B1' }}>
           <div>
             <p className="text-2xl font-bold text-white">{publishedAll}/{totalAll} bài đã xuất bản</p>
-            <p className="text-sm mt-0.5" style={{ color: '#8AABC8' }}>
+            <p className="text-sm mt-0.5" style={{ color: '#BFDBFE' }}>
               {allBranches.length} nhánh · {Object.values(branchMap).reduce((s, b) => s + Object.keys(b.modules).length, 0)} module
             </p>
           </div>
@@ -165,9 +165,9 @@ export default function LessonList() {
             onClick={() => setActiveBranch('all')}
             className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
             style={{
-              backgroundColor: activeBranch === 'all' ? '#466898' : 'white',
-              color: activeBranch === 'all' ? 'white' : '#466898',
-              border: '2px solid #466898'
+              backgroundColor: activeBranch === 'all' ? '#0E62B1' : 'white',
+              color: activeBranch === 'all' ? 'white' : '#0E62B1',
+              border: '2px solid #0E62B1'
             }}>
             Tất cả
           </button>
@@ -176,9 +176,9 @@ export default function LessonList() {
               onClick={() => setActiveBranch(bId)}
               className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
               style={{
-                backgroundColor: activeBranch === bId ? '#466898' : 'white',
-                color: activeBranch === bId ? 'white' : '#466898',
-                border: '2px solid #466898'
+                backgroundColor: activeBranch === bId ? '#0E62B1' : 'white',
+                color: activeBranch === bId ? 'white' : '#0E62B1',
+                border: '2px solid #0E62B1'
               }}>
               {branchName}
             </button>
@@ -196,10 +196,10 @@ export default function LessonList() {
             <div key={bId}>
               {/* Branch header */}
               <div className="flex items-center justify-between mb-3 px-1">
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#466898' }}>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#0E62B1' }}>
                   {branchName}
                 </p>
-                <p className="text-xs font-medium" style={{ color: '#8AABC8' }}>
+                <p className="text-xs font-medium" style={{ color: '#BFDBFE' }}>
                   {publishedLessons}/{totalLessons} đã xuất bản
                 </p>
               </div>
@@ -214,17 +214,17 @@ export default function LessonList() {
 
                   return (
                     <div key={openKey} className="rounded-2xl overflow-hidden bg-white shadow-sm"
-                      style={{ border: '2px solid #E7EDF3' }}>
+                      style={{ border: '2px solid #BFDBFE' }}>
 
                       {/* Module header */}
                       <button
                         onClick={() => toggleModule(openKey)}
                         className="w-full px-5 py-4 flex items-center gap-3 text-left transition-colors"
-                        style={{ backgroundColor: isOpen ? '#F0F4F8' : 'white' }}>
+                        style={{ backgroundColor: isOpen ? '#EFF6FF' : 'white' }}>
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{
-                            backgroundColor: allPublished ? '#E8F5E9' : '#EEF2F7',
-                            color: allPublished ? '#2E7D32' : '#466898'
+                            backgroundColor: allPublished ? '#E8F5E9' : '#EFF6FF',
+                            color: allPublished ? '#2E7D32' : '#0E62B1'
                           }}>
                           {allPublished
                             ? <i className="ti ti-check" style={{ fontSize: '12px' }} />
@@ -234,7 +234,7 @@ export default function LessonList() {
                           <p className="text-sm font-semibold truncate" style={{ color: '#1E3A5F' }}>
                             {modData.modName}
                           </p>
-                          <p className="text-xs mt-0.5" style={{ color: '#8AABC8' }}>
+                          <p className="text-xs mt-0.5" style={{ color: '#BFDBFE' }}>
                             {published}/{total} bài đã xuất bản
                           </p>
                         </div>
@@ -242,23 +242,23 @@ export default function LessonList() {
                           <button
                             onClick={e => { e.stopPropagation(); handlePublishAll(modData.lessons) }}
                             className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
-                            style={{ backgroundColor: '#466898', color: 'white' }}>
+                            style={{ backgroundColor: '#0E62B1', color: 'white' }}>
                             Xuất bản tất cả
                           </button>
                         )}
                         <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                          style={{ fontSize: '16px', color: '#8AABC8' }} />
+                          style={{ fontSize: '16px', color: '#BFDBFE' }} />
                       </button>
 
                       {/* Lesson rows */}
                       {isOpen && (
-                        <div style={{ borderTop: '2px solid #EEF2F7' }}>
+                        <div style={{ borderTop: '2px solid #EFF6FF' }}>
                           {modData.lessons.map((lesson, idx) => (
                             <div key={lesson.id}
                               className="px-5 py-3.5 flex items-center gap-3"
-                              style={{ borderTop: idx > 0 ? '1px solid #EEF2F7' : 'none' }}>
+                              style={{ borderTop: idx > 0 ? '1px solid #EFF6FF' : 'none' }}>
                               <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                                style={{ backgroundColor: '#EEF2F7', color: '#466898' }}>
+                                style={{ backgroundColor: '#EFF6FF', color: '#0E62B1' }}>
                                 {lesson.order_index}
                               </span>
                               <div className="flex-1 min-w-0">
@@ -276,14 +276,14 @@ export default function LessonList() {
                                   disabled={publishingId === lesson.id}
                                   className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-40"
                                   style={lesson.is_published
-                                    ? { borderColor: '#E7EDF3', color: '#466898' }
+                                    ? { borderColor: '#BFDBFE', color: '#0E62B1' }
                                     : { borderColor: '#BBF7D0', color: '#15803D', backgroundColor: '#F0FDF4' }}>
                                   {publishingId === lesson.id ? '...' : lesson.is_published ? 'Bỏ XB' : 'Xuất bản'}
                                 </button>
                                 <button
                                   onClick={() => setEditingId(lesson.id)}
                                   className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
-                                  style={{ borderColor: '#E7EDF3', color: '#466898' }}>
+                                  style={{ borderColor: '#BFDBFE', color: '#0E62B1' }}>
                                   Sửa
                                 </button>
                                 <button
@@ -315,7 +315,7 @@ export default function LessonList() {
               <p className="text-sm font-semibold" style={{ color: '#1E3A5F' }}>Sửa bài học</p>
               <button onClick={() => setEditingId(null)}
                 className="text-sm font-medium"
-                style={{ color: '#8AABC8' }}>
+                style={{ color: '#BFDBFE' }}>
                 ✕ Đóng
               </button>
             </div>
