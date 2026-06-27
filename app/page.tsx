@@ -344,7 +344,7 @@ export default function Home() {
       {/* ── Closing note ── */}
       <div className="relative overflow-hidden" style={{ backgroundColor: NAVY }}>
         <div className="absolute inset-0">
-          <Image src="k-global-footer-banner." alt="" fill
+          <Image src="k-global-footer-banner.jpg" alt="" fill
             style={{ objectFit: 'cover', objectPosition: 'center 60%' }} />
           <div className="absolute inset-0"
             style={{ background: 'linear-gradient(180deg, rgba(70,104,152,0.88) 0%, rgba(70,104,152,0.92) 100%)' }} />
