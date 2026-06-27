@@ -185,7 +185,6 @@ export default function ReportPanel() {
       ['Nhánh', learner.branch?.name || ''],
       ['Vị trí', learner.position || ''],
       ['Ngày OB', learner.onboardingDate || ''],
-      ['Mentor', learner.mentorName || ''],
       ['Mục tiêu', learner.goal || ''],
       ['Kỳ vọng', learner.expectation || ''],
       ['Tiến độ', `${learner.pct}%`],
@@ -211,12 +210,12 @@ export default function ReportPanel() {
 
   function exportAllExcel() {
     const wb = XLSX.utils.book_new()
-    const header = ['Họ tên', 'Email', 'Nhánh', 'Vị trí', 'Ngày OB', 'Mentor', 'Tiến độ %', 'Đúng lần đầu', 'Huy hiệu cao nhất', 'Bài đã xong Quiz', 'Bài đã xong Bài tập']
+    const header = ['Họ tên', 'Email', 'Nhánh', 'Vị trí', 'Ngày OB', 'Tiến độ %','Đúng lần đầu', 'Huy hiệu cao nhất', 'Bài đã xong Quiz', 'Bài đã xong Bài tập']
     const rows = filtered.map(l => {
       const highestBadge = ['diamond', 'gold', 'silver', 'bronze'].find(b => l.badges.includes(b))
       return [
         l.name, l.email, l.branch?.name || '', l.position || '',
-        l.onboardingDate || '', l.mentorName || '', `${l.pct}%`,
+        l.onboardingDate || '', `${l.pct}%`,
         l.firstAttemptRate != null ? `${l.firstAttemptRate}%` : '—',
         highestBadge ? (BADGE_LABELS[highestBadge] || highestBadge) : 'Chưa có',
         l.lessonProgress.filter(p => p.tick1).length,
@@ -428,11 +427,10 @@ export default function ReportPanel() {
                 <p className="text-xs font-bold uppercase tracking-widest mb-3"
                   style={{ color: '#BFDBFE' }}>Thông tin onboarding</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  {[
+                   {[
                     ['Nhánh', selectedLearner.branch?.name],
                     ['Vị trí', selectedLearner.position],
                     ['Ngày OB', selectedLearner.onboardingDate],
-                    ['Mentor', selectedLearner.mentorName],
                   ].map(([label, value]) => (
                     <div key={label}>
                       <p className="text-xs" style={{ color: '#93C5FD' }}>{label}</p>
