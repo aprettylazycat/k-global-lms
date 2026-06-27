@@ -381,6 +381,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 }
 
 const MIN_ESSAY_CHARS = 150
+const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
 function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userId }: {
   lessonId: number; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string
@@ -391,6 +392,32 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showCongrats, setShowCongrats] = useState(false)
+  const [draftSaved, setDraftSaved] = useState(false)
+
+  // Load draft từ localStorage khi mở bài
+  useEffect(() => {
+    if (!tick1Done || tick2Done) return
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY(lessonId))
+      if (!raw) return
+      const draft = JSON.parse(raw)
+      if (draft.text) setText(draft.text)
+      if (draft.essayAnswers) setEssayAnswers(draft.essayAnswers)
+    } catch {}
+  }, [tick1Done, lessonId, tick2Done])
+
+  // Auto-save draft mỗi khi text hoặc essayAnswers thay đổi
+  useEffect(() => {
+    if (!tick1Done || tick2Done || submitted) return
+    const hasSomething = text.trim() || Object.values(essayAnswers).some(v => v.trim())
+    if (!hasSomething) return
+    try {
+      localStorage.setItem(DRAFT_KEY(lessonId), JSON.stringify({ text, essayAnswers }))
+      setDraftSaved(true)
+      const timer = setTimeout(() => setDraftSaved(false), 2000)
+      return () => clearTimeout(timer)
+    } catch {}
+  }, [text, essayAnswers, tick1Done, tick2Done, submitted, lessonId])
 
   async function handleSubmit() {
     setLoading(true)
@@ -412,7 +439,12 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lessonId, userId, answer_text: combinedText, file_url: fileUrl })
     })
-    if (res.ok) { setSubmitted(true); setShowCongrats(true) }
+    if (res.ok) {
+      // Xóa draft sau khi nộp thành công
+      localStorage.removeItem(DRAFT_KEY(lessonId))
+      setSubmitted(true)
+      setShowCongrats(true)
+    }
     setLoading(false)
   }
 
@@ -500,19 +532,29 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
   return (
     <div className={`rounded-3xl p-6 transition-opacity ${isLocked ? 'opacity-50' : ''}`}
       style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
-      <div className="flex items-center gap-2.5 mb-5">
-        <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-          style={
-            tick2Done ? { backgroundColor: '#EAF3DE', color: '#27500A' } :
-            isLocked ? { backgroundColor: CREAM, color: '#A8A29E' } :
-            { backgroundColor: GOLD, color: NAVY }
-          }>
-          {tick2Done ? <i className="ti ti-check" /> : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} /> : '2'}
-        </span>
-        <div>
-          <h2 className="font-semibold" style={{ color: NAVY }}>Bài tập thực hành</h2>
-          <p className="text-xs font-medium mt-0.5" style={{ color: '#8AABC8' }}>Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+            style={
+              tick2Done ? { backgroundColor: '#EAF3DE', color: '#27500A' } :
+              isLocked ? { backgroundColor: CREAM, color: '#A8A29E' } :
+              { backgroundColor: GOLD, color: NAVY }
+            }>
+            {tick2Done ? <i className="ti ti-check" /> : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} /> : '2'}
+          </span>
+          <div>
+            <h2 className="font-semibold" style={{ color: NAVY }}>Bài tập thực hành</h2>
+            <p className="text-xs font-medium mt-0.5" style={{ color: '#8AABC8' }}>Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
+          </div>
         </div>
+        {/* Draft indicator */}
+        {draftSaved && (
+          <span className="text-xs font-medium flex items-center gap-1 transition-opacity"
+            style={{ color: '#27500A' }}>
+            <i className="ti ti-check" style={{ fontSize: '11px' }} />
+            Đã lưu nháp
+          </span>
+        )}
       </div>
 
       {isLocked ? (
