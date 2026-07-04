@@ -5,16 +5,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { email, password, name, branch_id, position, onboarding_date, goal_after_onboarding, expectation } = body
 
-  // Tạo user bằng admin — bypass email confirmation, user tồn tại ngay
+  // Tạo user — email_confirm: false để user tồn tại ngay trong auth.users
   const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: false, // vẫn gửi email xác nhận nhưng user đã tồn tại trong auth.users
+    email_confirm: false,
   })
 
   if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
 
-  // Insert profile — user đã tồn tại nên không bị foreign key lỗi
+  // Insert profile
   const { error: profileError } = await supabaseAdmin.from('profiles').insert({
     id: data.user.id,
     name,
@@ -28,6 +28,15 @@ export async function POST(req: NextRequest) {
   })
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 })
+
+  // Gửi email xác nhận thủ công
+  const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: 'signup',
+    email,
+    password,
+  })
+
+  if (linkError) console.error('Không gửi được email xác nhận:', linkError.message)
 
   return NextResponse.json({ ok: true })
 }
