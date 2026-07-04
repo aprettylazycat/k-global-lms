@@ -71,28 +71,37 @@ export default function RegisterPage() {
     setLoading(true)
     setError('')
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
+    async function handleRegister() {
+    if (!selectedBranch) { setError('Vui lòng chọn nhánh đào tạo'); return }
+    if (!form.name || !form.email || !form.password) { setError('Vui lòng điền đầy đủ thông tin tài khoản'); return }
+    if (!form.position || !form.onboarding_date || !form.goal_after_onboarding || !form.expectation) {
+      setError('Vui lòng điền đầy đủ thông tin onboarding'); return
+    }
+    if (!committed) { setError('Vui lòng xác nhận cam kết onboarding trước khi tạo tài khoản'); return }
+
+    setLoading(true)
+    setError('')
+
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        name: form.name,
+        branch_id: selectedBranch,
+        position: form.position,
+        onboarding_date: form.onboarding_date,
+        goal_after_onboarding: form.goal_after_onboarding,
+        expectation: form.expectation,
+      })
     })
 
-    if (authError) { setError(authError.message || 'Đã có lỗi xảy ra'); setLoading(false); return }
-
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user!.id,
-      name: form.name,
-      email: form.email,
-      role: 'learner',
-      branch_id: selectedBranch,
-      position: form.position,
-      onboarding_date: form.onboarding_date,
-      goal_after_onboarding: form.goal_after_onboarding,
-      expectation: form.expectation,
-    })
-
-    if (profileError) { setError(profileError.message || 'Không thể lưu hồ sơ'); setLoading(false); return }
+    const data = await res.json()
+    if (!res.ok) { setError(data.error || 'Đã có lỗi xảy ra'); setLoading(false); return }
 
     router.push('/verify-email')
+    setLoading(false)
   }
 
   const inputClass = "w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
