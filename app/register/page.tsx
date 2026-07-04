@@ -71,17 +71,6 @@ export default function RegisterPage() {
     setLoading(true)
     setError('')
 
-    async function handleRegister() {
-    if (!selectedBranch) { setError('Vui lòng chọn nhánh đào tạo'); return }
-    if (!form.name || !form.email || !form.password) { setError('Vui lòng điền đầy đủ thông tin tài khoản'); return }
-    if (!form.position || !form.onboarding_date || !form.goal_after_onboarding || !form.expectation) {
-      setError('Vui lòng điền đầy đủ thông tin onboarding'); return
-    }
-    if (!committed) { setError('Vui lòng xác nhận cam kết onboarding trước khi tạo tài khoản'); return }
-
-    setLoading(true)
-    setError('')
-
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
