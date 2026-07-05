@@ -21,12 +21,14 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .single()
 
+  
+
   if (profileError || profile?.role !== 'admin') {
     return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
   }
 
   const body = await req.json()
-  const { lessonId, title, branch_id, module_id, order_index, youtube_id, intro_text, practice_prompt, attachment_url, questions, is_published } = body
+  const { lessonId, title, branch_id, module_id, order_index, youtube_id, intro_text, practice_prompt, recap_content, attachment_url, questions, is_published } = body
 
   if (!lessonId) {
     return NextResponse.json({ error: 'Thiếu lessonId' }, { status: 400 })
@@ -45,6 +47,7 @@ export async function POST(req: Request) {
       youtube_id: youtube_id || null,
       intro_text: intro_text || null,
       practice_prompt: practice_prompt || null,
+      recap_content: recap_content || null,        // ← thêm dòng này
       attachment_url: attachment_url || null,
       questions: questions || [],
       ...(is_published !== undefined ? { is_published } : {})

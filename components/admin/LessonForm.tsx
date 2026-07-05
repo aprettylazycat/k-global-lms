@@ -14,7 +14,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
   const [loadingModules, setLoadingModules] = useState(false)
   const [form, setForm] = useState({
     title: '', branch_id: '', module_id: '', order_index: 1,
-    youtube_id: '', intro_text: '', practice_prompt: ''
+    youtube_id: '', intro_text: '', practice_prompt: '', recap_content: ''
   })
   const [mcqs, setMcqs] = useState([
     { question: '', options: ['', '', '', ''], correct: 0 }
@@ -69,7 +69,8 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
           order_index: l.order_index || 1,
           youtube_id: l.youtube_id || '',
           intro_text: l.intro_text || '',
-          practice_prompt: l.practice_prompt || ''
+          practice_prompt: l.practice_prompt || '',
+          recap_content: l.recap_content || ''
         })
         const loadedMcqs = (l.questions || []).filter((q: any) => q.type === 'mcq')
         const loadedEssays = (l.questions || []).filter((q: any) => q.type === 'essay')
@@ -153,7 +154,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
       onSaved?.()
     } else {
       setSuccess(`Đã ${isPublished ? 'xuất bản' : 'lưu nháp'} "${form.title}"`)
-      setForm({ title: '', branch_id: '', module_id: '', order_index: 1, youtube_id: '', intro_text: '', practice_prompt: '' })
+      setForm({ title: '', branch_id: '', module_id: '', order_index: 1, youtube_id: '', intro_text: '', practice_prompt: '', recap_content: '' })
       setMcqs([{ question: '', options: ['', '', '', ''], correct: 0 }])
       setEssays([{ question: '' }])
       setIsPublished(true)
@@ -360,7 +361,17 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
         </label>
         {uploadingPdf && <p className="text-xs text-gray-400 mt-2">Đang upload PDF...</p>}
       </div>
-
+{/* Card 4b: Recap bài học */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="mb-3">
+          <p className="text-sm font-medium">Nội dung Recap</p>
+          <p className="text-xs text-gray-400 mt-0.5">Hiển thị sau khi học viên hoàn thành bài — tóm tắt điểm quan trọng cần nhớ.</p>
+        </div>
+        <textarea rows={8} className={inputCls}
+          placeholder="Điều quan trọng cần ghi nhớ&#10;&#10;1. ...&#10;2. ...&#10;3. ..."
+          value={form.recap_content}
+          onChange={e => setForm({...form, recap_content: e.target.value})} />
+      </div>
       {/* Card 5: Xuất bản */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <label className="flex items-center gap-3 cursor-pointer">

@@ -36,6 +36,7 @@ export async function POST(req: Request) {
       youtube_id: l.youtube_id || null,
       intro_text: l.intro_text || null,
       practice_prompt: l.practice_prompt || null,
+      recap_content: l.recap_content || null,      // ← thêm dòng này
       questions: l.questions || [],
       is_published: false
     }
