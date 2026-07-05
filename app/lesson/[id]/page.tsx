@@ -153,6 +153,7 @@ export default function LessonPage() {
             tick1Done={tick1Done}
             tick2Done={tick2Done}
             userId={userId}
+            recapContent={(lesson as any).recap_content}
           />
         </div>
       </div>
@@ -383,8 +384,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 const MIN_ESSAY_CHARS = 150
 const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
-function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userId }: {
-  lessonId: number; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string
+function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent }: {
+  lessonId: number; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string
 }) {
   const [text, setText] = useState('')
   const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({})
@@ -499,31 +500,53 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
   const isLocked = !tick1Done
 
   if (showCongrats) return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="relative bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+      <div className="relative bg-white rounded-3xl max-w-lg w-full my-8 overflow-hidden shadow-2xl">
         <canvas id="congrats-canvas" className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
-        <div className="relative p-8 text-center" style={{ zIndex: 1 }}>
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: NAVY }}>
-            <i className="ti ti-trophy" style={{ color: GOLD, fontSize: '28px' }} />
+        <div className="relative" style={{ zIndex: 1 }}>
+
+          {/* Header chúc mừng */}
+          <div className="p-8 text-center" style={{ borderBottom: recapContent ? `1px solid ${BORDER}` : 'none' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: NAVY }}>
+              <i className="ti ti-trophy" style={{ color: GOLD, fontSize: '28px' }} />
+            </div>
+            <p className="text-2xl font-bold mb-2" style={{ color: NAVY }}>Chúc mừng!</p>
+            <p className="text-sm font-medium" style={{ color: '#8AABC8' }}>
+              Bài tập đã được nộp thành công —<br />đang chờ admin duyệt.
+            </p>
           </div>
-          <p className="text-2xl font-bold mb-2" style={{ color: NAVY }}>Chúc mừng!</p>
-          <p className="text-sm font-medium mb-8" style={{ color: '#8AABC8' }}>
-            Bài tập đã được nộp thành công —<br />đang chờ admin duyệt.
-          </p>
-          <button
-            onClick={() => window.location.href = `/lesson/${lessonId + 1}`}
-            className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 mb-3 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: NAVY }}>
-            Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} />
-          </button>
-          <button
-            onClick={() => window.location.href = '/dashboard'}
-            className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
-            style={{ border: `1px solid ${BORDER}`, color: '#8AABC8' }}>
-            <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
-            Về Dashboard
-          </button>
+
+          {/* Recap content */}
+          {recapContent && (
+            <div className="px-8 py-6" style={{ backgroundColor: CREAM, borderBottom: `1px solid ${BORDER}` }}>
+              <div className="flex items-center gap-2 mb-3">
+                <i className="ti ti-bulb" style={{ fontSize: '16px', color: GOLD }} />
+                <p className="text-sm font-bold uppercase tracking-wide" style={{ color: NAVY }}>Điểm quan trọng cần nhớ</p>
+              </div>
+              <div className="text-sm leading-relaxed whitespace-pre-line max-h-64 overflow-y-auto pr-1"
+                style={{ color: '#4A5568' }}>
+                {recapContent}
+              </div>
+            </div>
+          )}
+
+          {/* Nút điều hướng */}
+          <div className="p-6 space-y-3">
+            <button
+              onClick={() => window.location.href = `/lesson/${lessonId + 1}`}
+              className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: NAVY }}>
+              Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} />
+            </button>
+            <button
+              onClick={() => window.location.href = '/dashboard'}
+              className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
+              style={{ border: `1px solid ${BORDER}`, color: '#8AABC8' }}>
+              <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
+              Về Dashboard
+            </button>
+          </div>
         </div>
       </div>
     </div>
