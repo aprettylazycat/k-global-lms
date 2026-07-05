@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { email, password, name, branch_id, position, onboarding_date, goal_after_onboarding, expectation } = body
 
-  // Tạo user — email_confirm: false để user tồn tại ngay trong auth.users
-  const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // signUp gửi email xác nhận tự động qua SMTP đã cấu hình
+  const { data, error: authError } = await supabase.auth.signUp({
     email,
     password,
-    email_confirm: false,
+    options: {
+      emailRedirectTo: 'https://k-global-lms.vercel.app/dashboard'
+    }
   })
 
   if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
+  if (!data.user) return NextResponse.json({ error: 'Không tạo được user' }, { status: 400 })
 
-  // Insert profile
+  // Insert profile bằng admin để bypass RLS
   const { error: profileError } = await supabaseAdmin.from('profiles').insert({
     id: data.user.id,
     name,
@@ -28,15 +37,6 @@ export async function POST(req: NextRequest) {
   })
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 })
-
-  // Gửi email xác nhận thủ công
-  const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'signup',
-    email,
-    password,
-  })
-
-  if (linkError) console.error('Không gửi được email xác nhận:', linkError.message)
 
   return NextResponse.json({ ok: true })
 }
