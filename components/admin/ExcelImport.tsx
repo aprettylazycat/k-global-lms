@@ -25,6 +25,7 @@ type ParsedLesson = {
   youtube_id: string
   intro_text: string
   practice_prompt: string
+  recap_content: string
   questions: any[]
   mcqCount: number
   essayCount: number
@@ -141,6 +142,7 @@ export default function ExcelImport() {
             youtube_id: String(row.youtube_id ?? '').trim(),
             intro_text: String(row.intro_text ?? '').trim(),
             practice_prompt: String(row.practice_prompt ?? '').trim(),
+            recap_content: String(row.recap_content ?? '').trim(),
             questions,
             mcqCount: matchedMcqs.length,
             essayCount: matchedEssays.length,
@@ -207,7 +209,7 @@ export default function ExcelImport() {
           File cần có 3 sheet: <code>lessons</code>, <code>mcq</code>, <code>essay</code>
         </p>
         <p className="text-xs text-gray-500 mb-1">
-          Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>
+          Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>
         </p>
         <p className="text-xs text-gray-500 mb-1">
           Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code>, <code>option_b</code>, <code>option_c</code>, <code>option_d</code>, <code>correct</code> (A/B/C/D)
