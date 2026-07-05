@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
+  if (authError) return NextResponse.json({ error: authError.message || JSON.stringify(authError) }, { status: 400 })
   if (!data.user) return NextResponse.json({ error: 'Không tạo được user' }, { status: 400 })
 
   // Insert profile bằng admin để bypass RLS
