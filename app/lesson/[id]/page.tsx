@@ -518,18 +518,87 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
           </div>
 
           {/* Recap content */}
-          {recapContent && (
-            <div className="px-8 py-6" style={{ backgroundColor: CREAM, borderBottom: `1px solid ${BORDER}` }}>
-              <div className="flex items-center gap-2 mb-3">
-                <i className="ti ti-bulb" style={{ fontSize: '16px', color: GOLD }} />
-                <p className="text-sm font-bold uppercase tracking-wide" style={{ color: NAVY }}>Điểm quan trọng cần nhớ</p>
+          {recapContent && (() => {
+            // Parse recap thành sections dựa theo số thứ tự "1." "2." "3."
+            const lines = recapContent.split('\n').filter(l => l.trim())
+            const sections: { type: 'header' | 'point' | 'principle' | 'text'; title?: string; body?: string; content?: string }[] = []
+            let i = 0
+            while (i < lines.length) {
+              const line = lines[i].trim()
+              // Dòng số thứ tự "1. Tiêu đề"
+              const pointMatch = line.match(/^(\d+)\.\s+(.+)/)
+              if (pointMatch) {
+                const title = pointMatch[2]
+                const bodyLines: string[] = []
+                i++
+                while (i < lines.length && !lines[i].trim().match(/^(\d+)\.\s+/) && !lines[i].trim().startsWith('Nguyên tắc')) {
+                  bodyLines.push(lines[i].trim())
+                  i++
+                }
+                sections.push({ type: 'point', title, body: bodyLines.join(' ') })
+              } else if (line.startsWith('Nguyên tắc')) {
+                const bodyLines: string[] = []
+                i++
+                while (i < lines.length) {
+                  bodyLines.push(lines[i].trim())
+                  i++
+                }
+                sections.push({ type: 'principle', title: line, body: bodyLines.filter(Boolean).join(' ') })
+              } else if (line.match(/^Điều quan trọng/) || line.match(/^Bài học này/)) {
+                sections.push({ type: 'header', content: line })
+                i++
+              } else {
+                i++
+              }
+            }
+            const pointSections = sections.filter(s => s.type === 'point')
+            const principle = sections.find(s => s.type === 'principle')
+
+            return (
+              <div style={{ backgroundColor: CREAM, borderBottom: `1px solid ${BORDER}` }}>
+                {/* Header */}
+                <div className="px-6 pt-5 pb-3 flex items-center gap-2">
+                  <i className="ti ti-bulb" style={{ fontSize: '16px', color: GOLD }} />
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: NAVY }}>Điểm quan trọng cần nhớ</p>
+                </div>
+
+                {/* Point cards */}
+                {pointSections.length > 0 && (
+                  <div className="px-6 pb-4 space-y-3 max-h-72 overflow-y-auto">
+                    {pointSections.map((s, idx) => (
+                      <div key={idx} className="rounded-2xl p-4 bg-white"
+                        style={{ border: `1px solid ${BORDER}` }}>
+                        <div className="flex items-start gap-3">
+                          <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
+                            style={{ backgroundColor: NAVY, color: GOLD }}>
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <p className="text-sm font-bold mb-1" style={{ color: NAVY }}>{s.title}</p>
+                            {s.body && <p className="text-xs leading-relaxed" style={{ color: '#4A5568' }}>{s.body}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Principle box */}
+                {principle && (
+                  <div className="mx-6 mb-5 rounded-2xl p-4"
+                    style={{ backgroundColor: NAVY }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <i className="ti ti-star" style={{ fontSize: '13px', color: GOLD }} />
+                      <p className="text-xs font-bold uppercase tracking-wide" style={{ color: GOLD }}>{principle.title}</p>
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                      {principle.body}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="text-sm leading-relaxed whitespace-pre-line max-h-64 overflow-y-auto pr-1"
-                style={{ color: '#4A5568' }}>
-                {recapContent}
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Nút điều hướng */}
           <div className="p-6 space-y-3">
