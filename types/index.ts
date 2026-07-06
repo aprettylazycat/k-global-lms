@@ -34,6 +34,7 @@ export type Lesson = {
   questions: Question[]
   practice_prompt: string
   is_published: boolean
+  video_url?: string | null
 }
 
 export type Progress = {
