@@ -106,8 +106,8 @@ export default function LessonPage() {
               <div className="aspect-video rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: CREAM }}>
                 <iframe
                   src={lesson.youtube_id
-                  ? `https://www.youtube.com/embed/${lesson.youtube_id}`
-                  : lesson.video_url}
+                    ? `https://www.youtube.com/embed/${lesson.youtube_id}`
+                    : lesson.video_url || undefined}
                   className="w-full h-full"
                   allow="autoplay"
                   allowFullScreen
