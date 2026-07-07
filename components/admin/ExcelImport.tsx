@@ -36,6 +36,7 @@ type ParsedLesson = {
   intro_text: string
   practice_prompt: string
   recap_content: string
+  no_quiz: boolean
   questions: any[]
   mcqCount: number
   essayCount: number
@@ -121,7 +122,6 @@ export default function ExcelImport() {
           return { lesson_title, question, rowError: rowError || undefined }
         })
 
-
         // Parse True/False rows
         const parsedTrueFalse: TrueFalseRow[] = trueFalseRows.map((row, i) => {
           const lesson_title = String(row.lesson_title ?? '').trim()
@@ -147,6 +147,7 @@ export default function ExcelImport() {
           const branch_slug = String(row.branch_slug ?? '').trim()
           const module_name = String(row.module_name ?? '').trim()
           const order_index = parseInt(row.order_index) || 0
+          const no_quiz = String(row.no_quiz ?? '').trim().toUpperCase() === 'TRUE'
 
           const missing = []
           if (!title) missing.push('title')
@@ -155,7 +156,6 @@ export default function ExcelImport() {
 
           const matchedMcqs = parsedMcqs.filter(m => m.lesson_title === title && !m.rowError)
           const matchedEssays = parsedEssays.filter(e => e.lesson_title === title && !e.rowError)
-
           const matchedTf = parsedTrueFalse.filter(t => t.lesson_title === title && !t.rowError)
 
           // Group TF theo group_id
@@ -163,10 +163,10 @@ export default function ExcelImport() {
             matchedTf.reduce((acc, row) => {
               if (!acc[row.group_id]) {
                 acc[row.group_id] = {
-                id: row.group_id,
-                type: 'true_false',
-                question: row.group_question,
-                items: []
+                  id: row.group_id,
+                  type: 'true_false',
+                  question: row.group_question,
+                  items: []
                 }
               }
               acc[row.group_id].items.push({ id: row.item_id, statement: row.statement, correct: row.correct })
@@ -177,12 +177,12 @@ export default function ExcelImport() {
           const questions = [
             ...matchedMcqs.map((m, qi) => ({
               id: qi + 1, type: 'mcq', question: m.question, options: m.options, correct: m.correct
-           })),
-          ...tfGroups,
-          ...matchedEssays.map((e, qi) => ({
-            id: matchedMcqs.length + tfGroups.length + qi + 1, type: 'essay', question: e.question
+            })),
+            ...tfGroups,
+            ...matchedEssays.map((e, qi) => ({
+              id: matchedMcqs.length + tfGroups.length + qi + 1, type: 'essay', question: e.question
             }))
-        ]
+          ]
 
           const valid = missing.length === 0
           if (!valid) errors.push(`Sheet lessons, dòng ${i + 2} ("${title || '(không tên)'}"): Thiếu ${missing.join(', ')}`)
@@ -196,6 +196,7 @@ export default function ExcelImport() {
             intro_text: String(row.intro_text ?? '').trim(),
             practice_prompt: String(row.practice_prompt ?? '').trim(),
             recap_content: String(row.recap_content ?? '').trim(),
+            no_quiz,
             questions,
             mcqCount: matchedMcqs.length,
             essayCount: matchedEssays.length,
@@ -284,7 +285,7 @@ export default function ExcelImport() {
             <code>branch_slug</code>: dùng slug của nhánh trong DB (ví dụ: <code>k-embroidery</code>, <code>lotus-smock</code>, <code>hair</code>)
           </p>
           <p className="text-xs text-gray-400">
-            <code>module_name</code>: tên module chính xác như trong DB (ví dụ: <code>Module 1. Giới thiệu chung</code>). Để trống nếu bài không thuộc module nào.
+            <code>module_name</code>: tên module chính xác như trong DB. Để trống nếu bài không thuộc module nào.
           </p>
           <p className="text-xs text-gray-400">
             <code>lesson_title</code> ở sheet mcq/essay/true_false phải khớp chính xác với <code>title</code> ở sheet lessons.
@@ -292,9 +293,12 @@ export default function ExcelImport() {
           <p className="text-xs text-gray-400">
             Sheet <code>true_false</code>: mỗi nhóm câu hỏi có cùng <code>group_id</code>, mỗi item là một dòng riêng với <code>item_id</code> tăng dần.
           </p>
+          <p className="text-xs text-gray-400">
+            <code>no_quiz</code>: ghi TRUE nếu bài không có câu hỏi (ví dụ: Bài 0 chỉ xem video).
+          </p>
         </div>
       </div>
-      
+
       {/* Upload */}
       <label className="block cursor-pointer" htmlFor="excel-upload">
         <input type="file" accept=".xlsx,.xls"
@@ -339,10 +343,14 @@ export default function ExcelImport() {
                         {l.module_name}
                       </span>
                     )}
+                    {l.no_quiz && (
+                      <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">
+                        no quiz
+                      </span>
+                    )}
                   </div>
                   {l.valid && (
                     <p className="text-xs text-gray-400">
-                      {l.mcqCount} trắc nghiệm · {l.essayCount} tự luận · thứ tự {l.order_index}
                       {l.mcqCount} trắc nghiệm · {l.tfCount} đúng/sai · {l.essayCount} tự luận · thứ tự {l.order_index}
                     </p>
                   )}
