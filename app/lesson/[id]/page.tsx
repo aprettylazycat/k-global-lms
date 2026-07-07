@@ -36,7 +36,7 @@ export default function LessonPage() {
         .select('lesson_id, tick1, tick2, completed_at')
         .eq('user_id', session.user.id)
         .eq('lesson_id', lessonId)
-        .single()
+        .maybeSingle()
       setProgress(prog)
 
       await supabase.from('lesson_timestamps').upsert(
@@ -102,11 +102,15 @@ export default function LessonPage() {
             <h1 className="text-xl lg:text-2xl font-bold mb-4" style={{ color: NAVY }}>
               {lesson.title}
             </h1>
-            {lesson.youtube_id && (
+            {(lesson.youtube_id || lesson.video_url) && (
               <div className="aspect-video rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: CREAM }}>
                 <iframe
-                  src={`https://www.youtube.com/embed/${lesson.youtube_id}`}
-                  className="w-full h-full" allowFullScreen
+                  src={lesson.youtube_id
+                  ? `https://www.youtube.com/embed/${lesson.youtube_id}`
+                  : lesson.video_url}
+                  className="w-full h-full"
+                  allow="autoplay"
+                  allowFullScreen
                 />
               </div>
             )}
