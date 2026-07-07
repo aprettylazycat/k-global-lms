@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { lessonId, userId, answers, attempts } = await req.json()
+  const { lessonId, userId, answers, attempts, tfAnswers, tfQuestions } = await req.json()
 
   const { data: lesson, error: lessonError } = await supabaseAdmin
     .from('lessons').select('questions').eq('id', lessonId).single()
@@ -12,12 +12,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Không tìm thấy bài học' }, { status: 404 })
   }
 
+  // Lọc và chấm điểm trắc nghiệm (MCQ)
   const mcqs = (lesson.questions || []).filter((q: any) => q.type === 'mcq')
   const results: { id: string; correct: boolean }[] = mcqs.map((q: any) => ({
     id: q.id,
     correct: answers[q.id] === q.correct
   }))
-  const allCorrect = results.every(r => r.correct)
+  const mcqAllCorrect = mcqs.length === 0 || results.every(r => r.correct)
+
+  // Chấm điểm Đúng/Sai (True/False)
+  const tfAllCorrect = !tfQuestions || tfQuestions.length === 0 || tfQuestions.every((group: any) => {
+    const groupAnswers = tfAnswers?.[group.id] || {}
+    return group.items.every((item: any) => groupAnswers[item.id] === item.correct)
+  })
+
+  // Kết hợp điều kiện qua bài
+  const allCorrect = mcqAllCorrect && tfAllCorrect
 
   // Ghi quiz_attempts
   if (attempts && Object.keys(attempts).length > 0) {

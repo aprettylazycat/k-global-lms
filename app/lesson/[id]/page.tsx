@@ -71,7 +71,8 @@ export default function LessonPage() {
     )
   }
 
-  const tick1Done = progress?.tick1 ?? false
+  const noQuiz = (lesson as any).no_quiz === true
+  const tick1Done = noQuiz ? true : (progress?.tick1 ?? false)
   const tick2Done = progress?.tick2 ?? false
   const currentStep = !tick1Done ? 1 : !tick2Done ? 2 : 3
 
@@ -106,8 +107,8 @@ export default function LessonPage() {
               <div className="aspect-video rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: CREAM }}>
                 <iframe
                   src={lesson.youtube_id
-                    ? `https://www.youtube.com/embed/${lesson.youtube_id}`
-                    : lesson.video_url || undefined}
+                  ? `https://www.youtube.com/embed/${lesson.youtube_id}`
+                  : lesson.video_url}
                   className="w-full h-full"
                   allow="autoplay"
                   allowFullScreen
@@ -139,13 +140,27 @@ export default function LessonPage() {
             )}
           </div>
 
-          <QuizSection
-            lessonId={lessonId}
-            questions={lesson.questions}
-            tick1Done={tick1Done}
-            userId={userId}
-            onDone={() => setProgress((p: any) => p ? { ...p, tick1: true } : { tick1: true, tick2: false })}
-          />
+          {noQuiz ? (
+            <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                  style={{ backgroundColor: GOLD, color: NAVY }}>
+                  <i className="ti ti-check" />
+                </span>
+                <p className="text-sm font-semibold" style={{ color: NAVY }}>
+                  Bài này không có bài kiểm tra — xem xong video là hoàn thành phần lý thuyết.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <QuizSection
+              lessonId={lessonId}
+              questions={lesson.questions}
+              tick1Done={tick1Done}
+              userId={userId}
+              onDone={() => setProgress((p: any) => p ? { ...p, tick1: true } : { tick1: true, tick2: false })}
+            />
+          )}
         </div>
 
         {/* Cột phải */}
@@ -204,12 +219,23 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   lessonId: number; questions: any[]; tick1Done: boolean; userId: string; onDone: () => void
 }) {
   const mcqs = questions.filter(q => q.type === 'mcq')
+  const trueFalseGroups = questions.filter(q => q.type === 'true_false')
+
   const [currentSlide, setCurrentSlide] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [slideState, setSlideState] = useState<'idle' | 'correct' | 'wrong'>('idle')
   const [submitted, setSubmitted] = useState(tick1Done)
   const [submitting, setSubmitting] = useState(false)
   const [attemptLog, setAttemptLog] = useState<Record<string, { selectedOption: number; isCorrect: boolean }[]>>({})
+
+  // True/False state
+  const [tfAnswers, setTfAnswers] = useState<Record<number, Record<number, boolean>>>({})
+  const [tfSubmitted, setTfSubmitted] = useState<Record<number, boolean>>({})
+  const [tfResults, setTfResults] = useState<Record<number, boolean>>({})
+
+  const allTfDone = trueFalseGroups.length === 0 ||
+    trueFalseGroups.every(g => tfSubmitted[g.id])
+  const allTfCorrect = trueFalseGroups.every(g => tfResults[g.id])
 
   const q = mcqs[currentSlide]
   const isLastSlide = currentSlide === mcqs.length - 1
@@ -231,13 +257,32 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     setSlideState('idle')
   }
 
+  function handleTfToggle(groupId: number, itemId: number, value: boolean) {
+    if (tfSubmitted[groupId]) return
+    setTfAnswers(prev => ({
+      ...prev,
+      [groupId]: { ...(prev[groupId] || {}), [itemId]: value }
+    }))
+  }
+
+  function handleTfSubmit(group: any) {
+    const answers = tfAnswers[group.id] || {}
+    const allCorrect = group.items.every((item: any) => answers[item.id] === item.correct)
+    setTfSubmitted(prev => ({ ...prev, [group.id]: true }))
+    setTfResults(prev => ({ ...prev, [group.id]: allCorrect }))
+  }
+
   async function handleNext() {
     if (isLastSlide) {
+      if (!allTfDone) return // chờ TF xong
       setSubmitting(true)
       const res = await fetch('/api/submit-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, userId, answers, attempts: attemptLog })
+        body: JSON.stringify({
+          lessonId, userId, answers, attempts: attemptLog,
+          tfAnswers, tfQuestions: trueFalseGroups
+        })
       })
       const data = await res.json()
       setSubmitting(false)
@@ -266,121 +311,240 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     )
   }
 
-  if (!q) return null
-
   return (
-    <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
-      {/* Header */}
-      <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ backgroundColor: NAVY, color: 'white' }}>1</span>
-            <h2 className="font-semibold" style={{ color: NAVY }}>Bài kiểm tra</h2>
+    <div className="space-y-4">
+      {/* MCQ slides */}
+      {mcqs.length > 0 && q && (
+        <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+          {/* Header */}
+          <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                  style={{ backgroundColor: NAVY, color: 'white' }}>1</span>
+                <h2 className="font-semibold" style={{ color: NAVY }}>Bài kiểm tra</h2>
+              </div>
+              <span className="text-xs font-semibold" style={{ color: '#8AABC8' }}>Câu {currentSlide + 1}/{mcqs.length}</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: CREAM }}>
+              <div className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${((currentSlide + (slideState === 'correct' ? 1 : 0)) / mcqs.length) * 100}%`, backgroundColor: GOLD }} />
+            </div>
           </div>
-          <span className="text-xs font-semibold" style={{ color: '#8AABC8' }}>Câu {currentSlide + 1}/{mcqs.length}</span>
+
+          {/* Slide */}
+          <div className="px-6 py-5">
+            <p className="text-base font-semibold mb-4 leading-snug" style={{ color: NAVY }}>{q.question}</p>
+            <div className="space-y-2.5 mb-5">
+              {q.options.map((opt: string, i: number) => {
+                const isSelected = selectedAnswer === i
+                let optStyle: React.CSSProperties = { borderColor: BORDER, backgroundColor: 'white' }
+                let labelStyle: React.CSSProperties = { backgroundColor: CREAM, color: NAVY }
+                if (slideState !== 'idle') {
+                  if (isSelected && slideState === 'wrong') {
+                    optStyle = { borderColor: '#DC2626', backgroundColor: '#FEF2F2' }
+                    labelStyle = { backgroundColor: '#DC2626', color: 'white' }
+                  } else if (isSelected && slideState === 'correct') {
+                    optStyle = { borderColor: '#27500A', backgroundColor: '#EAF3DE' }
+                    labelStyle = { backgroundColor: '#27500A', color: 'white' }
+                  } else {
+                    optStyle = { borderColor: BORDER, backgroundColor: '#FAFAF9', opacity: 0.5 }
+                    labelStyle = { backgroundColor: CREAM, color: '#A8A29E' }
+                  }
+                } else if (isSelected) {
+                  optStyle = { borderColor: NAVY, backgroundColor: '#EFF4F9' }
+                  labelStyle = { backgroundColor: NAVY, color: 'white' }
+                }
+                return (
+                  <button key={i} onClick={() => handleSelectOption(i)}
+                    disabled={slideState !== 'idle'}
+                    className="w-full text-left text-sm px-4 py-3 rounded-xl border transition-all flex items-center gap-3"
+                    style={optStyle}>
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 transition-all"
+                      style={labelStyle}>
+                      {slideState === 'correct' && isSelected
+                        ? <i className="ti ti-check" style={{ fontSize: '11px' }} />
+                        : slideState === 'wrong' && isSelected
+                        ? <i className="ti ti-x" style={{ fontSize: '11px' }} />
+                        : ['A', 'B', 'C', 'D', 'E'][i]}
+                    </span>
+                    <span className="flex-1 font-medium" style={{ color: NAVY }}>{opt}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {slideState === 'correct' && (
+              <div className="space-y-3">
+                <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
+                  <i className="ti ti-circle-check text-lg" style={{ color: '#27500A' }} />
+                  <p className="text-sm font-semibold" style={{ color: '#27500A' }}>Chính xác!</p>
+                </div>
+                <button onClick={handleNext} disabled={submitting || (isLastSlide && !allTfDone)}
+                  className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: NAVY }}>
+                  {submitting ? (
+                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
+                  ) : isLastSlide ? (
+                    allTfDone
+                      ? <>Nộp bài kiểm tra <i className="ti ti-send" style={{ fontSize: '14px' }} /></>
+                      : <>Hoàn thành Đúng/Sai bên dưới trước <i className="ti ti-arrow-down" style={{ fontSize: '14px' }} /></>
+                  ) : (
+                    <>Câu tiếp <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
+                  )}
+                </button>
+              </div>
+            )}
+            {slideState === 'wrong' && (
+              <div className="space-y-3">
+                <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5 bg-red-50 border border-red-100">
+                  <i className="ti ti-circle-x text-lg text-red-500" />
+                  <p className="text-sm font-semibold text-red-700">Chưa đúng — thử lại nhé!</p>
+                </div>
+                <button onClick={handleRetry}
+                  className="w-full text-sm font-semibold py-3 rounded-xl transition-colors"
+                  style={{ border: `1px solid ${BORDER}`, color: NAVY, backgroundColor: 'white' }}>
+                  Chọn lại đáp án
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Dot indicator */}
+          <div className="px-6 pb-5 flex items-center justify-center gap-1.5">
+            {mcqs.map((_, i) => {
+              const isDone = i < currentSlide
+              const isCurrent = i === currentSlide
+              return (
+                <div key={i} className="rounded-full transition-all duration-300"
+                  style={{
+                    width: isCurrent ? '20px' : '6px',
+                    height: '6px',
+                    backgroundColor: isDone ? GOLD : isCurrent ? NAVY : BORDER,
+                  }} />
+              )
+            })}
+          </div>
         </div>
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: CREAM }}>
-          <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${((currentSlide + (slideState === 'correct' ? 1 : 0)) / mcqs.length) * 100}%`, backgroundColor: GOLD }} />
-        </div>
-      </div>
+      )}
 
-      {/* Slide */}
-      <div className="px-6 py-5">
-        <p className="text-base font-semibold mb-4 leading-snug" style={{ color: NAVY }}>{q.question}</p>
-
-        <div className="space-y-2.5 mb-5">
-          {q.options.map((opt: string, i: number) => {
-            const isSelected = selectedAnswer === i
-            let optStyle: React.CSSProperties = { borderColor: BORDER, backgroundColor: 'white' }
-            let labelStyle: React.CSSProperties = { backgroundColor: CREAM, color: NAVY }
-
-            if (slideState !== 'idle') {
-              if (isSelected && slideState === 'wrong') {
-                optStyle = { borderColor: '#DC2626', backgroundColor: '#FEF2F2' }
-                labelStyle = { backgroundColor: '#DC2626', color: 'white' }
-              } else if (isSelected && slideState === 'correct') {
-                optStyle = { borderColor: '#27500A', backgroundColor: '#EAF3DE' }
-                labelStyle = { backgroundColor: '#27500A', color: 'white' }
-              } else {
-                optStyle = { borderColor: BORDER, backgroundColor: '#FAFAF9', opacity: 0.5 }
-                labelStyle = { backgroundColor: CREAM, color: '#A8A29E' }
-              }
-            } else if (isSelected) {
-              optStyle = { borderColor: NAVY, backgroundColor: '#EFF4F9' }
-              labelStyle = { backgroundColor: NAVY, color: 'white' }
-            }
-
-            return (
-              <button key={i} onClick={() => handleSelectOption(i)}
-                disabled={slideState !== 'idle'}
-                className="w-full text-left text-sm px-4 py-3 rounded-xl border transition-all flex items-center gap-3"
-                style={optStyle}>
-                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 transition-all"
-                  style={labelStyle}>
-                  {slideState === 'correct' && isSelected
-                    ? <i className="ti ti-check" style={{ fontSize: '11px' }} />
-                    : slideState === 'wrong' && isSelected
-                    ? <i className="ti ti-x" style={{ fontSize: '11px' }} />
-                    : ['A', 'B', 'C', 'D'][i]}
-                </span>
-                <span className="flex-1 font-medium" style={{ color: NAVY }}>{opt}</span>
+      {/* True/False sections */}
+      {trueFalseGroups.map((group: any) => (
+        <div key={group.id} className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+          <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                style={{ backgroundColor: tfSubmitted[group.id] ? (tfResults[group.id] ? '#27500A' : '#DC2626') : NAVY, color: 'white' }}>
+                {tfSubmitted[group.id]
+                  ? <i className={`ti ti-${tfResults[group.id] ? 'check' : 'x'}`} />
+                  : <i className="ti ti-toggle-left" />}
+              </span>
+              <div>
+                <h2 className="font-semibold" style={{ color: NAVY }}>Đúng / Sai</h2>
+                <p className="text-xs" style={{ color: '#8AABC8' }}>{group.question}</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-4 space-y-3">
+            {group.items.map((item: any) => {
+              const selected = tfAnswers[group.id]?.[item.id]
+              const isSubmitted = tfSubmitted[group.id]
+              const isCorrect = isSubmitted ? selected === item.correct : null
+              return (
+                <div key={item.id} className="rounded-xl p-3.5"
+                  style={{
+                    border: `1px solid ${isSubmitted ? (isCorrect ? '#27500A' : '#DC2626') : BORDER}`,
+                    backgroundColor: isSubmitted ? (isCorrect ? '#EAF3DE' : '#FEF2F2') : 'white'
+                  }}>
+                  <p className="text-sm font-medium mb-2.5" style={{ color: NAVY }}>{item.statement}</p>
+                  <div className="flex gap-2">
+                    {[true, false].map(val => {
+                      const isSelected = selected === val
+                      const label = val ? 'Đúng' : 'Sai'
+                      const icon = val ? 'ti-check' : 'ti-x'
+                      let btnStyle: React.CSSProperties = {
+                        border: `1px solid ${BORDER}`,
+                        backgroundColor: isSelected ? NAVY : 'white',
+                        color: isSelected ? 'white' : NAVY,
+                      }
+                      if (isSubmitted) {
+                        if (isSelected && isCorrect) btnStyle = { border: '1px solid #27500A', backgroundColor: '#27500A', color: 'white' }
+                        else if (isSelected && !isCorrect) btnStyle = { border: '1px solid #DC2626', backgroundColor: '#DC2626', color: 'white' }
+                        else btnStyle = { border: `1px solid ${BORDER}`, backgroundColor: 'white', color: '#A8A29E', opacity: 0.6 }
+                      }
+                      return (
+                        <button key={String(val)}
+                          onClick={() => handleTfToggle(group.id, item.id, val)}
+                          disabled={isSubmitted}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                          style={btnStyle}>
+                          <i className={`ti ${icon}`} style={{ fontSize: '11px' }} />
+                          {label}
+                        </button>
+                      )
+                    })}
+                    {isSubmitted && (
+                      <span className="ml-auto text-xs font-semibold flex items-center gap-1"
+                        style={{ color: isCorrect ? '#27500A' : '#DC2626' }}>
+                        {isCorrect
+                          ? <><i className="ti ti-circle-check" /> Đúng</>
+                          : <><i className="ti ti-circle-x" /> Sai — đáp án: {item.correct ? 'Đúng' : 'Sai'}</>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {!tfSubmitted[group.id] && (
+            <div className="px-6 pb-5">
+              <button
+                onClick={() => handleTfSubmit(group)}
+                disabled={!group.items.every((item: any) => tfAnswers[group.id]?.[item.id] !== undefined)}
+                className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-40"
+                style={{ backgroundColor: NAVY }}>
+                Kiểm tra đáp án
               </button>
-            )
-          })}
+            </div>
+          )}
+          {tfSubmitted[group.id] && (
+            <div className="px-6 pb-5">
+              <div className={`rounded-xl px-4 py-3 flex items-center gap-2`}
+                style={{ backgroundColor: tfResults[group.id] ? '#EAF3DE' : '#FEF2F2' }}>
+                <i className={`ti ti-${tfResults[group.id] ? 'circle-check' : 'circle-x'}`}
+                  style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626' }} />
+                <p className="text-sm font-semibold"
+                  style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626' }}>
+                  {tfResults[group.id] ? 'Hoàn thành!' : 'Có một số câu chưa đúng — xem lại đáp án bên trên.'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
+      ))}
 
-        {slideState === 'correct' && (
-          <div className="space-y-3">
-            <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
-              <i className="ti ti-circle-check text-lg" style={{ color: '#27500A' }} />
-              <p className="text-sm font-semibold" style={{ color: '#27500A' }}>Chính xác!</p>
-            </div>
-            <button onClick={handleNext} disabled={submitting}
-              className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ backgroundColor: NAVY }}>
-              {submitting ? (
-                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
-              ) : isLastSlide ? (
-                <>Nộp bài kiểm tra <i className="ti ti-send" style={{ fontSize: '14px' }} /></>
-              ) : (
-                <>Câu tiếp <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
-              )}
-            </button>
-          </div>
-        )}
-
-        {slideState === 'wrong' && (
-          <div className="space-y-3">
-            <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5 bg-red-50 border border-red-100">
-              <i className="ti ti-circle-x text-lg text-red-500" />
-              <p className="text-sm font-semibold text-red-700">Chưa đúng — thử lại nhé!</p>
-            </div>
-            <button onClick={handleRetry}
-              className="w-full text-sm font-semibold py-3 rounded-xl transition-colors"
-              style={{ border: `1px solid ${BORDER}`, color: NAVY, backgroundColor: 'white' }}>
-              Chọn lại đáp án
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Dot indicator */}
-      <div className="px-6 pb-5 flex items-center justify-center gap-1.5">
-        {mcqs.map((_, i) => {
-          const isDone = i < currentSlide
-          const isCurrent = i === currentSlide
-          return (
-            <div key={i} className="rounded-full transition-all duration-300"
-              style={{
-                width: isCurrent ? '20px' : '6px',
-                height: '6px',
-                backgroundColor: isDone ? GOLD : isCurrent ? NAVY : BORDER,
-              }} />
-          )
-        })}
-      </div>
+      {/* Nút nộp cuối nếu chỉ có TF (không có MCQ) */}
+      {mcqs.length === 0 && allTfDone && (
+        <button onClick={async () => {
+          setSubmitting(true)
+          const res = await fetch('/api/submit-quiz', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lessonId, userId, answers: {}, attempts: {},
+              tfAnswers, tfQuestions: trueFalseGroups
+            })
+          })
+          const data = await res.json()
+          setSubmitting(false)
+          if (res.ok && data.allCorrect) { setSubmitted(true); onDone() }
+        }} disabled={submitting}
+          className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{ backgroundColor: NAVY }}>
+          {submitting
+            ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
+            : <>Nộp bài kiểm tra <i className="ti ti-send" style={{ fontSize: '14px' }} /></>}
+        </button>
+      )}
     </div>
   )
 }

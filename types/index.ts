@@ -22,7 +22,14 @@ export type EssayQuestion = {
   question: string
 }
 
-export type Question = MCQQuestion | EssayQuestion
+export type TrueFalseQuestion = {
+  id: number
+  type: 'true_false'
+  question: string
+  items: { id: number; statement: string; correct: boolean }[]
+}
+
+export type Question = MCQQuestion | EssayQuestion | TrueFalseQuestion
 
 export type Lesson = {
   id: number
@@ -35,6 +42,7 @@ export type Lesson = {
   practice_prompt: string
   is_published: boolean
   video_url?: string | null
+  no_quiz?: boolean  // Bài 0 không có câu hỏi
 }
 
 export type Progress = {
