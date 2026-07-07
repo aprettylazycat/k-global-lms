@@ -24,23 +24,24 @@ export async function POST(req: Request) {
   })
 
   const toInsert = lessons.map((l: any) => {
-    const branchId = branchMap[l.branch_slug]
-    const moduleKey = branchId && l.module_name ? `${branchId}|${l.module_name.trim()}` : null
-    const moduleId = moduleKey ? (moduleMap[moduleKey] ?? null) : null
+  const branchId = branchMap[l.branch_slug]
+  const moduleKey = branchId && l.module_name ? `${branchId}|${l.module_name.trim()}` : null
+  const moduleId = moduleKey ? (moduleMap[moduleKey] ?? null) : null
 
-    return {
-      title: l.title,
-      branch_id: branchId,
-      module_id: moduleId,
-      order_index: l.order_index,
-      youtube_id: l.youtube_id || null,
-      intro_text: l.intro_text || null,
-      practice_prompt: l.practice_prompt || null,
-      recap_content: l.recap_content || null,      // ← thêm dòng này
-      questions: l.questions || [],
-      is_published: false
-    }
-  })
+  return {
+    title: l.title,
+    branch_id: branchId,
+    module_id: moduleId,
+    order_index: l.order_index,
+    youtube_id: l.youtube_id || null,
+    intro_text: l.intro_text || null,
+    practice_prompt: l.practice_prompt || null,
+    recap_content: l.recap_content || null,
+    questions: l.questions || [],
+    no_quiz: l.no_quiz || false,        // ← thêm dòng này
+    is_published: false
+  }
+})
 
   const { error } = await supabaseAdmin.from('lessons').insert(toInsert)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

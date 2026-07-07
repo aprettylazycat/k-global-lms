@@ -17,6 +17,16 @@ type EssayRow = {
   rowError?: string
 }
 
+type TrueFalseRow = {
+  lesson_title: string
+  group_id: number
+  group_question: string
+  item_id: number
+  statement: string
+  correct: boolean
+  rowError?: string
+}
+
 type ParsedLesson = {
   title: string
   branch_slug: string
@@ -29,6 +39,7 @@ type ParsedLesson = {
   questions: any[]
   mcqCount: number
   essayCount: number
+  tfCount: number
   valid: boolean
   error?: string
 }
@@ -65,6 +76,9 @@ export default function ExcelImport() {
           : []
         const essayRows = wb.Sheets['essay']
           ? XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets['essay'])
+          : []
+        const trueFalseRows = wb.Sheets['true_false']
+          ? XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets['true_false'])
           : []
 
         const errors: string[] = []
@@ -107,6 +121,26 @@ export default function ExcelImport() {
           return { lesson_title, question, rowError: rowError || undefined }
         })
 
+
+        // Parse True/False rows
+        const parsedTrueFalse: TrueFalseRow[] = trueFalseRows.map((row, i) => {
+          const lesson_title = String(row.lesson_title ?? '').trim()
+          const group_id = parseInt(row.group_id) || 0
+          const group_question = String(row.group_question ?? '').trim()
+          const item_id = parseInt(row.item_id) || 0
+          const statement = String(row.statement ?? '').trim()
+          const correctRaw = String(row.correct ?? '').trim().toUpperCase()
+          const correct = correctRaw === 'TRUE' || correctRaw === 'ĐÚNG' || correctRaw === '1'
+
+          let rowError = ''
+          if (!lesson_title) rowError = 'Thiếu lesson_title'
+          else if (!group_id) rowError = 'Thiếu group_id'
+          else if (!statement) rowError = 'Thiếu statement'
+
+          if (rowError) errors.push(`Sheet true_false, dòng ${i + 2}: ${rowError}`)
+          return { lesson_title, group_id, group_question, item_id, statement, correct, rowError: rowError || undefined }
+        })
+
         // Parse lessons + ráp câu hỏi vào theo lesson_title
         const parsedLessons: ParsedLesson[] = lessonRows.map((row, i) => {
           const title = String(row.title ?? '').trim()
@@ -122,14 +156,33 @@ export default function ExcelImport() {
           const matchedMcqs = parsedMcqs.filter(m => m.lesson_title === title && !m.rowError)
           const matchedEssays = parsedEssays.filter(e => e.lesson_title === title && !e.rowError)
 
+          const matchedTf = parsedTrueFalse.filter(t => t.lesson_title === title && !t.rowError)
+
+          // Group TF theo group_id
+          const tfGroups = Object.values(
+            matchedTf.reduce((acc, row) => {
+              if (!acc[row.group_id]) {
+                acc[row.group_id] = {
+                id: row.group_id,
+                type: 'true_false',
+                question: row.group_question,
+                items: []
+                }
+              }
+              acc[row.group_id].items.push({ id: row.item_id, statement: row.statement, correct: row.correct })
+              return acc
+            }, {} as Record<number, any>)
+          )
+
           const questions = [
             ...matchedMcqs.map((m, qi) => ({
               id: qi + 1, type: 'mcq', question: m.question, options: m.options, correct: m.correct
-            })),
-            ...matchedEssays.map((e, qi) => ({
-              id: matchedMcqs.length + qi + 1, type: 'essay', question: e.question
+           })),
+          ...tfGroups,
+          ...matchedEssays.map((e, qi) => ({
+            id: matchedMcqs.length + tfGroups.length + qi + 1, type: 'essay', question: e.question
             }))
-          ]
+        ]
 
           const valid = missing.length === 0
           if (!valid) errors.push(`Sheet lessons, dòng ${i + 2} ("${title || '(không tên)'}"): Thiếu ${missing.join(', ')}`)
@@ -146,6 +199,7 @@ export default function ExcelImport() {
             questions,
             mcqCount: matchedMcqs.length,
             essayCount: matchedEssays.length,
+            tfCount: tfGroups.length,
             valid,
             error: valid ? undefined : `Thiếu: ${missing.join(', ')}`
           }
@@ -161,6 +215,11 @@ export default function ExcelImport() {
         parsedEssays.forEach((eRow, i) => {
           if (!eRow.rowError && !allTitles.has(eRow.lesson_title)) {
             errors.push(`Sheet essay, dòng ${i + 2}: lesson_title "${eRow.lesson_title}" không khớp bài học nào trong sheet lessons`)
+          }
+        })
+        parsedTrueFalse.forEach((t, i) => {
+          if (!t.rowError && !allTitles.has(t.lesson_title)) {
+            errors.push(`Sheet true_false, dòng ${i + 2}: lesson_title "${t.lesson_title}" không khớp bài học nào`)
           }
         })
 
@@ -206,16 +265,19 @@ export default function ExcelImport() {
       <div className="border rounded-xl p-4 bg-gray-50">
         <p className="text-sm font-medium mb-2">Format file Excel (.xlsx)</p>
         <p className="text-xs text-gray-500 mb-1">
-          File cần có 3 sheet: <code>lessons</code>, <code>mcq</code>, <code>essay</code>
+          File cần có 4 sheet: <code>lessons</code>, <code>mcq</code>, <code>essay</code>, <code>true_false</code>
         </p>
         <p className="text-xs text-gray-500 mb-1">
-          Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>
+          Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>, <code>no_quiz</code> (TRUE/FALSE)
         </p>
         <p className="text-xs text-gray-500 mb-1">
           Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code>, <code>option_b</code>, <code>option_c</code>, <code>option_d</code>, <code>correct</code> (A/B/C/D)
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 mb-1">
           Sheet <code>essay</code>: <code>lesson_title</code>, <code>question</code>
+        </p>
+        <p className="text-xs text-gray-500 mb-1">
+          Sheet <code>true_false</code>: <code>lesson_title</code>, <code>group_id</code>, <code>group_question</code>, <code>item_id</code>, <code>statement</code>, <code>correct</code> (TRUE/FALSE)
         </p>
         <div className="mt-2 pt-2 border-t border-gray-200 space-y-1">
           <p className="text-xs text-gray-400">
@@ -225,11 +287,14 @@ export default function ExcelImport() {
             <code>module_name</code>: tên module chính xác như trong DB (ví dụ: <code>Module 1. Giới thiệu chung</code>). Để trống nếu bài không thuộc module nào.
           </p>
           <p className="text-xs text-gray-400">
-            <code>lesson_title</code> ở sheet mcq/essay phải khớp chính xác với <code>title</code> ở sheet lessons.
+            <code>lesson_title</code> ở sheet mcq/essay/true_false phải khớp chính xác với <code>title</code> ở sheet lessons.
+          </p>
+          <p className="text-xs text-gray-400">
+            Sheet <code>true_false</code>: mỗi nhóm câu hỏi có cùng <code>group_id</code>, mỗi item là một dòng riêng với <code>item_id</code> tăng dần.
           </p>
         </div>
       </div>
-
+      
       {/* Upload */}
       <label className="block cursor-pointer" htmlFor="excel-upload">
         <input type="file" accept=".xlsx,.xls"
@@ -278,6 +343,7 @@ export default function ExcelImport() {
                   {l.valid && (
                     <p className="text-xs text-gray-400">
                       {l.mcqCount} trắc nghiệm · {l.essayCount} tự luận · thứ tự {l.order_index}
+                      {l.mcqCount} trắc nghiệm · {l.tfCount} đúng/sai · {l.essayCount} tự luận · thứ tự {l.order_index}
                     </p>
                   )}
                   {l.error && <p className="text-xs text-red-500">{l.error}</p>}
