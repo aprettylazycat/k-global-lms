@@ -12,10 +12,10 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "frame-src 'self' https://drive.google.com https://www.youtube.com",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
               "img-src 'self' data: https:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-              "font-src 'self' https://cdn.jsdelivr.net",
+              "font-src 'self' data: https://cdn.jsdelivr.net",
             ].join('; ')
           }
         ]
