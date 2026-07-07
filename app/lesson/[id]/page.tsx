@@ -108,7 +108,7 @@ export default function LessonPage() {
                 <iframe
                   src={lesson.youtube_id
                   ? `https://www.youtube.com/embed/${lesson.youtube_id}`
-                  : lesson.video_url}
+                  : lesson.video_url || undefined} 
                   className="w-full h-full"
                   allow="autoplay"
                   allowFullScreen
