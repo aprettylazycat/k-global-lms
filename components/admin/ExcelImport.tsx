@@ -45,7 +45,7 @@ type ParsedLesson = {
   error?: string
 }
 
-const LETTER_TO_INDEX: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, a: 0, b: 1, c: 2, d: 3 }
+const LETTER_TO_INDEX: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, a: 0, b: 1, c: 2, d: 3, e: 4, f: 5 }
 
 export default function ExcelImport() {
   const [preview, setPreview] = useState<ParsedLesson[]>([])
@@ -93,14 +93,16 @@ export default function ExcelImport() {
             String(row.option_b ?? '').trim(),
             String(row.option_c ?? '').trim(),
             String(row.option_d ?? '').trim(),
-          ]
+            String(row.option_e ?? '').trim(),
+            String(row.option_f ?? '').trim(),
+          ].filter(o => o !== '')
           const correctLetter = String(row.correct ?? '').trim()
           const correct = LETTER_TO_INDEX[correctLetter]
 
           let rowError = ''
           if (!lesson_title) rowError = 'Thiếu lesson_title'
           else if (!question) rowError = 'Thiếu question'
-          else if (options.some(o => !o)) rowError = 'Thiếu 1 trong 4 đáp án (option_a-d)'
+          else if (options.length < 2) rowError = 'Cần ít nhất 2 đáp án (option_a trở lên)'
           else if (correct === undefined) rowError = `Cột correct phải là A/B/C/D, đang là "${correctLetter}"`
 
           if (rowError) errors.push(`Sheet mcq, dòng ${i + 2}: ${rowError}`)
@@ -272,7 +274,7 @@ export default function ExcelImport() {
           Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>, <code>no_quiz</code> (TRUE/FALSE)
         </p>
         <p className="text-xs text-gray-500 mb-1">
-          Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code>, <code>option_b</code>, <code>option_c</code>, <code>option_d</code>, <code>correct</code> (A/B/C/D)
+          Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code> đến <code>option_f</code> (tối thiểu a-b, tối đa a-f), <code>correct</code> (A/B/C/D/E/F)
         </p>
         <p className="text-xs text-gray-500 mb-1">
           Sheet <code>essay</code>: <code>lesson_title</code>, <code>question</code>
