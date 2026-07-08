@@ -222,11 +222,11 @@ export default function Home() {
                       <p className="text-[11px] tracking-[0.15em] uppercase mb-1.5 font-semibold"
                         style={{ color: isActive ? GOLD : NAVY }}>{b.name}</p>
                       <p className="text-2xl font-bold" style={{ color: isActive ? 'white' : NAVY }}>
-                        {b.lessonCount} bài học
-                      </p>
-                      <p className="text-xs mt-1 font-medium" style={{ color: isActive ? MUTED : '#9A9590' }}>
-                        {b.modules.length} module
-                      </p>
+  {b.modules.length} module
+</p>
+<p className="text-xs mt-1 font-medium" style={{ color: isActive ? MUTED : '#9A9590' }}>
+  {b.lessonCount} bài học
+</p>
                     </div>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: isActive ? GOLD : CREAM }}>
@@ -260,7 +260,7 @@ export default function Home() {
                         {activeBranch.name}
                       </p>
                       <p className="text-2xl font-bold" style={{ color: 'white' }}>
-                        {activeBranch.modules.length} module · {activeBranch.lessonCount} bài học
+                        {activeBranch.lessonCount} bài học · {activeBranch.modules.length} module
                       </p>
                     </div>
                   </div>
