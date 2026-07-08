@@ -366,7 +366,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                         ? <i className="ti ti-check" style={{ fontSize: '11px' }} />
                         : slideState === 'wrong' && isSelected
                         ? <i className="ti ti-x" style={{ fontSize: '11px' }} />
-                        : ['A', 'B', 'C', 'D', 'E'][i]}
+                        : ['A', 'B', 'C', 'D', 'E', 'F'][i]}
                     </span>
                     <span className="flex-1 font-medium" style={{ color: NAVY }}>{opt}</span>
                   </button>

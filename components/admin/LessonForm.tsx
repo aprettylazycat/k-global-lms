@@ -270,7 +270,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
                         {isCorrect && <i className="ti ti-check text-white" style={{fontSize:'11px'}} />}
                       </span>
                       <span className={`text-xs font-medium flex-shrink-0 ${isCorrect ? 'text-green-700' : 'text-gray-400'}`}>
-                        {['A','B','C','D'][oi]}
+                        {['A','B','C','D','E','F'][oi]}
                       </span>
                       <input
                         className="flex-1 min-w-0 text-sm bg-transparent outline-none"
@@ -283,6 +283,58 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
                   )
                 })}
               </div>
+              <div className="grid grid-cols-2 gap-2">
+  {mcq.options.map((opt: string, oi: number) => {
+    const isCorrect = mcq.correct === oi
+    return (
+      <div key={oi}
+        onClick={() => { const u = [...mcqs]; u[qi].correct = oi; setMcqs(u) }}
+        className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 cursor-pointer transition-all ${
+          isCorrect ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
+        }`}
+      >
+        <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+          isCorrect ? 'border-green-500 bg-green-500' : 'border-gray-300'
+        }`}>
+          {isCorrect && <i className="ti ti-check text-white" style={{fontSize:'11px'}} />}
+        </span>
+        <span className={`text-xs font-medium flex-shrink-0 ${isCorrect ? 'text-green-700' : 'text-gray-400'}`}>
+          {['A','B','C','D','E','F'][oi]}
+        </span>
+        <input
+          className="flex-1 min-w-0 text-sm bg-transparent outline-none"
+          placeholder="Đáp án..." value={opt}
+          onClick={e => e.stopPropagation()}
+          onChange={e => {
+            const u = [...mcqs]; u[qi].options[oi] = e.target.value; setMcqs(u)
+          }} />
+        {mcq.options.length > 2 && (
+          <button onClick={e => {
+            e.stopPropagation()
+            const u = [...mcqs]
+            u[qi].options = u[qi].options.filter((_: string, i: number) => i !== oi)
+            if (u[qi].correct >= u[qi].options.length) u[qi].correct = 0
+            setMcqs(u)
+          }} className="text-gray-300 hover:text-red-400 flex-shrink-0">
+            <i className="ti ti-x" style={{fontSize:'11px'}} />
+          </button>
+        )}
+      </div>
+    )
+  })}
+</div>
+{mcq.options.length < 6 && (
+  <button
+    onClick={() => {
+      const u = [...mcqs]
+      u[qi].options = [...u[qi].options, '']
+      setMcqs(u)
+    }}
+    className="mt-2 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+  >
+    <i className="ti ti-plus" style={{fontSize:'11px'}} /> Thêm đáp án
+  </button>
+)}
             </div>
           ))}
         </div>
