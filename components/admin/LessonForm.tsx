@@ -255,35 +255,6 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
                 placeholder="Nhập câu hỏi..." value={mcq.question}
                 onChange={e => { const u = [...mcqs]; u[qi].question = e.target.value; setMcqs(u) }} />
               <div className="grid grid-cols-2 gap-2">
-                {mcq.options.map((opt: string, oi: number) => {
-                  const isCorrect = mcq.correct === oi
-                  return (
-                    <div key={oi}
-                      onClick={() => { const u = [...mcqs]; u[qi].correct = oi; setMcqs(u) }}
-                      className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 cursor-pointer transition-all ${
-                        isCorrect ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                    >
-                      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        isCorrect ? 'border-green-500 bg-green-500' : 'border-gray-300'
-                      }`}>
-                        {isCorrect && <i className="ti ti-check text-white" style={{fontSize:'11px'}} />}
-                      </span>
-                      <span className={`text-xs font-medium flex-shrink-0 ${isCorrect ? 'text-green-700' : 'text-gray-400'}`}>
-                        {['A','B','C','D','E','F'][oi]}
-                      </span>
-                      <input
-                        className="flex-1 min-w-0 text-sm bg-transparent outline-none"
-                        placeholder="Đáp án..." value={opt}
-                        onClick={e => e.stopPropagation()}
-                        onChange={e => {
-                          const u = [...mcqs]; u[qi].options[oi] = e.target.value; setMcqs(u)
-                        }} />
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
   {mcq.options.map((opt: string, oi: number) => {
     const isCorrect = mcq.correct === oi
     return (
