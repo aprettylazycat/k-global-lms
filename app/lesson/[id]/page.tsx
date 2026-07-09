@@ -119,9 +119,9 @@ export default function LessonPage() {
       </div>
 
       {/* Body */}
-      <div className="max-w-3xl mx-auto px-5 pt-6">
+      <div className="max-w-6xl mx-auto px-6 py-6 space-y-8">
 
-        {/* Nội dung chính - 1 cột */}
+        {/* Cột trái */}
         <div className="space-y-5">
           <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
             <h1 className="text-xl lg:text-2xl font-bold mb-4" style={{ color: NAVY }}>
@@ -185,8 +185,10 @@ export default function LessonPage() {
               onDone={() => setProgress((p: any) => p ? { ...p, tick1: true } : { tick1: true, tick2: false })}
             />
           )}
+        </div>
 
-          {/* Practice Section - bên dưới Quiz */}
+        {/* Cột phải */}
+        <div className="space-y-5">
           {noQuiz ? (
             <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
               <div className="flex items-center gap-3">
@@ -238,6 +240,7 @@ export default function LessonPage() {
           )}
         </div>
       </div>
+    </div>
   )
 }
 
@@ -867,7 +870,7 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
   )
 
   return (
-    <div className={`rounded-3xl p-6 transition-opacity ${isLocked ? 'opacity-50' : ''}`}
+    <div className={`rounded-3xl p-8 lg:p-10 transition-opacity ${isLocked ? 'opacity-50' : ''}`}
       style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
@@ -915,13 +918,13 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
       ) : (
         <>
           {essays.length > 0 && (
-            <div className="space-y-3 mb-4">
+            <div className="space-y-6 mb-6">
               {essays.map((q: any, qi: number) => (
-                <div key={q.id} className="p-4 rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
+                <div key={q.id} className="p- rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
                   <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#8AABC8' }}>Câu hỏi tự luận {qi + 1}</p>
                   <p className="text-sm font-semibold mb-2" style={{ color: NAVY }}>{q.question}</p>
-                  <textarea rows={3}
-                    className="w-full text-sm rounded-xl px-3.5 py-2.5 focus:outline-none transition-colors resize-none"
+                  <textarea rows={6}
+                    className="w-full text-sm rounded-xl px-3.5 py-2.5 focus:outline-none transition-colors resize-y"
                     style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
                     placeholder="Nhập câu trả lời..."
                     value={essayAnswers[q.id] || ''}
@@ -937,23 +940,100 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
             </div>
           )}
 
-          <p className="text-sm font-medium mb-3" style={{ color: NAVY }}>{prompt}</p>
-          <textarea rows={4}
+          {prompt && (
+  <div
+    className="rounded-2xl p-5 mb-6"
+    style={{
+      backgroundColor: CREAM,
+      border: `1px solid ${BORDER}`,
+    }}
+  >
+    <div className="flex items-center gap-2 mb-2">
+      <i
+        className="ti ti-bulb"
+        style={{ color: GOLD, fontSize: '16px' }}
+      />
+      <p
+        className="text-xs font-bold uppercase tracking-wide"
+        style={{ color: NAVY }}
+      >
+        Yêu cầu thực hành
+      </p>
+    </div>
+
+    <p
+      className="text-sm leading-7"
+      style={{ color: '#4A5568' }}
+    >
+      {prompt}
+    </p>
+  </div>
+)}
+          <textarea rows={12}
             className="w-full text-sm rounded-xl px-3.5 py-2.5 mb-3 focus:outline-none transition-colors resize-none"
             style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
             placeholder="Mô tả bài làm của bạn..."
             value={text} onChange={e => setText(e.target.value)} />
 
-          <label className="block rounded-xl px-4 py-3 mb-1 cursor-pointer transition-colors"
-            style={{ border: `1.5px dashed ${BORDER}`, backgroundColor: 'white' }}>
-            <div className="flex items-center gap-2 text-sm font-medium" style={{ color: '#8AABC8' }}>
-              <i className="ti ti-paperclip" />
-              {file ? file.name : 'Đính kèm ảnh hoặc file PDF (tùy chọn)'}
-            </div>
-            <input type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden"
-              onChange={e => setFile(e.target.files?.[0] ?? null)} />
-          </label>
-          <p className="text-xs font-medium mb-4" style={{ color: '#8AABC8' }}>jpg, png, pdf — tối đa 10MB</p>
+          <label
+  className="block rounded-2xl p-6 mb-2 cursor-pointer transition-colors"
+  style={{
+    border: `2px dashed ${BORDER}`,
+    backgroundColor: CREAM,
+  }}
+>
+            <div className="flex flex-col items-center justify-center text-center gap-2">
+
+  <i
+    className="ti ti-cloud-upload"
+    style={{
+      fontSize: '34px',
+      color: NAVY
+    }}
+  />
+
+  <p
+    className="font-semibold"
+    style={{ color: NAVY }}
+  >
+    {file ? (
+<>
+<i className="ti ti-circle-check" />
+{file.name}
+</>
+) : (
+<>
+<i className="ti ti-cloud-upload" />
+Chọn ảnh hoặc PDF
+</>
+)}
+  </p>
+
+  <p
+    className="text-xs"
+    style={{ color: '#8AABC8' }}
+  >
+    JPG • PNG • PDF (tối đa 10MB)
+  </p>
+
+  {!file && (
+    <p
+      className="text-xs"
+      style={{ color: '#A8A29E' }}
+    >
+      Nhấn để chọn tệp từ máy tính
+    </p>
+  )}
+
+</div>
+
+<input
+  type="file"
+  accept=".jpg,.jpeg,.png,.pdf"
+  className="hidden"
+  onChange={e => setFile(e.target.files?.[0] ?? null)}
+/>
+</label>
 
           <button onClick={handleSubmit}
             disabled={loading || !text || essays.some((q: any) => (essayAnswers[q.id] || '').length < MIN_ESSAY_CHARS)}
