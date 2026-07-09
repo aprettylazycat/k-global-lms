@@ -86,19 +86,15 @@ async function checkBadges(userId: string) {
 
   // Check từng badge
   if (await isModuleDone(modules.intro)) await award('k-starter')
-
   if (await isModuleDone(modules.mindset)) {
     await award('k-member')
     if (await isModulePerfect(modules.mindset)) await award('k-member-super')
   }
-
   if (await isModuleDone(modules.sales)) {
     await award('k-sales')
     if (await isModulePerfect(modules.sales)) await award('k-super-sales')
   }
-
   if (await isModuleDone(modules.smock)) await award('k-smock-expert')
-
   if (await isModuleDone(modules.warrior)) await award('chien-binh')
 
   // Perfect Member — tất cả module đều perfect
