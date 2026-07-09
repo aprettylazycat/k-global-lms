@@ -920,11 +920,11 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
           {essays.length > 0 && (
             <div className="space-y-6 mb-6">
               {essays.map((q: any, qi: number) => (
-                <div key={q.id} className="p- rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
+                <div key={q.id} className="p-5 py-4 rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
                   <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#8AABC8' }}>Câu hỏi tự luận {qi + 1}</p>
-                  <p className="text-sm font-semibold mb-2" style={{ color: NAVY }}>{q.question}</p>
+                  <p className="text-base font-semibold leading-6 mb-4" style={{ color: NAVY }}>{q.question}</p>
                   <textarea rows={6}
-                    className="w-full text-sm rounded-xl px-3.5 py-2.5 focus:outline-none transition-colors resize-y"
+                    className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none transition-colors resize-y"
                     style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
                     placeholder="Nhập câu trả lời..."
                     value={essayAnswers[q.id] || ''}
