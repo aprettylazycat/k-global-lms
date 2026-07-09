@@ -19,21 +19,21 @@ type LessonListItem = {
 }
 
 const badgeDefs = [
-  { type: 'k-starter', label: 'K-Starter', bg: '#FBF7EE', color: '#C9A84C',
+  { type: 'k-starter', label: 'K-Starter', icon: 'ti-star', bg: '#FBF7EE', color: '#C9A84C',
     desc: 'Có hiểu biết cơ bản về K-Global — hoàn thành phần Giới thiệu.' },
-  { type: 'k-member', label: 'K-Member', bg: '#EAF3DE', color: '#27500A',
+  { type: 'k-member', label: 'K-Member', icon: 'ti-user-check', bg: '#EAF3DE', color: '#27500A',
     desc: 'Người có tư duy làm việc đỉnh cao tại K-Global.' },
-  { type: 'k-member-super', label: 'K-Member Super', bg: '#EAF3DE', color: '#1A3A06',
+  { type: 'k-member-super', label: 'K-Member Super', icon: 'ti-user-star', bg: '#D1FAE5', color: '#1A3A06',
     desc: 'K-Member đạt all Perfect Score phần Tư duy.' },
-  { type: 'k-sales', label: 'K-Sales', bg: '#EFF6FF', color: '#0E62B1',
+  { type: 'k-sales', label: 'K-Sales', icon: 'ti-briefcase', bg: '#EFF6FF', color: '#0E62B1',
     desc: 'Người có tư duy bán hàng tại K-Global.' },
-  { type: 'k-super-sales', label: 'K-Super Sales', bg: '#EFF6FF', color: '#0A3F7A',
+  { type: 'k-super-sales', label: 'K-Super Sales', icon: 'ti-award', bg: '#DBEAFE', color: '#0A3F7A',
     desc: 'Hoàn thành Sales B2B đỉnh cao với Perfect Score.' },
-  { type: 'k-smock-expert', label: 'K-Smock Expert', bg: '#FDF2F8', color: '#9D174D',
+  { type: 'k-smock-expert', label: 'K-Smock Expert', icon: 'ti-needle-thread', bg: '#FDF2F8', color: '#9D174D',
     desc: 'Hoàn thành phần Khóa học Smock.' },
-  { type: 'chien-binh', label: 'Chiến Binh', bg: '#FBF7EE', color: '#B8860B',
+  { type: 'chien-binh', label: 'Chiến Binh', icon: 'ti-shield-check', bg: '#FBF7EE', color: '#B8860B',
     desc: 'Hoàn thành phần Sách Chiến Binh.' },
-  { type: 'perfect-member', label: 'Perfect Member', bg: '#F0F4FF', color: '#4338CA',
+  { type: 'perfect-member', label: 'Perfect Member', icon: 'ti-crown', bg: '#F0F4FF', color: '#4338CA',
     desc: 'Tất cả đều Perfect Score — thành viên xuất sắc nhất!' },
 ]
 
