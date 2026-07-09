@@ -446,8 +446,7 @@ export default function DashboardPage() {
             onClick={e => e.stopPropagation()}>
             <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{ backgroundColor: badgePopup.bg }}>
-              <img src={`/badges/${badgePopup.type}.png`} alt={badgePopup.label}
-                className="w-16 h-16 object-contain" />
+              <i className={`ti ${badgePopup.icon}`} style={{ fontSize: '48px', color: badgePopup.color }} />
             </div>
             <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold"
               style={{ color: GOLD }}>Achievement Unlocked</p>
