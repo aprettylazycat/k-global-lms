@@ -26,48 +26,84 @@ export async function POST(req: Request) {
 }
 
 async function checkBadges(userId: string) {
-  // Lấy branch của user
   const { data: profile } = await supabaseAdmin
     .from('profiles').select('branch_id').eq('id', userId).single()
+  if (!profile?.branch_id) return
 
-  // Tổng số bài đã publish trong nhánh
-  const { data: branchLessons } = await supabaseAdmin
-    .from('lessons')
-    .select('id')
-    .eq('branch_id', profile?.branch_id)
-    .eq('is_published', true)
+  const branchId = profile.branch_id
 
-  const lessonIds = (branchLessons ?? []).map(l => l.id)
-  const total = lessonIds.length || 1
+  // Lấy branch slug để xác định mapping module
+  const { data: branch } = await supabaseAdmin
+    .from('branches').select('slug').eq('id', branchId).single()
+  const slug = branch?.slug
 
-  if (lessonIds.length === 0) return
-
-  // Toàn bộ progress của user trong các bài thuộc nhánh này
-  const { data: progressRows } = await supabaseAdmin
-    .from('progress')
-    .select('lesson_id, tick1, tick2')
-    .eq('user_id', userId)
-    .in('lesson_id', lessonIds)
-
-  const tick1Count = (progressRows ?? []).filter(p => p.tick1).length
-  const tick2Count = (progressRows ?? []).filter(p => p.tick2).length
-
-  // % tổng = trung bình cộng (tỉ lệ tick1) và (tỉ lệ tick2) — đồng bộ với công thức ở dashboard
-  const pct = Math.round(((tick1Count / total) + (tick2Count / total)) / 2 * 100)
-
-  const badges = [
-    { min: 25,  type: 'bronze' },
-    { min: 50,  type: 'silver' },
-    { min: 75,  type: 'gold' },
-    { min: 100, type: 'diamond' },
-  ]
-
-  for (const badge of badges) {
-    if (pct >= badge.min) {
-      await supabaseAdmin.from('badges').upsert(
-        { user_id: userId, badge_type: badge.type },
-        { onConflict: 'user_id,badge_type' }
-      )
-    }
+  // Mapping module_id theo branch
+  const moduleMap: Record<string, Record<string, number>> = {
+    'k-embroidery': { intro: 3, mindset: 6, sales: 9, smock: 10, warrior: 13 },
+    'lotus-smock':  { intro: 4, mindset: 7, sales: 11, smock: 12, warrior: 14 },
   }
+  const modules = moduleMap[slug ?? '']
+  if (!modules) return // hair/office tính sau
+
+  // Helper: kiểm tra user đã hoàn thành tick1+tick2 hết tất cả bài trong module chưa
+  async function isModuleDone(moduleId: number): Promise<boolean> {
+    const { data: lessons } = await supabaseAdmin
+      .from('lessons').select('id')
+      .eq('module_id', moduleId).eq('is_published', true)
+    if (!lessons || lessons.length === 0) return false
+    const ids = lessons.map(l => l.id)
+    const { data: prog } = await supabaseAdmin
+      .from('progress').select('lesson_id, tick1, tick2')
+      .eq('user_id', userId).in('lesson_id', ids)
+    return ids.every(id => {
+      const p = prog?.find(p => p.lesson_id === id)
+      return p?.tick1 && p?.tick2
+    })
+  }
+
+  // Helper: kiểm tra perfect score hết bài trong module
+  async function isModulePerfect(moduleId: number): Promise<boolean> {
+    const { data: lessons } = await supabaseAdmin
+      .from('lessons').select('id')
+      .eq('module_id', moduleId).eq('is_published', true)
+    if (!lessons || lessons.length === 0) return false
+    const ids = lessons.map(l => l.id)
+    const { data: prog } = await supabaseAdmin
+      .from('progress').select('lesson_id, perfect_score')
+      .eq('user_id', userId).in('lesson_id', ids)
+    return ids.every(id => {
+      const p = prog?.find(p => p.lesson_id === id)
+      return p?.perfect_score === true
+    })
+  }
+
+  async function award(badgeType: string) {
+    await supabaseAdmin.from('badges').upsert(
+      { user_id: userId, badge_type: badgeType },
+      { onConflict: 'user_id,badge_type' }
+    )
+  }
+
+  // Check từng badge
+  if (await isModuleDone(modules.intro)) await award('k-starter')
+
+  if (await isModuleDone(modules.mindset)) {
+    await award('k-member')
+    if (await isModulePerfect(modules.mindset)) await award('k-member-super')
+  }
+
+  if (await isModuleDone(modules.sales)) {
+    await award('k-sales')
+    if (await isModulePerfect(modules.sales)) await award('k-super-sales')
+  }
+
+  if (await isModuleDone(modules.smock)) await award('k-smock-expert')
+
+  if (await isModuleDone(modules.warrior)) await award('chien-binh')
+
+  // Perfect Member — tất cả module đều perfect
+  const allPerfect = await Promise.all(
+    Object.values(modules).map(id => isModulePerfect(id))
+  )
+  if (allPerfect.every(Boolean)) await award('perfect-member')
 }
