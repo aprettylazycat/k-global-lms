@@ -185,7 +185,6 @@ export default function LessonPage() {
               onDone={() => setProgress((p: any) => p ? { ...p, tick1: true } : { tick1: true, tick2: false })}
             />
           )}
-        </div>
 
           {/* Practice Section - bên dưới Quiz */}
           {noQuiz ? (
@@ -239,7 +238,6 @@ export default function LessonPage() {
           )}
         </div>
       </div>
-    </div>
   )
 }
 
