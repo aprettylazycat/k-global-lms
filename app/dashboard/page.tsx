@@ -19,14 +19,22 @@ type LessonListItem = {
 }
 
 const badgeDefs = [
-  { type: 'bronze', label: 'Apprentice', min: 25, bg: '#FBF7EE', color: '#C9A84C',
-    desc: 'Bạn đã hoàn thành 25% lộ trình — bước đầu của một hành trình dài.' },
-  { type: 'silver', label: 'Artisan', min: 50, bg: '#F0F4F8', color: '#4A6FA5',
-    desc: 'Nửa chặng đường — bạn đang xây dựng tay nghề thật sự.' },
-  { type: 'gold', label: 'Craftsman', min: 75, bg: '#FBF7EE', color: '#B8860B',
-    desc: '75% hoàn thành — kỹ năng của bạn đang được tôi luyện.' },
-  { type: 'diamond', label: 'Master', min: 100, bg: '#EFF6FF', color: '#0E62B1',
-    desc: 'Xuất sắc! Bạn đã làm chủ toàn bộ lộ trình đào tạo.' },
+  { type: 'k-starter', label: 'K-Starter', bg: '#FBF7EE', color: '#C9A84C',
+    desc: 'Có hiểu biết cơ bản về K-Global — hoàn thành phần Giới thiệu.' },
+  { type: 'k-member', label: 'K-Member', bg: '#EAF3DE', color: '#27500A',
+    desc: 'Người có tư duy làm việc đỉnh cao tại K-Global.' },
+  { type: 'k-member-super', label: 'K-Member Super', bg: '#EAF3DE', color: '#1A3A06',
+    desc: 'K-Member đạt all Perfect Score phần Tư duy.' },
+  { type: 'k-sales', label: 'K-Sales', bg: '#EFF6FF', color: '#0E62B1',
+    desc: 'Người có tư duy bán hàng tại K-Global.' },
+  { type: 'k-super-sales', label: 'K-Super Sales', bg: '#EFF6FF', color: '#0A3F7A',
+    desc: 'Hoàn thành Sales B2B đỉnh cao với Perfect Score.' },
+  { type: 'k-smock-expert', label: 'K-Smock Expert', bg: '#FDF2F8', color: '#9D174D',
+    desc: 'Hoàn thành phần Khóa học Smock.' },
+  { type: 'chien-binh', label: 'Chiến Binh', bg: '#FBF7EE', color: '#B8860B',
+    desc: 'Hoàn thành phần Sách Chiến Binh.' },
+  { type: 'perfect-member', label: 'Perfect Member', bg: '#F0F4FF', color: '#4338CA',
+    desc: 'Tất cả đều Perfect Score — thành viên xuất sắc nhất!' },
 ]
 
 const NAVY = '#466898'
@@ -263,17 +271,18 @@ export default function DashboardPage() {
                   <div key={b.type}
                     className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${earned ? 'opacity-100' : 'opacity-35'}`}
                     style={{ backgroundColor: earned ? b.bg : '#F9F9F9', border: `1px solid ${earned ? BORDER : 'transparent'}` }}>
-                    <img src={`/badges/${b.type}.png`} alt={b.label}
-                      className="w-10 h-10 object-contain flex-shrink-0"
-                      style={{ filter: earned ? 'none' : 'grayscale(1)' }} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold" style={{ color: earned ? b.color : '#78716C' }}>
-                        {b.label}
-                      </p>
-                      <p className="text-xs font-medium" style={{ color: earned ? b.color : '#A8A29E', opacity: earned ? 0.85 : 1 }}>
-                        {earned ? `Đạt được tại ${b.min}%` : `Hoàn thành ${b.min}% để mở khóa`}
-                      </p>
-                    </div>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+  style={{ backgroundColor: earned ? b.bg : '#F3F4F6' }}>
+  <i className={`ti ${b.icon}`} style={{ fontSize: '20px', color: earned ? b.color : '#D1D5DB' }} />
+</div>
+<div className="min-w-0">
+  <p className="text-sm font-semibold" style={{ color: earned ? b.color : '#78716C' }}>
+    {b.label}
+  </p>
+  <p className="text-xs font-medium" style={{ color: earned ? b.color : '#A8A29E', opacity: earned ? 0.85 : 1 }}>
+    {earned ? '✓ Đã đạt được' : b.desc}
+  </p>
+</div>
                     {earned && (
                       <div className="ml-auto flex-shrink-0">
                         <i className="ti ti-check" style={{ color: b.color, fontSize: '16px' }} />
