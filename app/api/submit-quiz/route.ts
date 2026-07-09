@@ -94,57 +94,5 @@ export async function POST(req: Request) {
     ).then(),
   ])
 
-  const newBadgePromise = checkAndAwardBadges(userId)
-  const newBadge = await Promise.race([
-    newBadgePromise,
-    new Promise<null>(resolve => setTimeout(() => resolve(null), 1000))
-  ])
-  newBadgePromise.catch(() => {})
-
-  return NextResponse.json({ success: true, allCorrect, results, newBadge })
-}
-
-async function checkAndAwardBadges(userId: string): Promise<string | null> {
-  const [profileRes, badgesRes] = await Promise.all([
-    supabaseAdmin.from('profiles').select('branch_id').eq('id', userId).single(),
-    supabaseAdmin.from('badges').select('badge_type').eq('user_id', userId)
-  ])
-
-  const branchId = profileRes.data?.branch_id
-  if (!branchId) return null
-
-  const [lessonsRes, progressRes] = await Promise.all([
-    supabaseAdmin.from('lessons').select('id').eq('branch_id', branchId).eq('is_published', true),
-    supabaseAdmin.from('progress').select('lesson_id, tick1, tick2').eq('user_id', userId)
-  ])
-
-  const lessonIds = (lessonsRes.data ?? []).map(l => l.id)
-  const total = lessonIds.length || 1
-  if (lessonIds.length === 0) return null
-
-  const progressRows = (progressRes.data ?? []).filter(p => lessonIds.includes(p.lesson_id))
-  const tick1Count = progressRows.filter(p => p.tick1).length
-  const tick2Count = progressRows.filter(p => p.tick2).length
-  const pct = Math.round(((tick1Count / total) + (tick2Count / total)) / 2 * 100)
-
-  const existing = new Set((badgesRes.data ?? []).map(b => b.badge_type))
-  const thresholds = [
-    { min: 25, type: 'bronze' },
-    { min: 50, type: 'silver' },
-    { min: 75, type: 'gold' },
-    { min: 100, type: 'diamond' },
-  ]
-
-  const toAward = thresholds.filter(b => pct >= b.min)
-  if (toAward.length > 0) {
-    await Promise.all(toAward.map(b =>
-      supabaseAdmin.from('badges').upsert(
-        { user_id: userId, badge_type: b.type },
-        { onConflict: 'user_id,badge_type' }
-      )
-    ))
-  }
-
-  const newBadge = thresholds.slice().reverse().find(b => pct >= b.min && !existing.has(b.type))
-  return newBadge?.type ?? null
+  return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
 }
