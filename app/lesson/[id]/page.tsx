@@ -32,18 +32,27 @@ export default function LessonPage() {
         .from('lessons').select('*').eq('id', lessonId).single()
       setLesson(lessonData)
 
-      // Fetch bài tiếp theo ← thêm ở đây
+      // Fetch bài tiếp theo trong cùng module
       if (lessonData) {
         const { data: nextLesson } = await supabase
           .from('lessons')
           .select('id')
           .eq('branch_id', lessonData.branch_id)
+          .eq('module_id', lessonData.module_id)
           .eq('is_published', true)
           .gt('order_index', lessonData.order_index)
           .order('order_index', { ascending: true })
           .limit(1)
           .maybeSingle()
         setNextLessonId(nextLesson?.id ?? null)
+
+        // Nếu bài no_quiz → tự động mark tick1 + tick2 = true
+        if (lessonData.no_quiz) {
+          await supabase.from('progress').upsert(
+            { user_id: session.user.id, lesson_id: lessonId, tick1: true, tick2: true },
+            { onConflict: 'user_id,lesson_id' }
+          )
+        }
       }
 
       const { data: prog } = await supabase
@@ -180,16 +189,55 @@ export default function LessonPage() {
 
         {/* Cột phải */}
         <div className="mt-5 lg:mt-0 lg:sticky lg:top-20">
-          <PracticeSection
-            lessonId={lessonId}
-            nextLessonId={nextLessonId}
-            prompt={lesson.practice_prompt}
-            essays={lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim())}
-            tick1Done={tick1Done}
-            tick2Done={tick2Done}
-            userId={userId}
-            recapContent={(lesson as any).recap_content}
-          />
+          {noQuiz ? (
+            <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+              <div className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                  style={{ backgroundColor: GOLD, color: NAVY }}>
+                  <i className="ti ti-check" />
+                </span>
+                <p className="text-sm font-semibold" style={{ color: NAVY }}>
+                  Bài học này không có bài tập — xem xong video là hoàn thành!
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                <button
+                  onClick={() => {
+                    if (nextLessonId) {
+                      window.location.href = `/lesson/${nextLessonId}`
+                    } else {
+                      window.location.href = '/dashboard'
+                    }
+                  }}
+                  className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: NAVY }}>
+                  {nextLessonId ? (
+                    <>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
+                  ) : (
+                    <>Hoàn thành khóa học <i className="ti ti-trophy" style={{ fontSize: '14px' }} /></>
+                  )}
+                </button>
+                <button
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
+                  style={{ border: `1px solid ${BORDER}`, color: '#8AABC8' }}>
+                  <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
+                  Về Dashboard
+                </button>
+              </div>
+            </div>
+          ) : (
+            <PracticeSection
+              lessonId={lessonId}
+              nextLessonId={nextLessonId}
+              prompt={lesson.practice_prompt}
+              essays={lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim())}
+              tick1Done={tick1Done}
+              tick2Done={tick2Done}
+              userId={userId}
+              recapContent={(lesson as any).recap_content}
+            />
+          )}
         </div>
       </div>
     </div>
