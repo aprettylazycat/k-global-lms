@@ -20,6 +20,7 @@ export default function LessonPage() {
   const [progress, setProgress] = useState<Progress | null>(null)
   const [userId, setUserId] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [nextLessonId, setNextLessonId] = useState<number | null>(null)  // ← thêm ở đây
 
   useEffect(() => {
     async function load() {
@@ -30,6 +31,20 @@ export default function LessonPage() {
       const { data: lessonData } = await supabase
         .from('lessons').select('*').eq('id', lessonId).single()
       setLesson(lessonData)
+
+      // Fetch bài tiếp theo ← thêm ở đây
+      if (lessonData) {
+        const { data: nextLesson } = await supabase
+          .from('lessons')
+          .select('id')
+          .eq('branch_id', lessonData.branch_id)
+          .eq('is_published', true)
+          .gt('order_index', lessonData.order_index)
+          .order('order_index', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        setNextLessonId(nextLesson?.id ?? null)
+      }
 
       const { data: prog } = await supabase
         .from('progress')

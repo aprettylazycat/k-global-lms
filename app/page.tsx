@@ -260,7 +260,7 @@ export default function Home() {
                         {activeBranch.name}
                       </p>
                       <p className="text-2xl font-bold" style={{ color: 'white' }}>
-                        {activeBranch.lessonCount} bài học · {activeBranch.modules.length} module
+                        {activeBranch.modules.length} module · {activeBranch.lessonCount} bài học
                       </p>
                     </div>
                   </div>
