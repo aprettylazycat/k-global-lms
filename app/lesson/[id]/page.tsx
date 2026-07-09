@@ -495,99 +495,142 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
       )}
 
       {/* True/False sections */}
-      {trueFalseGroups.map((group: any) => (
-        <div key={group.id} className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
-          <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                style={{ backgroundColor: tfSubmitted[group.id] ? (tfResults[group.id] ? '#27500A' : '#DC2626') : NAVY, color: 'white' }}>
-                {tfSubmitted[group.id]
-                  ? <i className={`ti ti-${tfResults[group.id] ? 'check' : 'x'}`} />
-                  : <i className="ti ti-toggle-left" />}
-              </span>
-              <div>
-                <h2 className="font-semibold" style={{ color: NAVY }}>Đúng / Sai</h2>
-                <p className="text-xs" style={{ color: '#8AABC8' }}>{group.question}</p>
-              </div>
+{trueFalseGroups.map((group: any) => {
+  const answeredCount = group.items.filter((item: any) => tfAnswers[group.id]?.[item.id] !== undefined).length
+  const totalCount = group.items.length
+  const pct = Math.round((answeredCount / totalCount) * 100)
+  const isSubmitted = tfSubmitted[group.id]
+
+  return (
+    <div key={group.id} className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+      {/* Header */}
+      <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: isSubmitted ? (tfResults[group.id] ? '#EAF3DE' : '#FEF2F2') : CREAM }}>
+              {isSubmitted
+                ? <i className={`ti ti-${tfResults[group.id] ? 'check' : 'x'}`} style={{ fontSize: '16px', color: tfResults[group.id] ? '#27500A' : '#DC2626' }} />
+                : <i className="ti ti-list-check" style={{ fontSize: '16px', color: NAVY }} />}
+            </span>
+            <div>
+              <h2 className="font-semibold text-sm" style={{ color: NAVY }}>Đúng / Sai</h2>
+              <p className="text-xs mt-0.5" style={{ color: '#8AABC8' }}>{group.question}</p>
             </div>
           </div>
-          <div className="px-6 py-4 space-y-3">
-            {group.items.map((item: any) => {
-              const selected = tfAnswers[group.id]?.[item.id]
-              const isSubmitted = tfSubmitted[group.id]
-              const isCorrect = isSubmitted ? selected === item.correct : null
-              return (
-                <div key={item.id} className="rounded-xl p-3.5"
-                  style={{
-                    border: `1px solid ${isSubmitted ? (isCorrect ? '#27500A' : '#DC2626') : BORDER}`,
-                    backgroundColor: isSubmitted ? (isCorrect ? '#EAF3DE' : '#FEF2F2') : 'white'
-                  }}>
-                  <p className="text-sm font-medium mb-2.5" style={{ color: NAVY }}>{item.statement}</p>
-                  <div className="flex gap-2">
-                    {[true, false].map(val => {
-                      const isSelected = selected === val
-                      const label = val ? 'Đúng' : 'Sai'
-                      const icon = val ? 'ti-check' : 'ti-x'
-                      let btnStyle: React.CSSProperties = {
-                        border: `1px solid ${BORDER}`,
-                        backgroundColor: isSelected ? NAVY : 'white',
-                        color: isSelected ? 'white' : NAVY,
-                      }
-                      if (isSubmitted) {
-                        if (isSelected && isCorrect) btnStyle = { border: '1px solid #27500A', backgroundColor: '#27500A', color: 'white' }
-                        else if (isSelected && !isCorrect) btnStyle = { border: '1px solid #DC2626', backgroundColor: '#DC2626', color: 'white' }
-                        else btnStyle = { border: `1px solid ${BORDER}`, backgroundColor: 'white', color: '#A8A29E', opacity: 0.6 }
-                      }
-                      return (
-                        <button key={String(val)}
-                          onClick={() => handleTfToggle(group.id, item.id, val)}
-                          disabled={isSubmitted}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                          style={btnStyle}>
-                          <i className={`ti ${icon}`} style={{ fontSize: '11px' }} />
-                          {label}
-                        </button>
-                      )
-                    })}
-                    {isSubmitted && (
-                      <span className="ml-auto text-xs font-semibold flex items-center gap-1"
-                        style={{ color: isCorrect ? '#27500A' : '#DC2626' }}>
-                        {isCorrect
-                          ? <><i className="ti ti-circle-check" /> Đúng</>
-                          : <><i className="ti ti-circle-x" /> Sai — đáp án: {item.correct ? 'Đúng' : 'Sai'}</>}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+          <div className="text-right flex-shrink-0">
+            <p className="text-xs font-semibold" style={{ color: answeredCount === totalCount ? '#27500A' : NAVY }}>
+              Đã trả lời {answeredCount}/{totalCount} câu
+            </p>
+            <div className="w-24 h-1.5 rounded-full mt-1.5 overflow-hidden" style={{ backgroundColor: CREAM }}>
+              <div className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${pct}%`, backgroundColor: answeredCount === totalCount ? '#27500A' : GOLD }} />
+            </div>
+            <p className="text-xs mt-1" style={{ color: '#8AABC8' }}>{pct}%</p>
           </div>
-          {!tfSubmitted[group.id] && (
-            <div className="px-6 pb-5">
-              <button
-                onClick={() => handleTfSubmit(group)}
-                disabled={!group.items.every((item: any) => tfAnswers[group.id]?.[item.id] !== undefined)}
-                className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-40"
-                style={{ backgroundColor: NAVY }}>
-                Kiểm tra đáp án
-              </button>
-            </div>
-          )}
-          {tfSubmitted[group.id] && (
-            <div className="px-6 pb-5">
-              <div className={`rounded-xl px-4 py-3 flex items-center gap-2`}
-                style={{ backgroundColor: tfResults[group.id] ? '#EAF3DE' : '#FEF2F2' }}>
-                <i className={`ti ti-${tfResults[group.id] ? 'circle-check' : 'circle-x'}`}
-                  style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626' }} />
-                <p className="text-sm font-semibold"
-                  style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626' }}>
-                  {tfResults[group.id] ? 'Hoàn thành!' : 'Có một số câu chưa đúng — xem lại đáp án bên trên.'}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
-      ))}
+      </div>
+
+      {/* Items */}
+      <div className="px-6 py-4 space-y-3">
+        {group.items.map((item: any, idx: number) => {
+          const selected = tfAnswers[group.id]?.[item.id]
+          const isCorrect = isSubmitted ? selected === item.correct : null
+          return (
+            <div key={item.id} className="flex items-center gap-3 py-3 px-4 rounded-2xl transition-all"
+              style={{
+                border: `1px solid ${isSubmitted ? (isCorrect ? '#B7DFA4' : '#FCA5A5') : BORDER}`,
+                backgroundColor: isSubmitted ? (isCorrect ? '#EAF3DE' : '#FEF2F2') : '#FAFAF8'
+              }}>
+              {/* Số thứ tự */}
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                style={{
+                  backgroundColor: isSubmitted ? (isCorrect ? '#27500A' : '#DC2626') : (selected !== undefined ? NAVY : BORDER),
+                  color: 'white'
+                }}>
+                {isSubmitted
+                  ? <i className={`ti ti-${isCorrect ? 'check' : 'x'}`} style={{ fontSize: '10px' }} />
+                  : idx + 1}
+              </span>
+
+              {/* Statement */}
+              <p className="flex-1 text-sm font-medium" style={{ color: NAVY }}>{item.statement}</p>
+
+              {/* Buttons */}
+              <div className="flex gap-2 flex-shrink-0">
+                {[true, false].map(val => {
+                  const isSelected = selected === val
+                  const label = val ? 'Đúng' : 'Sai'
+                  const showResult = isSubmitted && isSelected
+                  const resultCorrect = showResult && isCorrect
+
+                  let bg = 'white'
+                  let border = BORDER
+                  let color = '#6B7280'
+                  if (!isSubmitted && isSelected) { bg = NAVY; border = NAVY; color = 'white' }
+                  if (isSubmitted && isSelected && isCorrect) { bg = '#27500A'; border = '#27500A'; color = 'white' }
+                  if (isSubmitted && isSelected && !isCorrect) { bg = '#DC2626'; border = '#DC2626'; color = 'white' }
+
+                  return (
+                    <button key={String(val)}
+                      onClick={() => handleTfToggle(group.id, item.id, val)}
+                      disabled={isSubmitted}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                      style={{ backgroundColor: bg, border: `1.5px solid ${border}`, color, minWidth: '72px', justifyContent: 'center' }}>
+                      {showResult
+                        ? <i className={`ti ti-${resultCorrect ? 'check' : 'x'}`} style={{ fontSize: '13px' }} />
+                        : <i className={`ti ti-${val ? 'check' : 'x'}`} style={{ fontSize: '13px', opacity: 0.5 }} />}
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Đáp án đúng nếu sai */}
+              {isSubmitted && !isCorrect && (
+                <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#DC2626' }}>
+                  → {item.correct ? 'Đúng' : 'Sai'}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 pb-5">
+        {!isSubmitted ? (
+          <div>
+            <button
+              onClick={() => handleTfSubmit(group)}
+              disabled={answeredCount === 0}
+              className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+              style={{ backgroundColor: NAVY }}>
+              <i className="ti ti-clipboard-check" style={{ fontSize: '14px' }} />
+              Kiểm tra đáp án
+            </button>
+            <p className="text-xs text-center mt-2" style={{ color: '#8AABC8' }}>
+              <i className="ti ti-lock" style={{ fontSize: '11px' }} /> Bạn có thể kiểm tra đáp án bất cứ lúc nào trước khi hoàn thành.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl px-4 py-3 flex items-center gap-2.5"
+            style={{ backgroundColor: tfResults[group.id] ? '#EAF3DE' : '#FEF2F2' }}>
+            <i className={`ti ti-${tfResults[group.id] ? 'circle-check' : 'circle-x'}`}
+              style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626', fontSize: '18px' }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626' }}>
+                {tfResults[group.id]
+                  ? `Xuất sắc! Tất cả ${totalCount} câu đều đúng.`
+                  : `${group.items.filter((i: any) => tfAnswers[group.id]?.[i.id] === i.correct).length}/${totalCount} câu đúng — xem đáp án bên trên.`}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+})}
 
       {/* Nút nộp cuối nếu chỉ có TF (không có MCQ) */}
       {mcqs.length === 0 && allTfDone && (
