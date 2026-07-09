@@ -182,6 +182,7 @@ export default function LessonPage() {
         <div className="mt-5 lg:mt-0 lg:sticky lg:top-20">
           <PracticeSection
             lessonId={lessonId}
+            nextLessonId={nextLessonId}
             prompt={lesson.practice_prompt}
             essays={lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim())}
             tick1Done={tick1Done}
@@ -567,8 +568,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 const MIN_ESSAY_CHARS = 150
 const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
-function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent }: {
-  lessonId: number; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string
+function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent }: {
+  lessonId: number; nextLessonId: number | null; prompt: string; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string
 }) {
   const [text, setText] = useState('')
   const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({})
@@ -784,13 +785,22 @@ function PracticeSection({ lessonId, prompt, essays, tick1Done, tick2Done, userI
           })()}
 
           {/* Nút điều hướng */}
-          <div className="p-6 space-y-3">
-            <button
-              onClick={() => window.location.href = `/lesson/${lessonId + 1}`}
-              className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: NAVY }}>
-              Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} />
-            </button>
+          <button
+  onClick={() => {
+    if (nextLessonId) {
+      window.location.href = `/lesson/${nextLessonId}`
+    } else {
+      window.location.href = '/dashboard'
+    }
+  }}
+  className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+  style={{ backgroundColor: NAVY }}>
+  {nextLessonId ? (
+    <>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
+  ) : (
+    <>Hoàn thành khóa học <i className="ti ti-trophy" style={{ fontSize: '14px' }} /></>
+  )}
+</button>
             <button
               onClick={() => window.location.href = '/dashboard'}
               className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"

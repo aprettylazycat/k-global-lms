@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "frame-src 'self' https://drive.google.com https://www.youtube.com",
+              "frame-src 'self' https://drive.google.com https://www.youtube.com https://docs.google.com",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
               "img-src 'self' data: https:",
