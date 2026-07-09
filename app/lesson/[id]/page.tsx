@@ -350,7 +350,10 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
       })
       const data = await res.json()
       setSubmitting(false)
-      if (res.ok && data.allCorrect) { setSubmitted(true); onDone() }
+      if (res.ok) {
+  setSubmitted(true)
+  onDone()
+}
     } else {
       setCurrentSlide(prev => prev + 1)
       setSlideState('idle')
@@ -600,7 +603,10 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
           })
           const data = await res.json()
           setSubmitting(false)
-          if (res.ok && data.allCorrect) { setSubmitted(true); onDone() }
+          if (res.ok) {
+            setSubmitted(true)
+            onDone()
+            }
         }} disabled={submitting}
           className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
           style={{ backgroundColor: NAVY }}>

@@ -46,9 +46,6 @@ export async function POST(req: Request) {
     }
   }
 
-  if (!allCorrect) {
-    return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
-  }
 
   // allCorrect — ghi progress + timestamp song song
   await Promise.all([
