@@ -119,9 +119,9 @@ export default function LessonPage() {
       </div>
 
       {/* Body */}
-      <div className="max-w-6xl mx-auto px-5 pt-6 lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start">
+      <div className="max-w-3xl mx-auto px-5 pt-6">
 
-        {/* Cột trái */}
+        {/* Nội dung chính - 1 cột */}
         <div className="space-y-5">
           <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
             <h1 className="text-xl lg:text-2xl font-bold mb-4" style={{ color: NAVY }}>
@@ -187,8 +187,7 @@ export default function LessonPage() {
           )}
         </div>
 
-        {/* Cột phải */}
-        <div className="mt-5 lg:mt-0 lg:sticky lg:top-20">
+          {/* Practice Section - bên dưới Quiz */}
           {noQuiz ? (
             <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
               <div className="flex items-center gap-3">
