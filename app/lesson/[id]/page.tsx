@@ -569,7 +569,7 @@ const MIN_ESSAY_CHARS = 150
 const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
 function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent }: {
-  lessonId: number; nextLessonId: number | null; prompt: string; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string
+  lessonId: number; nextLessonId: number | null; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string
 }) {
   const [text, setText] = useState('')
   const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({})
@@ -785,22 +785,23 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
           })()}
 
           {/* Nút điều hướng */}
-          <button
-  onClick={() => {
-    if (nextLessonId) {
-      window.location.href = `/lesson/${nextLessonId}`
-    } else {
-      window.location.href = '/dashboard'
-    }
-  }}
-  className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-  style={{ backgroundColor: NAVY }}>
-  {nextLessonId ? (
-    <>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
-  ) : (
-    <>Hoàn thành khóa học <i className="ti ti-trophy" style={{ fontSize: '14px' }} /></>
-  )}
-</button>
+          <div className="p-6 space-y-3">
+            <button
+              onClick={() => {
+                if (nextLessonId) {
+                  window.location.href = `/lesson/${nextLessonId}`
+                } else {
+                  window.location.href = '/dashboard'
+                }
+              }}
+              className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: NAVY }}>
+              {nextLessonId ? (
+                <>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
+              ) : (
+                <>Hoàn thành khóa học <i className="ti ti-trophy" style={{ fontSize: '14px' }} /></>
+              )}
+            </button>
             <button
               onClick={() => window.location.href = '/dashboard'}
               className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
