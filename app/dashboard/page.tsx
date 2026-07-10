@@ -54,7 +54,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
-  const [submittedSet, setSubmittedSet] = useState<Set<number>>(new Set())
+const [submissionStatusMap, setSubmissionStatusMap] = useState
+  Record<number, { status: string; reason: string | null }>
+>({})
+const [rejectPopup, setRejectPopup] = useState<{
+  lessonId: number; title: string; reason: string | null
+} | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -106,10 +111,16 @@ export default function DashboardPage() {
 
         const { data: submissions } = await supabase
   .from('submissions')
-  .select('lesson_id')
+  .select('lesson_id, status, submitted_at, reject_reason')
   .eq('user_id', session.user.id)
-const submittedLessonIds = new Set((submissions || []).map((s: any) => s.lesson_id))
-setSubmittedSet(submittedLessonIds)
+  .order('submitted_at', { ascending: false })
+const latestStatusMap: Record<number, { status: string; reason: string | null }> = {}
+;(submissions || []).forEach((s: any) => {
+  if (!(s.lesson_id in latestStatusMap)) {
+    latestStatusMap[s.lesson_id] = { status: s.status, reason: s.reject_reason ?? null }
+  }
+})
+setSubmissionStatusMap(latestStatusMap)
       }
 
       setLoading(false)
@@ -392,12 +403,13 @@ setSubmittedSet(submittedLessonIds)
 
                   {isOpen && (
                     <div className="px-4 py-3 space-y-2" style={{ borderTop: `1px solid rgba(255,255,255,0.08)` }}>
-                      {moduleLessons.map(lesson => {
-                        const prog = progressMap[lesson.id]
+                      {moduleLessons.map(lesson => {                       
+const prog = progressMap[lesson.id]
 const isLocked = !isLessonUnlocked(lesson.id)
 const isDone = !!(prog?.tick1 && prog?.tick2)
-const isSubmitted = !!(prog?.tick1 && !prog?.tick2 && submittedSet.has(lesson.id))
-const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submittedSet.has(lesson.id))
+const isSubmitted = !!(prog?.tick1 && !prog?.tick2 && submissionStatusMap[lesson.id]?.status === 'pending')
+const isRejected = !!(prog?.tick1 && !prog?.tick2 && submissionStatusMap[lesson.id]?.status === 'rejected')
+const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[lesson.id])
 
                         return (
                           <div key={lesson.id}
@@ -442,7 +454,7 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submittedSet.has(lesson.
                               </div>
                             </div>
 
-                            {!isLocked && !isDone && !isSubmitted && (
+                            {!isLocked && !isDone && !isSubmitted && !isRejected && (
   <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 text-white"
     style={{ backgroundColor: BLUE }}>
     {isInProgress ? 'Xem' : 'Học'}
@@ -453,6 +465,21 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submittedSet.has(lesson.
     style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>
     Chờ duyệt
   </span>
+)}
+{isRejected && (
+  <button
+    onClick={(e) => {
+      e.stopPropagation()
+      setRejectPopup({
+        lessonId: lesson.id,
+        title: lesson.title,
+        reason: submissionStatusMap[lesson.id]?.reason ?? null
+      })
+    }}
+    className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 transition-opacity hover:opacity-80"
+    style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
+    Bị từ chối
+  </button>
 )}
 {isDone && (
   <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#27500A' }}>Xong ✓</span>
@@ -492,6 +519,43 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submittedSet.has(lesson.
           </div>
         </div>
       )}
+      {/* Reject popup */}
+      {rejectPopup && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={() => setRejectPopup(null)}>
+          <div className="rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+            style={{ backgroundColor: 'white' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: '#FEE2E2' }}>
+              <i className="ti ti-alert-circle" style={{ fontSize: '28px', color: '#DC2626' }} />
+            </div>
+            <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold" style={{ color: '#DC2626' }}>
+              Bài tập bị từ chối
+            </p>
+            <p className="text-lg font-bold mb-3" style={{ color: NAVY }}>{rejectPopup.title}</p>
+            <div className="rounded-2xl p-4 mb-6 text-left" style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
+              <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#DC2626' }}>Lý do</p>
+              <p className="text-sm" style={{ color: '#991B1B' }}>
+                {rejectPopup.reason || 'Admin chưa ghi lý do cụ thể — hãy xem lại bài làm và nộp lại.'}
+              </p>
+            </div>
+            <button
+              onClick={() => router.push(`/lesson/${rejectPopup.lessonId}`)}
+              className="w-full py-3 rounded-2xl text-sm font-semibold text-white transition-colors mb-2"
+              style={{ backgroundColor: '#DC2626' }}>
+              Làm lại ngay →
+            </button>
+            <button
+              onClick={() => setRejectPopup(null)}
+              className="w-full py-3 rounded-2xl text-sm font-medium transition-colors"
+              style={{ border: `1px solid ${BORDER}`, color: MUTED }}>
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="h-10 lg:h-0" />
     </div>
   )

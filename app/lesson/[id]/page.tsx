@@ -675,24 +675,32 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
   const [loading, setLoading] = useState(false)
   const [showCongrats, setShowCongrats] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [submissionStatus, setSubmissionStatus] = useState<'pending' | 'rejected' | null>(null)
+  const [rejectReason, setRejectReason] = useState<string | null>(null)
 
   // Load draft từ localStorage khi mở bài
 useEffect(() => {
-  if (!tick1Done || tick2Done || !userId) return  // thêm !userId
+  if (!tick1Done || tick2Done || !userId) return
   async function fetchSubmission() {
     const { data } = await supabase
       .from('submissions')
-      .select('answer_text, submitted_at')
+      .select('status, reject_reason, submitted_at')
       .eq('lesson_id', lessonId)
       .eq('user_id', userId)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
       .maybeSingle()
-    console.log('submission data:', data, 'userId:', userId)
-    if (data) {
+    if (data?.status === 'pending') {
       setSubmitted(true)
+      setSubmissionStatus('pending')
+    } else if (data?.status === 'rejected') {
+      setSubmitted(false)
+      setSubmissionStatus('rejected')
+      setRejectReason(data.reject_reason ?? null)
     }
   }
   fetchSubmission()
-}, [tick1Done, tick2Done, lessonId, userId])  // userId đã có trong deps rồi, nhưng thêm guard !userId ở trên
+}, [tick1Done, tick2Done, lessonId, userId])
 
 useEffect(() => {
   if (!tick1Done || tick2Done) return
@@ -742,6 +750,8 @@ useEffect(() => {
       // Xóa draft sau khi nộp thành công
       localStorage.removeItem(DRAFT_KEY(lessonId))
       setSubmitted(true)
+      setSubmissionStatus('pending')
+      setRejectReason(null)
       setShowCongrats(true)
     }
     setLoading(false)
@@ -977,6 +987,19 @@ useEffect(() => {
         </div>
       ) : (
         <>
+          {submissionStatus === 'rejected' && (
+            <div className="rounded-2xl p-4 mb-6 flex items-start gap-3"
+              style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
+              <i className="ti ti-alert-circle" style={{ color: '#DC2626', fontSize: '20px', marginTop: '2px' }} />
+              <div>
+                <p className="text-sm font-bold" style={{ color: '#DC2626' }}>Bài làm trước đã bị từ chối</p>
+                {rejectReason && (
+                  <p className="text-xs mt-1" style={{ color: '#991B1B' }}>Lý do: {rejectReason}</p>
+                )}
+                <p className="text-xs mt-1" style={{ color: '#991B1B' }}>Hãy chỉnh sửa và nộp lại bên dưới.</p>
+              </div>
+            </div>
+          )}
           {essays.length > 0 && (
             <div className="space-y-6 mb-6">
               {essays.map((q: any, qi: number) => (

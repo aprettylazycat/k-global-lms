@@ -12,6 +12,7 @@ export default function ReviewPanel() {
   const [openSubs, setOpenSubs] = useState<Set<string>>(new Set())
   // Chỉ fetch 1 lần khi mount — bấm "Làm mới" mới fetch lại
   const hasFetched = useRef(false)
+  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (hasFetched.current) return
@@ -47,14 +48,14 @@ export default function ReviewPanel() {
   }
 
   async function handleReject(sub: any) {
-    const res = await fetch('/api/admin/reject', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ submissionId: sub.id })
-    })
-    if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))
-    else { const data = await res.json(); alert(`Lỗi: ${data.error || 'không rõ'}`) }
-  }
+  const res = await fetch('/api/admin/reject', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ submissionId: sub.id, reason: rejectReasons[sub.id] || '' })
+  })
+  if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))
+  else { const data = await res.json(); alert(`Lỗi: ${data.error || 'không rõ'}`) }
+}
 
   function toggleUser(userId: string) {
     setOpenUsers(prev => { const n = new Set(prev); n.has(userId) ? n.delete(userId) : n.add(userId); return n })
@@ -230,23 +231,33 @@ export default function ReviewPanel() {
                             </div>
                           </label>
 
-                          {/* Nút */}
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
-                              className="flex-1 text-white rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
-                              style={{ backgroundColor: '#0E62B1' }}>
-                              <i className="ti ti-check" style={{ fontSize: '16px' }} />
-                              Duyệt bài
-                            </button>
-                            <button
-                              onClick={() => handleReject(sub)}
-                              className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-red-50 flex items-center justify-center gap-2"
-                              style={{ border: '2px solid #FECACA', color: '#DC2626' }}>
-                              <i className="ti ti-x" style={{ fontSize: '16px' }} />
-                              Từ chối
-                            </button>
-                          </div>
+                          {/* Lý do từ chối */}
+<textarea
+  rows={2}
+  placeholder="Lý do từ chối (học viên sẽ thấy khi làm lại)..."
+  value={rejectReasons[sub.id] || ''}
+  onChange={e => setRejectReasons(prev => ({ ...prev, [sub.id]: e.target.value }))}
+  className="w-full text-sm rounded-xl px-3.5 py-2.5 focus:outline-none resize-none"
+  style={{ border: '1.5px solid #FECACA' }}
+/>
+
+{/* Nút */}
+<div className="flex gap-3">
+  <button
+    onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
+    className="flex-1 text-white rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+    style={{ backgroundColor: '#0E62B1' }}>
+    <i className="ti ti-check" style={{ fontSize: '16px' }} />
+    Duyệt bài
+  </button>
+  <button
+    onClick={() => handleReject(sub)}
+    className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-red-50 flex items-center justify-center gap-2"
+    style={{ border: '2px solid #FECACA', color: '#DC2626' }}>
+    <i className="ti ti-x" style={{ fontSize: '16px' }} />
+    Từ chối
+  </button>
+</div>
                         </div>
                       )}
                     </div>

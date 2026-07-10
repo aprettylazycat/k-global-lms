@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { submissionId } = await req.json()
+  const { submissionId, reason } = await req.json()
 
   if (!submissionId) {
     return NextResponse.json({ error: 'Thiếu submissionId' }, { status: 400 })
@@ -11,7 +11,11 @@ export async function POST(req: Request) {
 
   const { error } = await supabaseAdmin
     .from('submissions')
-    .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
+    .update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+      reject_reason: reason || null,
+    })
     .eq('id', submissionId)
 
   if (error) {
