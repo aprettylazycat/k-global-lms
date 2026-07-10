@@ -50,7 +50,7 @@ export async function GET() {
         ? Math.round(((tick1Count / totalLessons) + (tick2Count / totalLessons)) / 2 * 100)
         : 0
 
-      const score = progressPct + badgeCount * 5 + perfectCount * 3
+      const score = progressPct + badgeCount * 5 + perfectCount * 10
 
       return {
         userId: profile.id,
