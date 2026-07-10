@@ -680,16 +680,17 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
   useEffect(() => {
   if (!tick1Done || tick2Done) return
   async function fetchSubmission() {
-    const { data } = await supabase
-      .from('submissions')
-      .select('answer_text, submitted_at')
-      .eq('lesson_id', lessonId)
-      .eq('user_id', userId)
-      .maybeSingle()
-    if (data) {
-      setSubmitted(true)
-    }
+  const { data } = await supabase
+    .from('submissions')
+    .select('answer_text, submitted_at')
+    .eq('lesson_id', lessonId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  console.log('submission data:', data)  // thêm dòng này
+  if (data) {
+    setSubmitted(true)
   }
+}
   fetchSubmission()
 }, [tick1Done, tick2Done, lessonId, userId])
 
