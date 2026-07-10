@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     return group.items.every((item: any) => groupAnswers[item.id] === item.correct)
   })
 
-  const allCorrect = mcqAllCorrect && tfAllCorrect
+  const allCorrect = mcqAllCorrect  // TF chỉ lưu data, không block progress
 
   // Ghi MCQ attempts
   if (attempts && Object.keys(attempts).length > 0) {
