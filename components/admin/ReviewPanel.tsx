@@ -260,8 +260,16 @@ export default function ReviewPanel() {
                                 ))}
                                 {freeText.trim() && (
                                   <div className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-                                    <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#60A5FA' }}>
-                                      {qas.length > 0 ? 'Ghi chú thêm' : 'Bài làm'}
+                                    <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
+                                      Bài thực hành
+                                    </p>
+                                    {sub.lesson?.practice_prompt && (
+                                      <p className="text-sm font-semibold mb-3 leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                        {sub.lesson.practice_prompt}
+                                      </p>
+                                    )}
+                                    <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
+                                      Trả lời
                                     </p>
                                     <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#1E3A5F' }}>
                                       {freeText}

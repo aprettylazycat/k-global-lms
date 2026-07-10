@@ -25,15 +25,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
   }
 
-  const { data, error } = await supabaseAdmin
-  .from('submissions')
-  .select(`
-    id, user_id, lesson_id, answer_text, file_url, submitted_at, status,
-    user:profiles(name, email),
-    lesson:lessons(title, no_quiz)
-  `)
-  .eq('status', 'pending')
-  .order('submitted_at', { ascending: false })
+const { data, error } = await supabaseAdmin
+    .from('submissions')
+    .select(`
+      id, user_id, lesson_id, answer_text, file_url, submitted_at, status,
+      user:profiles(name, email),
+      lesson:lessons(title, no_quiz, practice_prompt)
+    `)
+    .eq('status', 'pending')
+    .order('submitted_at', { ascending: false })
 
 if (error) {
   return NextResponse.json({ error: error.message }, { status: 500 })
