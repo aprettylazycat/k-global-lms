@@ -26,18 +26,21 @@ export async function GET(req: Request) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from('submissions')
-    .select(`
-      id, user_id, lesson_id, answer_text, file_url, submitted_at, status,
-      user:profiles(name, email),
-      lesson:lessons(title)
-    `)
-    .eq('status', 'pending')
-    .order('submitted_at', { ascending: false })
+  .from('submissions')
+  .select(`
+    id, user_id, lesson_id, answer_text, file_url, submitted_at, status,
+    user:profiles(name, email),
+    lesson:lessons(title, no_quiz)
+  `)
+  .eq('status', 'pending')
+  .order('submitted_at', { ascending: false })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+if (error) {
+  return NextResponse.json({ error: error.message }, { status: 500 })
+}
 
-  return NextResponse.json({ submissions: data })
+// Lọc bỏ submissions của bài no_quiz (rác lịch sử, không cần duyệt)
+const filtered = (data || []).filter((s: any) => !s.lesson?.no_quiz)
+
+return NextResponse.json({ submissions: filtered })
 }

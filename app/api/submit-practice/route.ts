@@ -4,6 +4,13 @@ import { NextResponse } from 'next/server'
 export async function POST(req: Request) {
   const { lessonId, userId, answer_text, file_url } = await req.json()
 
+  const { data: lesson } = await supabaseAdmin
+    .from('lessons').select('no_quiz').eq('id', lessonId).single()
+
+  if (lesson?.no_quiz) {
+    return NextResponse.json({ error: 'Bài học này không yêu cầu nộp bài' }, { status: 400 })
+  }
+
   const { data: submission } = await supabaseAdmin
     .from('submissions')
     .insert({ user_id: userId, lesson_id: lessonId, answer_text, file_url, status: 'pending' })
