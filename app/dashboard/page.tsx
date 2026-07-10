@@ -18,23 +18,26 @@ type LessonListItem = {
   module_id: number
 }
 
+const SUPABASE_URL = 'https://rptmjqmdlcfnldyffgmc.supabase.co'
+const badgeImg = (name: string) => `${SUPABASE_URL}/storage/v1/object/public/badge-icons/${name}.png`
+
 const badgeDefs = [
-  { type: 'k-starter', label: 'K-Starter', icon: 'ti-star', bg: '#FBF7EE', color: '#C9A84C',
-    desc: 'Có hiểu biết cơ bản về K-Global — hoàn thành phần Giới thiệu.' },
-  { type: 'k-member', label: 'K-Member', icon: 'ti-user-check', bg: '#EAF3DE', color: '#27500A',
-    desc: 'Người có tư duy làm việc đỉnh cao tại K-Global.' },
-  { type: 'k-member-super', label: 'K-Member Super', icon: 'ti-user-star', bg: '#D1FAE5', color: '#1A3A06',
-    desc: 'K-Member đạt all Perfect Score phần Tư duy.' },
-  { type: 'k-sales', label: 'K-Sales', icon: 'ti-briefcase', bg: '#EFF6FF', color: '#0E62B1',
-    desc: 'Người có tư duy bán hàng tại K-Global.' },
-  { type: 'k-super-sales', label: 'K-Super Sales', icon: 'ti-award', bg: '#DBEAFE', color: '#0A3F7A',
-    desc: 'Hoàn thành Sales B2B đỉnh cao với Perfect Score.' },
-  { type: 'k-smock-expert', label: 'K-Smock Expert', icon: 'ti-needle-thread', bg: '#FDF2F8', color: '#9D174D',
-    desc: 'Hoàn thành phần Khóa học Smock.' },
-  { type: 'chien-binh', label: 'Chiến Binh', icon: 'ti-shield-check', bg: '#FBF7EE', color: '#B8860B',
-    desc: 'Hoàn thành phần Sách Chiến Binh.' },
-  { type: 'perfect-member', label: 'Perfect Member', icon: 'ti-crown', bg: '#F0F4FF', color: '#4338CA',
-    desc: 'Tất cả đều Perfect Score — thành viên xuất sắc nhất!' },
+  { type: 'k-starter', label: 'K-Starter', imageUrl: badgeImg('k-starter'), bg: '#FBF7EE', color: '#C9A84C',
+    desc: 'Bước chân đầu tiên trên hành trình K-Global — bạn đã chính thức khởi động!' },
+  { type: 'k-member', label: 'K-Member', imageUrl: badgeImg('k-member'), bg: '#EAF3DE', color: '#27500A',
+    desc: 'Tư duy làm việc chuyên nghiệp đã thấm vào bạn — một K-Member thực thụ!' },
+  { type: 'k-member-super', label: 'K-Member Super', imageUrl: badgeImg('k-member-super'), bg: '#D1FAE5', color: '#1A3A06',
+    desc: 'Perfect Score toàn bộ phần Tư duy — đẳng cấp vượt trội, không một sai sót!' },
+  { type: 'k-sales', label: 'K-Sales', imageUrl: badgeImg('k-sales'), bg: '#EFF6FF', color: '#0E62B1',
+    desc: 'Bạn đã nắm trong tay tư duy bán hàng đỉnh cao — sẵn sàng chinh phục mọi khách hàng!' },
+  { type: 'k-super-sales', label: 'K-Super Sales', imageUrl: badgeImg('k-super-sales'), bg: '#DBEAFE', color: '#0A3F7A',
+    desc: 'Perfect Score Sales B2B — bạn thuộc top xuất sắc nhất về nghệ thuật bán hàng!' },
+  { type: 'k-smock-expert', label: 'K-Smock Expert', imageUrl: badgeImg('k-smock-expert'), bg: '#FDF2F8', color: '#9D174D',
+    desc: 'Từ sợi chỉ đến sản phẩm hoàn thiện — bạn giờ là chuyên gia thực thụ về Smock!' },
+  { type: 'chien-binh', label: 'Chiến Binh', imageUrl: badgeImg('chien-binh'), bg: '#FBF7EE', color: '#B8860B',
+    desc: 'Bản lĩnh và ý chí Chiến Binh — bạn đã chinh phục thử thách khó nhằn nhất!' },
+  { type: 'perfect-member', label: 'Perfect Member', imageUrl: badgeImg('perfect-member'), bg: '#F0F4FF', color: '#4338CA',
+    desc: '🏆 Toàn bộ Perfect Score — bạn là thành viên xuất sắc nhất K-Global, không ai sánh bằng!' },
 ]
 
 const NAVY = '#466898'
@@ -305,9 +308,11 @@ setSubmissionStatusMap(latestStatusMap)
                   <div key={b.type}
                     className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${earned ? 'opacity-100' : 'opacity-35'}`}
                     style={{ backgroundColor: earned ? b.bg : '#F9F9F9', border: `1px solid ${earned ? BORDER : 'transparent'}` }}>
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
   style={{ backgroundColor: earned ? b.bg : '#F3F4F6' }}>
-  <i className={`ti ${b.icon}`} style={{ fontSize: '20px', color: earned ? b.color : '#D1D5DB' }} />
+  <img src={b.imageUrl} alt={b.label}
+    className="w-full h-full object-cover"
+    style={{ opacity: earned ? 1 : 0.3, filter: earned ? 'none' : 'grayscale(100%)' }} />
 </div>
 <div className="min-w-0">
   <p className="text-sm font-semibold" style={{ color: earned ? b.color : '#78716C' }}>
@@ -501,10 +506,10 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
           <div className="rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
             style={{ backgroundColor: 'white' }}
             onClick={e => e.stopPropagation()}>
-            <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: badgePopup.bg }}>
-              <i className={`ti ${badgePopup.icon}`} style={{ fontSize: '48px', color: badgePopup.color }} />
-            </div>
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center overflow-hidden"
+  style={{ backgroundColor: badgePopup.bg }}>
+  <img src={badgePopup.imageUrl} alt={badgePopup.label} className="w-full h-full object-cover" />
+</div>
             <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold"
               style={{ color: GOLD }}>Achievement Unlocked</p>
             <p className="text-2xl font-bold mb-2" style={{ color: NAVY }}>{badgePopup.label}</p>
