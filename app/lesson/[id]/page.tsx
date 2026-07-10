@@ -678,10 +678,7 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
 
   // Load draft từ localStorage khi mở bài
   useEffect(() => {
-    useEffect(() => {
   if (!tick1Done || tick2Done) return
-
-  // Fetch submission đã nộp nếu có
   async function fetchSubmission() {
     const { data } = await supabase
       .from('submissions')
@@ -690,18 +687,22 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
       .eq('user_id', userId)
       .maybeSingle()
     if (data) {
-      setSubmitted(true)  // hiện trạng thái đã nộp, ẩn form
+      setSubmitted(true)
     }
   }
   fetchSubmission()
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY(lessonId))
-      if (!raw) return
-      const draft = JSON.parse(raw)
-      if (draft.text) setText(draft.text)
-      if (draft.essayAnswers) setEssayAnswers(draft.essayAnswers)
-    } catch {}
-  }, [tick1Done, lessonId, tick2Done])
+}, [tick1Done, tick2Done, lessonId, userId])
+
+useEffect(() => {
+  if (!tick1Done || tick2Done) return
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY(lessonId))
+    if (!raw) return
+    const draft = JSON.parse(raw)
+    if (draft.text) setText(draft.text)
+    if (draft.essayAnswers) setEssayAnswers(draft.essayAnswers)
+  } catch {}
+}, [tick1Done, lessonId, tick2Done])
 
   // Auto-save draft mỗi khi text hoặc essayAnswers thay đổi
   useEffect(() => {
