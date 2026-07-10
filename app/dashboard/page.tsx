@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
+  const [submittedSet, setSubmittedSet] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     async function load() {
@@ -100,6 +101,15 @@ export default function DashboardPage() {
         const map: Record<number, Progress> = {}
         progList?.forEach((p: any) => { map[p.lesson_id] = p })
         setProgressMap(map)
+
+        
+
+        const { data: submissions } = await supabase
+  .from('submissions')
+  .select('lesson_id')
+  .eq('user_id', session.user.id)
+const submittedLessonIds = new Set((submissions || []).map((s: any) => s.lesson_id))
+setSubmittedSet(submittedLessonIds)
       }
 
       setLoading(false)
@@ -369,9 +379,10 @@ export default function DashboardPage() {
                     <div className="px-4 py-3 space-y-2" style={{ borderTop: `1px solid rgba(255,255,255,0.08)` }}>
                       {moduleLessons.map(lesson => {
                         const prog = progressMap[lesson.id]
-                        const isLocked = !isLessonUnlocked(lesson.id)
-                        const isDone = !!(prog?.tick1 && prog?.tick2)
-                        const isInProgress = !!(prog?.tick1 && !prog?.tick2)
+const isLocked = !isLessonUnlocked(lesson.id)
+const isDone = !!(prog?.tick1 && prog?.tick2)
+const isSubmitted = !!(prog?.tick1 && !prog?.tick2 && submittedSet.has(lesson.id))
+const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submittedSet.has(lesson.id))
 
                         return (
                           <div key={lesson.id}
@@ -416,15 +427,21 @@ export default function DashboardPage() {
                               </div>
                             </div>
 
-                            {!isLocked && !isDone && (
-                              <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 text-white"
-                                style={{ backgroundColor: BLUE }}>
-                                {isInProgress ? 'Xem' : 'Học'}
-                              </span>
-                            )}
-                            {isDone && (
-                              <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#27500A' }}>Xong ✓</span>
-                            )}
+                            {!isLocked && !isDone && !isSubmitted && (
+  <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 text-white"
+    style={{ backgroundColor: BLUE }}>
+    {isInProgress ? 'Xem' : 'Học'}
+  </span>
+)}
+{isSubmitted && (
+  <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0"
+    style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>
+    Chờ duyệt
+  </span>
+)}
+{isDone && (
+  <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#27500A' }}>Xong ✓</span>
+)}
                           </div>
                         )
                       })}
