@@ -54,9 +54,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
-const [submissionStatusMap, setSubmissionStatusMap] = useState
-  Record<number, { status: string; reason: string | null }>
->({})
+const [submissionStatusMap, setSubmissionStatusMap] = useState<Record<number, { status: string; reason: string | null }>>({})
 const [rejectPopup, setRejectPopup] = useState<{
   lessonId: number; title: string; reason: string | null
 } | null>(null)
