@@ -20,6 +20,22 @@ export default function ReviewPanel() {
     loadSubmissions()
   }, [])
 
+  async function handleCleanupStorage() {
+  if (!confirm('Xóa toàn bộ ảnh đính kèm của các bài đã duyệt/từ chối để tiết kiệm dung lượng? Hành động này KHÔNG thể hoàn tác.')) return
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const res = await fetch('/api/admin/cleanup-storage', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  })
+  const data = await res.json()
+  if (res.ok) {
+    alert(`Đã xóa ${data.deletedCount}/${data.total} ảnh (${data.failedCount} lỗi).`)
+  } else {
+    alert(`Lỗi: ${data.error}`)
+  }
+}
+
   async function loadSubmissions() {
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
@@ -93,12 +109,20 @@ export default function ReviewPanel() {
             {Object.keys(grouped).length} học viên · Cập nhật mới nhất
           </p>
         </div>
-        <button onClick={loadSubmissions}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-          style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
-          <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
-          Làm mới
-        </button>
+        <div className="flex gap-2">
+          <button onClick={loadSubmissions}
+            className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+            <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
+            Làm mới
+          </button>
+          <button onClick={handleCleanupStorage}
+            className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+            <i className="ti ti-trash" style={{ fontSize: '14px' }} />
+            Dọn ảnh cũ
+          </button>
+        </div>
       </div>
 
       {/* Thanh tìm kiếm */}
