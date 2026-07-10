@@ -41,11 +41,17 @@ export async function GET(req: Request) {
     supabaseAdmin.from('badges').select('user_id, badge_type').in('user_id', learnerIds),
     supabaseAdmin.from('modules').select('id, name, order_index'),
     supabaseAdmin.from('lesson_timestamps').select('user_id, lesson_id, started_at, quiz_started_at, quiz_completed_at, practice_started_at, practice_submitted_at').in('user_id', learnerIds),
-    supabaseAdmin.from('quiz_attempts').select('user_id, lesson_id, question_id, is_correct, is_first_attempt').in('user_id', learnerIds),
+    supabaseAdmin.from('quiz_attempts').select('user_id, lesson_id, question_id, is_correct, is_first_attempt, selected_option, extra_data').in('user_id', learnerIds),
   ])
 
   const moduleMap: Record<number, { name: string; order: number }> = {}
   allModules?.forEach(m => { moduleMap[m.id] = { name: m.name, order: m.order_index } })
+
+  function minutesBetween(a: string | null, b: string | null): number | null {
+    if (!a || !b) return null
+    const diff = new Date(b).getTime() - new Date(a).getTime()
+    return diff > 0 ? Math.round(diff / 60000) : null
+  }
 
   const result = learners.map(learner => {
     const branchLessons = (allLessons || []).filter(l => l.branch_id === learner.branch_id)
@@ -59,36 +65,48 @@ export async function GET(req: Request) {
     const tsMap: Record<number, any> = {}
     ;(allTimestamps || []).filter(t => t.user_id === learner.id).forEach(t => { tsMap[t.lesson_id] = t })
 
-    // Quiz attempts map theo lesson
+    // MCQ attempts map theo lesson (bỏ TF)
     const attMap: Record<number, { total: number; firstCorrect: number }> = {}
-    ;(allAttempts || []).filter(a => a.user_id === learner.id).forEach(a => {
-      if (!attMap[a.lesson_id]) attMap[a.lesson_id] = { total: 0, firstCorrect: 0 }
-      if (a.is_first_attempt) {
-        attMap[a.lesson_id].total += 1
-        if (a.is_correct) attMap[a.lesson_id].firstCorrect += 1
-      }
-    })
+    ;(allAttempts || [])
+      .filter(a => a.user_id === learner.id && !String(a.question_id).startsWith('tf_group_'))
+      .forEach(a => {
+        if (!attMap[a.lesson_id]) attMap[a.lesson_id] = { total: 0, firstCorrect: 0 }
+        if (a.is_first_attempt) {
+          attMap[a.lesson_id].total += 1
+          if (a.is_correct) attMap[a.lesson_id].firstCorrect += 1
+        }
+      })
+
+    // TF attempts map theo lesson
+    const tfMap: Record<number, { correct: number; total: number }> = {}
+    ;(allAttempts || [])
+      .filter(a => a.user_id === learner.id && String(a.question_id).startsWith('tf_group_'))
+      .forEach(a => {
+        if (!tfMap[a.lesson_id]) tfMap[a.lesson_id] = { correct: 0, total: 0 }
+        if (a.extra_data) {
+          try {
+            const d = JSON.parse(a.extra_data)
+            tfMap[a.lesson_id].correct += d.correct || 0
+            tfMap[a.lesson_id].total += d.total || 0
+          } catch {}
+        }
+      })
 
     const tick1Count = progList.filter(p => p.tick1).length
     const tick2Count = progList.filter(p => p.tick2).length
     const pct = Math.round(((tick1Count / total) + (tick2Count / total)) / 2 * 100)
     const badges = (allBadges || []).filter(b => b.user_id === learner.id).map(b => b.badge_type)
 
-    // Tính tỷ lệ đúng lần đầu toàn bộ
+    // Tỷ lệ đúng lần đầu toàn bộ (chỉ MCQ)
     const totalFirstAttempts = Object.values(attMap).reduce((s, v) => s + v.total, 0)
     const totalFirstCorrect = Object.values(attMap).reduce((s, v) => s + v.firstCorrect, 0)
     const firstAttemptRate = totalFirstAttempts > 0
       ? Math.round((totalFirstCorrect / totalFirstAttempts) * 100) : null
 
-    function minutesBetween(a: string | null, b: string | null): number | null {
-      if (!a || !b) return null
-      const diff = new Date(b).getTime() - new Date(a).getTime()
-      return diff > 0 ? Math.round(diff / 60000) : null
-    }
-
     const lessonProgress = branchLessons.map(l => {
       const ts = tsMap[l.id]
       const att = attMap[l.id]
+      const tf = tfMap[l.id]
       const quizMins = ts ? minutesBetween(ts.quiz_started_at, ts.quiz_completed_at) : null
       const practiceMins = ts ? minutesBetween(ts.practice_started_at, ts.practice_submitted_at) : null
       const totalMins = ts ? minutesBetween(ts.started_at, ts.practice_submitted_at) : null
@@ -109,6 +127,7 @@ export async function GET(req: Request) {
         totalMinutes: totalMins,
         firstAttemptRate: att && att.total > 0
           ? Math.round((att.firstCorrect / att.total) * 100) : null,
+        tfSummary: tf && tf.total > 0 ? `${tf.correct}/${tf.total} đúng` : null,
       }
     }).sort((a, b) => a.moduleOrder - b.moduleOrder || a.orderIndex - b.orderIndex)
 

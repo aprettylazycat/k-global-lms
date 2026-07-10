@@ -537,13 +537,13 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
           const selected = tfAnswers[group.id]?.[item.id]
           const isCorrect = isSubmitted ? selected === item.correct : null
           return (
-            <div key={item.id} className="flex items-center gap-3 py-3 px-4 rounded-2xl transition-all"
+            <div key={item.id} className="flex items-start gap-3 py-3 px-4 rounded-2xl transition-all"
               style={{
                 border: `1px solid ${isSubmitted ? (isCorrect ? '#B7DFA4' : '#FCA5A5') : BORDER}`,
                 backgroundColor: isSubmitted ? (isCorrect ? '#EAF3DE' : '#FEF2F2') : '#FAFAF8'
               }}>
               {/* Số thứ tự */}
-              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
                 style={{
                   backgroundColor: isSubmitted ? (isCorrect ? '#27500A' : '#DC2626') : (selected !== undefined ? NAVY : BORDER),
                   color: 'white'

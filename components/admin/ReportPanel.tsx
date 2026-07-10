@@ -18,6 +18,7 @@ type LessonProgress = {
   practiceMinutes: number | null
   totalMinutes: number | null
   firstAttemptRate: number | null
+  tfSummary?: string  // ví dụ "8/10 đúng"
 }
 
 type Learner = {
@@ -86,6 +87,7 @@ function LessonRow({ l }: { l: LessonProgress }) {
               { label: '⏱ Bài tập', value: l.practiceMinutes != null ? `${l.practiceMinutes} phút` : '—' },
               { label: '⏱ Tổng', value: l.totalMinutes != null ? `${l.totalMinutes} phút` : '—' },
               { label: '🎯 Đúng lần đầu', value: l.firstAttemptRate != null ? `${l.firstAttemptRate}%` : '—' },
+              { label: '✅ TF đúng/sai', value: (l as any).tfSummary || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl px-2.5 py-1.5"
                 style={{ backgroundColor: '#EFF6FF' }}>
