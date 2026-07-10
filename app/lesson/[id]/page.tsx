@@ -678,7 +678,22 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
 
   // Load draft từ localStorage khi mở bài
   useEffect(() => {
-    if (!tick1Done || tick2Done) return
+    useEffect(() => {
+  if (!tick1Done || tick2Done) return
+
+  // Fetch submission đã nộp nếu có
+  async function fetchSubmission() {
+    const { data } = await supabase
+      .from('submissions')
+      .select('answer_text, submitted_at')
+      .eq('lesson_id', lessonId)
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (data) {
+      setSubmitted(true)  // hiện trạng thái đã nộp, ẩn form
+    }
+  }
+  fetchSubmission()
     try {
       const raw = localStorage.getItem(DRAFT_KEY(lessonId))
       if (!raw) return
