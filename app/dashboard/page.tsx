@@ -134,11 +134,26 @@ setSubmittedSet(submittedLessonIds)
   const orderedLessons = lessonsByModule.flatMap(g => g.lessons)
 
   function isLessonUnlocked(lessonId: number) {
-    const idx = orderedLessons.findIndex(l => l.id === lessonId)
-    if (idx <= 0) return true
-    const prevLesson = orderedLessons[idx - 1]
-    return !!progressMap[prevLesson.id]?.tick1
+  const lesson = orderedLessons.find(l => l.id === lessonId)
+  if (!lesson) return false
+
+  const idx = orderedLessons.findIndex(l => l.id === lessonId)
+  if (idx <= 0) return true
+
+  const prevLesson = orderedLessons[idx - 1]
+
+  // Nếu bài này là bài đầu tiên của module khác module 1
+  if (lesson.module_id !== prevLesson.module_id) {
+    // Kiểm tra module 1 đã hoàn thành hết tick1 chưa
+    const firstModule = lessonsByModule[0]
+    if (!firstModule) return false
+    const module1AllDone = firstModule.lessons.every(l => progressMap[l.id]?.tick1)
+    return module1AllDone
   }
+
+  // Trong cùng module → tuần tự như cũ
+  return !!progressMap[prevLesson.id]?.tick1
+}
 
   const currentModuleGroup = lessonsByModule.find(g =>
     !g.lessons.every(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2)
