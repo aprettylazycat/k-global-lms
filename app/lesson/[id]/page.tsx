@@ -731,8 +731,10 @@ useEffect(() => {
     let fileUrl = ''
     if (file) {
       const path = `${userId}/${lessonId}/${Date.now()}_${file.name}`
-      const { data: uploadData } = await supabase.storage.from('submissions').upload(path, file)
-      if (uploadData) {
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('submissions').upload(path, file)
+      if (uploadError) {
+        alert(`Lỗi upload file: ${uploadError.message}. Bài vẫn nộp nhưng KHÔNG có file đính kèm — vui lòng báo admin.`)
+      } else if (uploadData) {
         const { data: urlData } = supabase.storage.from('submissions').getPublicUrl(path)
         fileUrl = urlData.publicUrl
       }
