@@ -3,6 +3,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
+function parseAnswerText(text: string) {
+  const parts = (text || '').split('\n\n---\n\n')
+  const essayPart = parts[0]
+  const freeText = parts.slice(1).join('\n\n---\n\n')
+
+  const blocks = essayPart.split(/\n\n(?=Câu hỏi tự luận)/g).filter(Boolean)
+  const qas = blocks
+    .map(block => {
+      const match = block.match(/^Câu hỏi tự luận \d+:\s*([\s\S]*?)\nTrả lời:\s*([\s\S]*)$/)
+      return match ? { question: match[1].trim(), answer: match[2].trim() } : null
+    })
+    .filter(Boolean) as { question: string; answer: string }[]
+
+  return { qas, freeText: qas.length > 0 ? freeText : text }
+}
+
 export default function ReviewPanel() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -221,15 +237,40 @@ export default function ReviewPanel() {
                       {isSubOpen && (
                         <div className="px-5 pb-5 space-y-4">
 
-                          {/* Bài làm */}
-                          <div className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-                            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#60A5FA' }}>
-                              Bài làm
-                            </p>
-                            <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#1E3A5F' }}>
-                              {sub.answer_text}
-                            </p>
-                          </div>
+                          {/* Bài làm — tách riêng từng câu hỏi/trả lời */}
+                          {(() => {
+                            const { qas, freeText } = parseAnswerText(sub.answer_text)
+                            return (
+                              <div className="space-y-3">
+                                {qas.map((qa, i) => (
+                                  <div key={i} className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                                    <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
+                                      Câu hỏi {i + 1}
+                                    </p>
+                                    <p className="text-sm font-semibold mb-3 leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                      {qa.question}
+                                    </p>
+                                    <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
+                                      Trả lời
+                                    </p>
+                                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                      {qa.answer}
+                                    </p>
+                                  </div>
+                                ))}
+                                {freeText.trim() && (
+                                  <div className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                                    <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#60A5FA' }}>
+                                      {qas.length > 0 ? 'Ghi chú thêm' : 'Bài làm'}
+                                    </p>
+                                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                      {freeText}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })()}
 
                           {sub.file_url && (
                             <a href={sub.file_url} target="_blank" rel="noreferrer"
