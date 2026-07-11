@@ -105,27 +105,30 @@ export default function Home() {
       {/* ── Header ── */}
       <div className="sticky top-0 z-20 relative" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer">
-            <Image src="/logo-kglobal.png" alt="K-Global" width={160} height={48}
-              style={{ height: '42px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
-          </a>
-          <span className="text-xs font-semibold tracking-widest uppercase hidden sm:block"
-            style={{ color: GOLD, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-            Học viên Đào tạo K-Global
-          </span>
           <div className="flex items-center gap-5">
+            <a href="https://k-global.com.vn/" target="_blank" rel="noreferrer">
+              <Image src="/logo-kglobal.png" alt="K-Global" width={160} height={48}
+                style={{ height: '42px', width: 'auto', filter: 'brightness(0) invert(1)' }} priority />
+            </a>
+            <div className="w-px h-5 hidden md:block" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
             <a href="tel:+84855555722"
               className="text-sm hidden md:block transition-opacity hover:opacity-70"
               style={{ color: 'rgba(255,255,255,0.85)' }}>
               +84 85 555 5722
             </a>
             <a href="https://www.facebook.com/kglobalvn/" target="_blank" rel="noreferrer"
-              className="transition-opacity hover:opacity-70"
+              className="hidden md:block transition-opacity hover:opacity-70"
               style={{ color: 'rgba(255,255,255,0.85)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z"/>
               </svg>
             </a>
+          </div>
+          <span className="text-xs font-semibold tracking-widest uppercase hidden lg:block"
+            style={{ color: GOLD, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            Học viên Đào tạo K-Global
+          </span>
+          <div className="flex items-center gap-5">
             <Link href="/scoreboard"
               className="text-sm flex items-center gap-1.5 font-medium transition-opacity hover:opacity-70"
               style={{ color: GOLD }}>
