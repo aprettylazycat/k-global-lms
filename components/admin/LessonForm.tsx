@@ -225,16 +225,14 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm font-medium">Câu hỏi trắc nghiệm</p>
-            <p className="text-xs text-gray-400 mt-0.5">{mcqs.length}/5 câu</p>
+            <p className="text-xs text-gray-400 mt-0.5">{mcqs.length} câu</p>
           </div>
-          {mcqs.length < 5 && (
-            <button
-              onClick={() => setMcqs([...mcqs, { question: '', options: ['','','',''], correct: 0 }])}
-              className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-1"
-            >
-              <i className="ti ti-plus" style={{fontSize:'12px'}} /> Thêm
-            </button>
-          )}
+          <button
+            onClick={() => setMcqs([...mcqs, { question: '', options: ['','','',''], correct: 0 }])}
+            className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-1"
+          >
+            <i className="ti ti-plus" style={{fontSize:'12px'}} /> Thêm
+          </button>
         </div>
 
         <div className="space-y-3">
@@ -316,16 +314,14 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm font-medium">Câu hỏi tự luận</p>
-            <p className="text-xs text-gray-400 mt-0.5">{essays.length}/5 câu</p>
+            <p className="text-xs text-gray-400 mt-0.5">{essays.length} câu</p>
           </div>
-          {essays.length < 5 && (
-            <button
-              onClick={() => setEssays([...essays, { question: '' }])}
-              className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-1"
-            >
-              <i className="ti ti-plus" style={{fontSize:'12px'}} /> Thêm
-            </button>
-          )}
+          <button
+            onClick={() => setEssays([...essays, { question: '' }])}
+            className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-1"
+          >
+            <i className="ti ti-plus" style={{fontSize:'12px'}} /> Thêm
+          </button>
         </div>
 
         <div className="space-y-2">
