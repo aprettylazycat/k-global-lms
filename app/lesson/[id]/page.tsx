@@ -296,7 +296,25 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   const [tfAnswers, setTfAnswers] = useState<Record<number, Record<number, boolean>>>({})
   const [tfSubmitted, setTfSubmitted] = useState<Record<number, boolean>>({})
   const [tfResults, setTfResults] = useState<Record<number, boolean>>({})
-
+// Tự động hoàn thành bước 1 nếu bài không có MCQ và không có Đúng/Sai (chỉ có tự luận)
+  useEffect(() => {
+    if (tick1Done || submitted) return
+    if (mcqs.length > 0 || trueFalseGroups.length > 0) return
+    async function autoComplete() {
+      setSubmitting(true)
+      const res = await fetch('/api/submit-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId, userId, answers: {}, attempts: {}, tfAnswers: {}, tfQuestions: [] })
+      })
+      setSubmitting(false)
+      if (res.ok) {
+        setSubmitted(true)
+        onDone()
+      }
+    }
+    autoComplete()
+  }, [mcqs.length, trueFalseGroups.length, tick1Done, submitted]) // eslint-disable-line react-hooks/exhaustive-deps
   const allTfDone = trueFalseGroups.length === 0 ||
     trueFalseGroups.every(g => tfSubmitted[g.id])
   const allTfCorrect = trueFalseGroups.every(g => tfResults[g.id])
@@ -632,8 +650,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   )
 })}
 
-      {/* Nút nộp cuối nếu chỉ có TF (không có MCQ) */}
-      {mcqs.length === 0 && allTfDone && (
+      {/* Nút nộp cuối nếu CÓ Đúng/Sai nhưng không có MCQ (trường hợp chỉ tự luận đã tự động xử lý ở useEffect trên) */}
+      {mcqs.length === 0 && trueFalseGroups.length > 0 && allTfDone && (
         <button onClick={async () => {
           setSubmitting(true)
           const res = await fetch('/api/submit-quiz', {
