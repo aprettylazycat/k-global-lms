@@ -20,6 +20,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
     { question: '', options: ['', '', '', ''], correct: 0 }
   ])
   const [essays, setEssays] = useState<{ question: string }[]>([])
+  const [tfGroups, setTfGroups] = useState<{ question: string; items: { statement: string; correct: boolean }[] }[]>([])
   const [isPublished, setIsPublished] = useState(true)
   const [attachmentUrl, setAttachmentUrl] = useState('')
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
@@ -74,8 +75,15 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
         })
         const loadedMcqs = (l.questions || []).filter((q: any) => q.type === 'mcq')
         const loadedEssays = (l.questions || []).filter((q: any) => q.type === 'essay')
+        const loadedTf = (l.questions || []).filter((q: any) => q.type === 'true_false')
         setMcqs(loadedMcqs.length > 0 ? loadedMcqs : [{ question: '', options: ['', '', '', ''], correct: 0 }])
         setEssays(loadedEssays.length > 0 ? loadedEssays : [])
+        setTfGroups(loadedTf.length > 0
+          ? loadedTf.map((g: any) => ({
+              question: g.question || '',
+              items: (g.items || []).map((it: any) => ({ statement: it.statement || '', correct: !!it.correct }))
+            }))
+          : [])
         setIsPublished(!!l.is_published)
         setAttachmentUrl(l.attachment_url || '')
       } else {
@@ -116,7 +124,13 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
 
     const questions = [
       ...mcqs.map((q, i) => ({ id: i + 1, type: 'mcq', ...q })),
-      ...essays.map((q, i) => ({ id: mcqs.length + i + 1, type: 'essay', ...q }))
+      ...essays.map((q, i) => ({ id: mcqs.length + i + 1, type: 'essay', ...q })),
+      ...tfGroups.map((g, i) => ({
+        id: mcqs.length + essays.length + i + 1,
+        type: 'true_false',
+        question: g.question,
+        items: g.items.map((it, ii) => ({ id: ii + 1, statement: it.statement, correct: it.correct }))
+      }))
     ]
 
     const { data: { session } } = await supabase.auth.getSession()
@@ -157,6 +171,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
       setForm({ title: '', branch_id: '', module_id: '', order_index: 1, youtube_id: '', intro_text: '', practice_prompt: '', recap_content: '' })
       setMcqs([{ question: '', options: ['', '', '', ''], correct: 0 }])
       setEssays([{ question: '' }])
+      setTfGroups([])
       setIsPublished(true)
     }
     setLoading(false)
@@ -338,6 +353,87 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
                   <i className="ti ti-x" style={{fontSize:'14px'}} />
                 </button>
               )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Card 3b: Đúng/Sai */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm font-medium">Câu hỏi Đúng/Sai</p>
+            <p className="text-xs text-gray-400 mt-0.5">{tfGroups.length} nhóm</p>
+          </div>
+          <button
+            onClick={() => setTfGroups([...tfGroups, { question: '', items: [{ statement: '', correct: true }] }])}
+            className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-1"
+          >
+            <i className="ti ti-plus" style={{fontSize:'12px'}} /> Thêm nhóm
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {tfGroups.map((group, gi) => (
+            <div key={gi} className="bg-gray-50 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-gray-400">Nhóm {gi + 1}</span>
+                <button onClick={() => setTfGroups(tfGroups.filter((_, i) => i !== gi))} className="text-gray-300 hover:text-red-500">
+                  <i className="ti ti-x" style={{fontSize:'14px'}} />
+                </button>
+              </div>
+
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 bg-white"
+                placeholder="Đề bài nhóm (vd: Xác định các câu sau đúng hay sai)"
+                value={group.question}
+                onChange={e => {
+                  const u = [...tfGroups]; u[gi].question = e.target.value; setTfGroups(u)
+                }} />
+
+              <div className="space-y-2">
+                {group.items.map((item, ii) => (
+                  <div key={ii} className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                      {ii + 1}
+                    </span>
+                    <input className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
+                      placeholder="Nội dung câu..."
+                      value={item.statement}
+                      onChange={e => {
+                        const u = [...tfGroups]; u[gi].items[ii].statement = e.target.value; setTfGroups(u)
+                      }} />
+                    <div className="flex gap-1 flex-shrink-0">
+                      {[true, false].map(val => (
+                        <button key={String(val)}
+                          onClick={() => { const u = [...tfGroups]; u[gi].items[ii].correct = val; setTfGroups(u) }}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                            item.correct === val
+                              ? (val ? 'bg-green-500 text-white' : 'bg-red-500 text-white')
+                              : 'bg-white border border-gray-200 text-gray-400'
+                          }`}>
+                          {val ? 'Đúng' : 'Sai'}
+                        </button>
+                      ))}
+                    </div>
+                    {group.items.length > 1 && (
+                      <button onClick={() => {
+                        const u = [...tfGroups]; u[gi].items = u[gi].items.filter((_, i) => i !== ii); setTfGroups(u)
+                      }} className="text-gray-300 hover:text-red-400 flex-shrink-0">
+                        <i className="ti ti-x" style={{fontSize:'14px'}} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  const u = [...tfGroups]; u[gi].items = [...u[gi].items, { statement: '', correct: true }]; setTfGroups(u)
+                }}
+                className="mt-2 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+              >
+                <i className="ti ti-plus" style={{fontSize:'11px'}} /> Thêm câu
+              </button>
             </div>
           ))}
         </div>
