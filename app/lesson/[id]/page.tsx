@@ -302,10 +302,11 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     if (mcqs.length > 0 || trueFalseGroups.length > 0) return
     async function autoComplete() {
       setSubmitting(true)
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/submit-quiz', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, userId, answers: {}, attempts: {}, tfAnswers: {}, tfQuestions: [] })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ lessonId, answers: {}, attempts: {}, tfAnswers: {}, tfQuestions: [] })  // bỏ userId
       })
       setSubmitting(false)
       if (res.ok) {
@@ -358,11 +359,12 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     if (isLastSlide) {
       if (!allTfDone) return // chờ TF xong
       setSubmitting(true)
+     const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/submit-quiz', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
         body: JSON.stringify({
-          lessonId, userId, answers, attempts: attemptLog,
+          lessonId, answers, attempts: attemptLog,   // bỏ userId
           tfAnswers, tfQuestions: trueFalseGroups
         })
       })
@@ -654,11 +656,12 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
       {mcqs.length === 0 && trueFalseGroups.length > 0 && allTfDone && (
         <button onClick={async () => {
           setSubmitting(true)
+         const { data: { session } } = await supabase.auth.getSession()
           const res = await fetch('/api/submit-quiz', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
             body: JSON.stringify({
-              lessonId, userId, answers: {}, attempts: {},
+              lessonId, answers: {}, attempts: {},   // bỏ userId
               tfAnswers, tfQuestions: trueFalseGroups
             })
           })
