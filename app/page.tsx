@@ -126,7 +126,7 @@ export default function Home() {
           </div>
           <span className="text-xs font-semibold tracking-widest uppercase hidden lg:block"
             style={{ color: GOLD, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-            Học viên Đào tạo K-Global
+            Học viện Đào tạo K-Global
           </span>
           <div className="flex items-center gap-5">
             <Link href="/scoreboard"
