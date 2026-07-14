@@ -764,10 +764,11 @@ useEffect(() => {
       ? essays.map((q, i) => `Câu hỏi tự luận ${i + 1}: ${q.question}\nTrả lời: ${essayAnswers[q.id] || '(chưa trả lời)'}`).join('\n\n')
       : ''
     const combinedText = [essayBlock, text].filter(Boolean).join('\n\n---\n\n')
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/submit-practice', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lessonId, userId, answer_text: combinedText, file_url: fileUrl })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ lessonId, answer_text: combinedText, file_url: fileUrl })  // bỏ userId
     })
     if (res.ok) {
       // Xóa draft sau khi nộp thành công
