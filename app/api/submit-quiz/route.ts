@@ -1,9 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
+import { verifyUser } from '@/lib/auth-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { lessonId, userId, answers, attempts, tfAnswers, tfQuestions } = await req.json()
+  const check = await verifyUser(req)
+  if (check.error) return check.error
+  const userId = check.user.id   // ← lấy từ token, KHÔNG lấy từ body nữa
+
+  const { lessonId, answers, attempts, tfAnswers, tfQuestions } = await req.json()
 
   const { data: lesson, error: lessonError } = await supabaseAdmin
     .from('lessons').select('questions').eq('id', lessonId).single()
