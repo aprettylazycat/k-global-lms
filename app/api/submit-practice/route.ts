@@ -1,8 +1,13 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
+import { verifyUser } from '@/lib/auth-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { lessonId, userId, answer_text, file_url } = await req.json()
+  const check = await verifyUser(req)
+  if (check.error) return check.error
+  const userId = check.user.id   // ← lấy từ token
+
+  const { lessonId, answer_text, file_url } = await req.json()  // ← bỏ userId
 
   const { data: lesson } = await supabaseAdmin
     .from('lessons').select('no_quiz').eq('id', lessonId).single()
