@@ -22,6 +22,7 @@ export default function LessonPage() {
   const [userId, setUserId] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [nextLessonId, setNextLessonId] = useState<number | null>(null)  // ← thêm ở đây
+  const [locked, setLocked] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -32,6 +33,56 @@ export default function LessonPage() {
       const { data: lessonData } = await supabase
         .from('lessons').select('*').eq('id', lessonId).single()
       setLesson(lessonData)
+
+      // Kiểm tra thật sự đã mở khoá bài này chưa — không chỉ dựa vào UI dashboard
+      if (lessonData) {
+        const { data: allModules } = await supabase
+          .from('modules').select('id, order_index')
+          .eq('branch_id', lessonData.branch_id)
+          .order('order_index', { ascending: true })
+
+        const { data: allLessons } = await supabase
+          .from('lessons').select('id, module_id, order_index')
+          .eq('branch_id', lessonData.branch_id)
+          .eq('is_published', true)
+
+        const { data: allProgress } = await supabase
+          .from('progress').select('lesson_id, tick1')
+          .eq('user_id', session.user.id)
+
+        if (allModules && allLessons) {
+          const progressByLesson = new Map((allProgress ?? []).map((p: any) => [p.lesson_id, p.tick1]))
+          const orderedLessons = allModules.flatMap(m =>
+            allLessons.filter(l => l.module_id === m.id).sort((a, b) => a.order_index - b.order_index)
+          )
+          const idx = orderedLessons.findIndex(l => l.id === lessonId)
+
+          if (idx > 0) {
+            const prevLesson = orderedLessons[idx - 1]
+            let unlocked: boolean
+            if (lessonData.module_id !== prevLesson.module_id) {
+              const firstModuleId = allModules[0]?.id
+              const firstModuleLessons = allLessons.filter(l => l.module_id === firstModuleId)
+              unlocked = firstModuleLessons.every(l => progressByLesson.get(l.id))
+            } else {
+              unlocked = !!progressByLesson.get(prevLesson.id)
+            }
+            if (!unlocked) {
+              setLocked(true)
+              setLoading(false)
+              return
+            }
+          }
+        }
+      }
+
+      // Lấy progress hiện tại của bài này TRƯỚC — cần biết đã hoàn thành chưa trước khi quyết định có upsert hay không
+      const { data: existingProg } = await supabase
+        .from('progress')
+        .select('lesson_id, tick1, tick2, completed_at')
+        .eq('user_id', session.user.id)
+        .eq('lesson_id', lessonId)
+        .maybeSingle()
 
       // Fetch bài tiếp theo trong cùng module
       if (lessonData) {
@@ -47,10 +98,11 @@ export default function LessonPage() {
           .maybeSingle()
         setNextLessonId(nextLesson?.id ?? null)
 
-        // Nếu bài no_quiz → tự động mark tick1 + tick2 = true
-        if (lessonData.no_quiz) {
+        // Nếu bài no_quiz → tự động mark tick1 + tick2 = true, CHỈ 1 LẦN DUY NHẤT (lần đầu vào)
+        // Các lần xem lại sau đó không ghi lại DB nữa — giữ nguyên completed_at gốc, tránh write thừa
+        if (lessonData.no_quiz && !(existingProg?.tick1 && existingProg?.tick2)) {
           await supabase.from('progress').upsert(
-            { user_id: session.user.id, lesson_id: lessonId, tick1: true, tick2: true },
+            { user_id: session.user.id, lesson_id: lessonId, tick1: true, tick2: true, completed_at: new Date().toISOString() },
             { onConflict: 'user_id,lesson_id' }
           )
         }
@@ -92,6 +144,22 @@ export default function LessonPage() {
     return (
       <div className="flex items-center justify-center min-h-screen text-sm" style={{ backgroundColor: CREAM, color: NAVY }}>
         Không tìm thấy bài học.
+      </div>
+    )
+  }
+  if (locked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6" style={{ backgroundColor: CREAM }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'white', border: `2px solid ${BORDER}` }}>
+          <i className="ti ti-lock" style={{ fontSize: '24px', color: NAVY }} />
+        </div>
+        <p className="text-base font-bold mb-2" style={{ color: NAVY }}>Bài học này chưa được mở khoá</p>
+        <p className="text-sm mb-6" style={{ color: '#8AABC8' }}>Hoàn thành bài học trước đó để mở bài này nhé.</p>
+        <button onClick={() => router.push('/dashboard')}
+          className="text-sm font-semibold text-white px-5 py-3 rounded-xl"
+          style={{ backgroundColor: NAVY }}>
+          Về Dashboard
+        </button>
       </div>
     )
   }
