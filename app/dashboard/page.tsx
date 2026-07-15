@@ -158,11 +158,7 @@ setSubmissionStatusMap(latestStatusMap)
     : done >= expectedDone * 1.15 ? 'nhanh hơn'
     : done <= expectedDone * 0.85 ? 'chậm hơn'
     : 'đúng nhịp so với'
-  const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
   const mascotWelcome = 'Chào mừng bạn tham gia khoá học tại K-Global, chúc bạn nhanh chóng lên trình nhé! 🚀'
-  const mascotDaily = dayNumber
-    ? `Hôm nay là ngày thứ ${dayNumber} của bạn tại K-Global! ${nextLessonTitle ? `Bạn đang ở bài "${nextLessonTitle}"` : 'Bạn đã hoàn thành hết bài rồi'} — tiến độ ${paceLabel} nhịp trung bình đó, tiếp tục cố gắng nhé! 💪`
-    : undefined
 
   const lessonsByModule = modules.map(mod => ({
     module: mod,
@@ -170,6 +166,10 @@ setSubmissionStatusMap(latestStatusMap)
   })).filter(g => g.lessons.length > 0)
 
   const orderedLessons = lessonsByModule.flatMap(g => g.lessons)
+  const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
+  const mascotDaily = dayNumber
+    ? `Hôm nay là ngày thứ ${dayNumber} của bạn tại K-Global! ${nextLessonTitle ? `Bạn đang ở bài "${nextLessonTitle}"` : 'Bạn đã hoàn thành hết bài rồi'} — tiến độ ${paceLabel} nhịp trung bình đó, tiếp tục cố gắng nhé! 💪`
+    : undefined
 
   function isLessonUnlocked(lessonId: number) {
   const lesson = orderedLessons.find(l => l.id === lessonId)
