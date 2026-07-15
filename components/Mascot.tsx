@@ -2,8 +2,6 @@
 import { useEffect, useRef, useState } from 'react'
 
 const NAVY = '#466898'
-const GOLD = '#C9A84C'
-const CREAM = '#F5F0E8'
 const BORDER = '#E2D8C8'
 
 const IDLE_MESSAGES = [
@@ -23,8 +21,8 @@ const IDLE_MS = 2 * 60 * 1000        // 2 phút không có tương tác
 const WANDER_MIN_MS = 10000
 const WANDER_MAX_MS = 18000
 const WALK_DURATION_MS = 2500
-const LEFT_MIN = 4
-const LEFT_MAX = 82
+const TOP_MIN = 15                   // % chiều cao màn hình, giới hạn vùng di chuyển dọc
+const TOP_MAX = 70
 const POSE_CYCLE_MS = 9000           // đổi dáng nghỉ (khi không nói) mỗi 9s
 
 function pickRandom<T>(arr: T[], exclude?: T): T {
@@ -46,13 +44,12 @@ export default function Mascot({
   const restPoses = variant === 'study' ? STUDY_POSES : IDLE_POSES
   const [bubble, setBubble] = useState<{ icon?: string; text: string } | null>(null)
   const [pose, setPose] = useState(restPoses[0])
-  const [leftPct, setLeftPct] = useState(80)
-  const [facing, setFacing] = useState<'left' | 'right'>('left')
+  const [topPct, setTopPct] = useState(40)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wanderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function showBubble(msg: { icon?: string; text: string }, durationMs = 5500) {
+  function showBubble(msg: { icon?: string; text: string }, durationMs = 8000) {
     setPose(prev => pickRandom(TALK_POSES, prev))
     setBubble(msg)
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
@@ -71,10 +68,10 @@ export default function Mascot({
 
     const timer = setTimeout(() => {
       if (welcomeMessage && !localStorage.getItem(welcomeKey)) {
-        showBubble({ icon: '👋', text: welcomeMessage }, 7000)
+        showBubble({ icon: '👋', text: welcomeMessage }, 10000)
         localStorage.setItem(welcomeKey, '1')
       } else if (dailyMessage && !localStorage.getItem(dailyKey)) {
-        showBubble({ icon: '📈', text: dailyMessage }, 7000)
+        showBubble({ icon: '📈', text: dailyMessage }, 10000)
         localStorage.setItem(dailyKey, '1')
       }
     }, 1200)
@@ -88,7 +85,7 @@ export default function Mascot({
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
       idleTimerRef.current = setTimeout(() => {
         const msg = IDLE_MESSAGES[Math.floor(Math.random() * IDLE_MESSAGES.length)]
-        showBubble(msg, 5500)
+        showBubble(msg, 8000)
         resetIdleTimer()
       }, IDLE_MS)
     }
@@ -118,16 +115,12 @@ export default function Mascot({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant])
 
-  // Loanh quanh — đổi vị trí ngẫu nhiên dọc cạnh dưới màn hình
+  // Loanh quanh — đổi vị trí ngẫu nhiên theo chiều dọc, giữ cố định cạnh phải
   useEffect(() => {
     function scheduleNextWander() {
       const delay = WANDER_MIN_MS + Math.random() * (WANDER_MAX_MS - WANDER_MIN_MS)
       wanderTimerRef.current = setTimeout(() => {
-        setLeftPct(prev => {
-          const target = LEFT_MIN + Math.random() * (LEFT_MAX - LEFT_MIN)
-          setFacing(target > prev ? 'right' : 'left')
-          return target
-        })
+        setTopPct(TOP_MIN + Math.random() * (TOP_MAX - TOP_MIN))
         scheduleNextWander()
       }, delay)
     }
@@ -137,8 +130,8 @@ export default function Mascot({
 
   return (
     <div
-      className="fixed z-40 flex flex-col items-center gap-2 transition-[left] ease-in-out"
-      style={{ left: `${leftPct}%`, bottom: '20px', transitionDuration: `${WALK_DURATION_MS}ms`, transform: 'translateX(-50%)' }}
+      className="fixed z-40 flex flex-col items-center gap-2 transition-[top] ease-in-out"
+      style={{ right: '32px', top: `${topPct}%`, transitionDuration: `${WALK_DURATION_MS}ms` }}
     >
       {bubble && (
         <div className="relative max-w-[240px] rounded-2xl px-4 py-3 shadow-xl"
@@ -151,20 +144,15 @@ export default function Mascot({
             style={{ backgroundColor: 'white', borderRight: `2px solid ${BORDER}`, borderBottom: `2px solid ${BORDER}` }} />
         </div>
       )}
-      <button
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={pose}
+        alt="K-Global mascot"
         onClick={() => setBubble(null)}
-        className="w-28 h-28 rounded-full flex items-center justify-center shadow-xl transition-transform hover:scale-110 active:scale-95 overflow-hidden"
-        style={{ backgroundColor: CREAM, border: `3px solid ${GOLD}` }}
+        className="w-28 h-28 object-contain cursor-pointer transition-transform hover:scale-110 active:scale-95"
+        style={{ filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.25))' }}
         title="Trợ lý K-Global"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={pose}
-          alt="K-Global mascot"
-          className="w-24 h-24 object-contain transition-opacity duration-300"
-          style={{ transform: facing === 'right' ? 'scaleX(-1)' : 'none' }}
-        />
-      </button>
+      />
     </div>
   )
 }
