@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Profile, Progress } from '@/types'
+import FireworksCanvas from '@/components/FireworksCanvas'
+import FeedbackModal, { FeedbackQuestion } from '@/components/FeedbackModal'
 
 type ModuleItem = {
   id: number
@@ -61,6 +63,11 @@ const [submissionStatusMap, setSubmissionStatusMap] = useState<Record<number, { 
 const [rejectPopup, setRejectPopup] = useState<{
   lessonId: number; title: string; reason: string | null
 } | null>(null)
+const [feedbackSeenModules, setFeedbackSeenModules] = useState<number[]>([])
+const [fireworksModuleId, setFireworksModuleId] = useState<number | null>(null)
+const [pendingFeedback, setPendingFeedback] = useState<{ moduleId: number; moduleName: string } | null>(null)
+const [feedbackQuestions, setFeedbackQuestions] = useState<FeedbackQuestion[]>([])
+const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -76,7 +83,7 @@ const [rejectPopup, setRejectPopup] = useState<{
 
       if (!prof?.branch_id) { setLoading(false); return }
 
-      const [lessonsRes, modulesRes, badgesRes] = await Promise.all([
+      const [lessonsRes, modulesRes, badgesRes, feedbackSeenRes] = await Promise.all([
         supabase.from('lessons')
           .select('id, title, order_index, module_id')
           .eq('branch_id', prof.branch_id)
@@ -89,12 +96,16 @@ const [rejectPopup, setRejectPopup] = useState<{
         supabase.from('badges')
           .select('badge_type')
           .eq('user_id', session.user.id),
+        supabase.from('module_feedback_seen')
+          .select('module_id')
+          .eq('user_id', session.user.id),
       ])
 
       const lessonList = lessonsRes.data ?? []
       setLessons(lessonList as LessonListItem[])
       setModules((modulesRes.data ?? []) as ModuleItem[])
       setBadges(badgesRes.data?.map((b: any) => b.badge_type) ?? [])
+      setFeedbackSeenModules((feedbackSeenRes.data ?? []).map((r: any) => r.module_id))
 
       const ids = lessonList.map((l: { id: number }) => l.id)
       if (ids.length > 0) {
@@ -193,6 +204,75 @@ setSubmissionStatusMap(latestStatusMap)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, badges])
+
+  useEffect(() => {
+    if (loading || lessonsByModule.length === 0) return
+    const completedModule = lessonsByModule.find(g =>
+      g.lessons.every(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2) &&
+      !feedbackSeenModules.includes(g.module.id)
+    )
+    if (completedModule && !fireworksModuleId && !pendingFeedback) {
+      setFireworksModuleId(completedModule.module.id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, progressMap, feedbackSeenModules])
+
+  async function handleFireworksDone() {
+    const moduleId = fireworksModuleId
+    setFireworksModuleId(null)
+    if (!moduleId) return
+    const mod = lessonsByModule.find(g => g.module.id === moduleId)?.module
+    const res = await fetch(`/api/feedback/questions?module_id=${moduleId}`)
+    const data = await res.json()
+    const questions: FeedbackQuestion[] = data.questions ?? []
+
+    if (questions.length === 0) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await fetch('/api/feedback/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ moduleId, responses: [], skipped: true })
+        })
+      }
+      setFeedbackSeenModules(prev => [...prev, moduleId])
+      return
+    }
+    setFeedbackQuestions(questions)
+    setPendingFeedback({ moduleId, moduleName: mod?.name ?? '' })
+  }
+
+  async function submitFeedback(responses: { question_id: string; rating_value?: number; text_value?: string }[]) {
+    if (!pendingFeedback) return
+    setFeedbackSubmitting(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await fetch('/api/feedback/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ moduleId: pendingFeedback.moduleId, responses, skipped: false })
+      })
+    }
+    setFeedbackSeenModules(prev => [...prev, pendingFeedback.moduleId])
+    setFeedbackSubmitting(false)
+    setPendingFeedback(null)
+  }
+
+  async function skipFeedback() {
+    if (!pendingFeedback) return
+    setFeedbackSubmitting(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await fetch('/api/feedback/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ moduleId: pendingFeedback.moduleId, responses: [], skipped: true })
+      })
+    }
+    setFeedbackSeenModules(prev => [...prev, pendingFeedback.moduleId])
+    setFeedbackSubmitting(false)
+    setPendingFeedback(null)
+  }
 
   if (loading) {
     return (
@@ -558,7 +638,19 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
           </div>
         </div>
       )}
+{/* Fireworks khi hoàn thành module */}
+      {fireworksModuleId && <FireworksCanvas onDone={handleFireworksDone} />}
 
+      {/* Feedback modal — chỉ hiện SAU KHI badge popup (nếu có) đã đóng, để không chồng 2 modal */}
+      {pendingFeedback && !badgePopup && feedbackQuestions.length > 0 && (
+        <FeedbackModal
+          moduleName={pendingFeedback.moduleName}
+          questions={feedbackQuestions}
+          submitting={feedbackSubmitting}
+          onSubmit={submitFeedback}
+          onSkip={skipFeedback}
+        />
+      )}
       <div className="h-10 lg:h-0" />
     </div>
   )
