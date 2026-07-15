@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Lesson, Progress } from '@/types'
+import Mascot from '@/components/Mascot'
 
 const NAVY = '#466898'
 const GOLD = '#C9A84C'
@@ -240,6 +241,7 @@ export default function LessonPage() {
           )}
         </div>
       </div>
+      <Mascot variant="study" />
     </div>
   )
 }

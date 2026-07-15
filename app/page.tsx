@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import Mascot from '@/components/Mascot'
 
 const NAVY = '#466898'
 const GOLD = '#C9A84C'
@@ -403,6 +404,7 @@ export default function Home() {
         }
         @media (prefers-reduced-motion: reduce) { .stat-shimmer { animation: none; } }
       `}</style>
+      <Mascot />
     </div>
   )
 }

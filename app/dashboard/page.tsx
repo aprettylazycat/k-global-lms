@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Profile, Progress } from '@/types'
 import FireworksCanvas from '@/components/FireworksCanvas'
 import FeedbackModal, { FeedbackQuestion } from '@/components/FeedbackModal'
+import Mascot from '@/components/Mascot'
 
 type ModuleItem = {
   id: number
@@ -148,6 +149,20 @@ setSubmissionStatusMap(latestStatusMap)
   const pct = lessons.length
     ? Math.round(((tick1Count / lessons.length) + (tick2Count / lessons.length)) / 2 * 100)
     : 0
+    const TARGET_LESSONS_PER_DAY = 0.5
+  const dayNumber = profile?.onboarding_date
+    ? Math.max(1, Math.floor((Date.now() - new Date(profile.onboarding_date).getTime()) / 86400000) + 1)
+    : null
+  const expectedDone = dayNumber ? dayNumber * TARGET_LESSONS_PER_DAY : null
+  const paceLabel = expectedDone == null ? ''
+    : done >= expectedDone * 1.15 ? 'nhanh hơn'
+    : done <= expectedDone * 0.85 ? 'chậm hơn'
+    : 'đúng nhịp so với'
+  const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
+  const mascotWelcome = 'Chào mừng bạn tham gia khoá học tại K-Global, chúc bạn nhanh chóng lên trình nhé! 🚀'
+  const mascotDaily = dayNumber
+    ? `Hôm nay là ngày thứ ${dayNumber} của bạn tại K-Global! ${nextLessonTitle ? `Bạn đang ở bài "${nextLessonTitle}"` : 'Bạn đã hoàn thành hết bài rồi'} — tiến độ ${paceLabel} nhịp trung bình đó, tiếp tục cố gắng nhé! 💪`
+    : undefined
 
   const lessonsByModule = modules.map(mod => ({
     module: mod,
@@ -651,6 +666,7 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
           onSkip={skipFeedback}
         />
       )}
+      <Mascot welcomeMessage={mascotWelcome} dailyMessage={mascotDaily} storageKey={profile?.id} />
       <div className="h-10 lg:h-0" />
     </div>
   )
