@@ -26,7 +26,7 @@ export default function ReviewPanel() {
   const [searchText, setSearchText] = useState('')
   const [openUsers, setOpenUsers] = useState<Set<string>>(new Set())
   const [openSubs, setOpenSubs] = useState<Set<string>>(new Set())
-  // Chỉ fetch 1 lần khi mount — bấm "Làm mới" mới fetch lại
+  const [processingId, setProcessingId] = useState<string | null>(null)
   const hasFetched = useRef(false)
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
 
@@ -70,6 +70,7 @@ export default function ReviewPanel() {
   
 
   async function handleApprove(sub: any, perfectScore: boolean = false) {
+    setProcessingId(sub.id)
     const res = await fetch('/api/admin/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -77,17 +78,20 @@ export default function ReviewPanel() {
     })
     if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))
     else { const data = await res.json(); alert(`Lỗi: ${data.error || 'không rõ'}`) }
+    setProcessingId(null)
   }
 
   async function handleReject(sub: any) {
-  const res = await fetch('/api/admin/reject', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ submissionId: sub.id, reason: rejectReasons[sub.id] || '' })
-  })
-  if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))
-  else { const data = await res.json(); alert(`Lỗi: ${data.error || 'không rõ'}`) }
-}
+    setProcessingId(sub.id)
+    const res = await fetch('/api/admin/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submissionId: sub.id, reason: rejectReasons[sub.id] || '' })
+    })
+    if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))
+    else { const data = await res.json(); alert(`Lỗi: ${data.error || 'không rõ'}`) }
+    setProcessingId(null)
+  }
 
   function toggleUser(userId: string) {
     setOpenUsers(prev => { const n = new Set(prev); n.has(userId) ? n.delete(userId) : n.add(userId); return n })
@@ -318,17 +322,25 @@ export default function ReviewPanel() {
 <div className="flex gap-3">
   <button
     onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
-    className="flex-1 text-white rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+    disabled={processingId === sub.id}
+    className="flex-1 text-white rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
     style={{ backgroundColor: '#0E62B1' }}>
-    <i className="ti ti-check" style={{ fontSize: '16px' }} />
-    Duyệt bài
+    {processingId === sub.id ? (
+      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+    ) : (
+      <><i className="ti ti-check" style={{ fontSize: '16px' }} />Duyệt bài</>
+    )}
   </button>
   <button
     onClick={() => handleReject(sub)}
-    className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-red-50 flex items-center justify-center gap-2"
+    disabled={processingId === sub.id}
+    className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-red-50 disabled:opacity-50 flex items-center justify-center gap-2"
     style={{ border: '2px solid #FECACA', color: '#DC2626' }}>
-    <i className="ti ti-x" style={{ fontSize: '16px' }} />
-    Từ chối
+    {processingId === sub.id ? (
+      <div className="w-4 h-4 border-2 border-red-200 border-t-red-600 rounded-full animate-spin" />
+    ) : (
+      <><i className="ti ti-x" style={{ fontSize: '16px' }} />Từ chối</>
+    )}
   </button>
 </div>
                         </div>

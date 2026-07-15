@@ -3,9 +3,18 @@ import { useState } from 'react'
 
 const NAVY = '#466898'
 const GOLD = '#C9A84C'
+const DEEP_GOLD = '#B8860B'
 const CREAM = '#F5F0E8'
 const BORDER = '#E2D8C8'
 const MUTED = '#8AABC8'
+
+const RATING_FACES: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: '😢',
+  2: '🙁',
+  3: '😐',
+  4: '🙂',
+  5: '🤩',
+}
 
 export type FeedbackQuestion = {
   id: string
@@ -50,7 +59,10 @@ export default function FeedbackModal({
       <div className="rounded-3xl max-w-lg w-full my-8 shadow-2xl overflow-hidden" style={{ backgroundColor: 'white' }}>
 
         {/* Header */}
-        <div className="p-6 text-center" style={{ backgroundColor: NAVY }}>
+        <div className="p-6 text-center" style={{ backgroundColor: NAVY, borderBottom: `3px solid ${GOLD}` }}>
+          <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold" style={{ color: GOLD }}>
+            Module Completed
+          </p>
           <p className="text-xl font-bold mb-1 text-white">
             Bạn vừa hoàn thành {moduleName}! 🎉
           </p>
@@ -71,12 +83,15 @@ export default function FeedbackModal({
                       key={star}
                       type="button"
                       onClick={() => setRatings(prev => ({ ...prev, [q.id]: star }))}
-                      className="text-2xl transition-transform hover:scale-110"
-                      style={{ color: (ratings[q.id] ?? 0) >= star ? GOLD : BORDER }}
+                      className="text-3xl transition-transform hover:scale-110"
+                      style={{ color: (ratings[q.id] ?? 0) >= star ? DEEP_GOLD : BORDER }}
                     >
                       ★
                     </button>
                   ))}
+                  <span className="text-2xl ml-1 transition-opacity" style={{ opacity: ratings[q.id] ? 1 : 0 }}>
+                    {RATING_FACES[ratings[q.id] as 1 | 2 | 3 | 4 | 5] ?? ''}
+                  </span>
                 </div>
               ) : (
                 <textarea

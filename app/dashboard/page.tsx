@@ -391,7 +391,7 @@ setSubmissionStatusMap(latestStatusMap)
                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
   style={{ backgroundColor: earned ? b.bg : '#F3F4F6' }}>
   <img src={b.imageUrl} alt={b.label}
-    className="w-full h-full object-cover"
+    className="w-full h-full object-cover scale-125"
     style={{ opacity: earned ? 1 : 0.3, filter: earned ? 'none' : 'grayscale(100%)' }} />
 </div>
 <div className="min-w-0">
@@ -588,7 +588,7 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
             onClick={e => e.stopPropagation()}>
             <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center overflow-hidden"
   style={{ backgroundColor: badgePopup.bg }}>
-  <img src={badgePopup.imageUrl} alt={badgePopup.label} className="w-full h-full object-cover" />
+  <img src={badgePopup.imageUrl} alt={badgePopup.label} className="w-full h-full object-cover scale-125" />
 </div>
             <p className="text-xs tracking-[0.2em] uppercase mb-2 font-semibold"
               style={{ color: GOLD }}>Achievement Unlocked</p>
