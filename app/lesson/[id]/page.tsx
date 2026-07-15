@@ -76,14 +76,6 @@ export default function LessonPage() {
         }
       }
 
-      // Lấy progress hiện tại của bài này TRƯỚC — cần biết đã hoàn thành chưa trước khi quyết định có upsert hay không
-      const { data: existingProg } = await supabase
-        .from('progress')
-        .select('lesson_id, tick1, tick2, completed_at')
-        .eq('user_id', session.user.id)
-        .eq('lesson_id', lessonId)
-        .maybeSingle()
-
       // Fetch bài tiếp theo trong cùng module
       if (lessonData) {
         const { data: nextLesson } = await supabase
@@ -98,13 +90,14 @@ export default function LessonPage() {
           .maybeSingle()
         setNextLessonId(nextLesson?.id ?? null)
 
-        // Nếu bài no_quiz → tự động mark tick1 + tick2 = true, CHỈ 1 LẦN DUY NHẤT (lần đầu vào)
-        // Các lần xem lại sau đó không ghi lại DB nữa — giữ nguyên completed_at gốc, tránh write thừa
-        if (lessonData.no_quiz && !(existingProg?.tick1 && existingProg?.tick2)) {
-          await supabase.from('progress').upsert(
-            { user_id: session.user.id, lesson_id: lessonId, tick1: true, tick2: true, completed_at: new Date().toISOString() },
-            { onConflict: 'user_id,lesson_id' }
-          )
+        // Nếu bài no_quiz → gọi API để tự động mark tick1+tick2=true (server-side, có xác thực)
+        // API tự kiểm tra đã hoàn thành chưa — chỉ ghi 1 lần duy nhất, giữ nguyên completed_at gốc
+        if (lessonData.no_quiz) {
+          await fetch('/api/mark-no-quiz-done', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+            body: JSON.stringify({ lessonId })
+          })
         }
       }
 
