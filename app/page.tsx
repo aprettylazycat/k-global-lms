@@ -41,12 +41,9 @@ export default function Home() {
         .from('branches')
         .select('id, name, slug, color_bg, color_text')
 
-      const { count: learners } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'learner')
-
-      setLearnerCount(learners ?? 0)
+      const learnersRes = await fetch('/api/public/learner-count')
+      const learnersData = await learnersRes.json()
+      setLearnerCount(learnersData.count ?? 0)
       if (!branchData) { setLoading(false); return }
 
       const withData = await Promise.all(
