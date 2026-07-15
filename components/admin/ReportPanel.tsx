@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import * as XLSX from 'xlsx'
+import FeedbackReportTab from './FeedbackReportTab'
 
 type LessonProgress = {
   lessonId: number
@@ -120,6 +121,7 @@ export default function ReportPanel() {
   const [resetPassword, setResetPassword] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMsg, setResetMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [viewTab, setViewTab] = useState<'learners' | 'feedback'>('learners')
   const hasFetched = useRef(false)
 
   async function load() {
@@ -245,6 +247,34 @@ export default function ReportPanel() {
 
   return (
     <div className="space-y-5">
+
+      {/* Tab switcher */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setViewTab('learners')}
+          className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+          style={{
+            backgroundColor: viewTab === 'learners' ? '#0E62B1' : 'white',
+            color: viewTab === 'learners' ? 'white' : '#0E62B1',
+            border: '2px solid #0E62B1'
+          }}>
+          <i className="ti ti-users mr-1.5" style={{ fontSize: '13px' }} />
+          Học viên
+        </button>
+        <button onClick={() => setViewTab('feedback')}
+          className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+          style={{
+            backgroundColor: viewTab === 'feedback' ? '#0E62B1' : 'white',
+            color: viewTab === 'feedback' ? 'white' : '#0E62B1',
+            border: '2px solid #0E62B1'
+          }}>
+          <i className="ti ti-message-star mr-1.5" style={{ fontSize: '13px' }} />
+          Feedback
+        </button>
+      </div>
+
+      {viewTab === 'feedback' && <FeedbackReportTab />}
+
+      {viewTab === 'learners' && <>
 
       {/* Header stats */}
       {stats && (
@@ -610,6 +640,7 @@ export default function ReportPanel() {
           </div>
         </div>
       )}
+      </>}
     </div>
   )
 }
