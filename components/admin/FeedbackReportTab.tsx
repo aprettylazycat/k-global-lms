@@ -194,52 +194,76 @@ export default function FeedbackReportTab() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {questionGroups.map(q => {
-            const avg = q.ratings.length > 0
-              ? (q.ratings.reduce((a, b) => a + b, 0) / q.ratings.length)
-              : null
-            return (
-              <div key={q.questionId} className="rounded-2xl p-5 bg-white" style={{ border: '2px solid #BFDBFE' }}>
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <p className="text-sm font-semibold flex-1" style={{ color: '#1E3A5F' }}>
-                    {q.questionType === 'rating' ? '⭐' : '💬'} {q.questionText}
-                  </p>
-                  {q.questionType === 'rating' && avg != null && (
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-2xl font-bold" style={{ color: '#0E62B1' }}>{avg.toFixed(1)}</p>
-                      <p className="text-[10px]" style={{ color: '#93C5FD' }}>{q.ratings.length} lượt đánh giá</p>
-                    </div>
-                  )}
-                </div>
+        <div className="space-y-2.5">
+          {questionGroups.map(q => (
+            <QuestionCard key={q.questionId} q={q} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
-                {q.questionType === 'rating' ? (
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <span key={star} className="text-lg"
-                        style={{ color: avg != null && avg >= star - 0.5 ? '#C9A84C' : '#E2E8F0' }}>★</span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                    {q.texts.length === 0 ? (
-                      <p className="text-xs" style={{ color: '#93C5FD' }}>Chưa có câu trả lời nào.</p>
-                    ) : q.texts.map((t, i) => (
-                      <div key={i} className="rounded-xl px-3 py-2" style={{ backgroundColor: '#EFF6FF' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-semibold" style={{ color: '#0E62B1' }}>{t.name}</p>
-                          <p className="text-[10px]" style={{ color: '#93C5FD' }}>
-                            {new Date(t.submittedAt).toLocaleDateString('vi-VN')}
-                          </p>
-                        </div>
-                        <p className="text-xs" style={{ color: '#1E3A5F' }}>{t.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+function QuestionCard({ q }: { q: QuestionGroup }) {
+  const [open, setOpen] = useState(false)
+  const avg = q.ratings.length > 0
+    ? (q.ratings.reduce((a, b) => a + b, 0) / q.ratings.length)
+    : null
+  const answerCount = q.questionType === 'rating' ? q.ratings.length : q.texts.length
+
+  return (
+    <div className="rounded-2xl bg-white overflow-hidden" style={{ border: '2px solid #BFDBFE' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-blue-50"
+      >
+        <p className="text-sm font-semibold flex-1 min-w-0 truncate" style={{ color: '#1E3A5F' }}>
+          {q.questionType === 'rating' ? '⭐' : '💬'} {q.questionText}
+        </p>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {q.questionType === 'rating' && avg != null ? (
+            <span className="text-sm font-bold" style={{ color: '#0E62B1' }}>
+              {avg.toFixed(1)} ★
+            </span>
+          ) : (
+            <span className="text-xs font-medium" style={{ color: '#93C5FD' }}>
+              {answerCount} trả lời
+            </span>
+          )}
+          <i className={`ti ti-chevron-down transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            style={{ fontSize: '14px', color: '#BFDBFE' }} />
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5" style={{ borderTop: '1px solid #EFF6FF' }}>
+          {q.questionType === 'rating' ? (
+            <div className="flex items-center gap-3 pt-4">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <span key={star} className="text-lg"
+                    style={{ color: avg != null && avg >= star - 0.5 ? '#C9A84C' : '#E2E8F0' }}>★</span>
+                ))}
               </div>
-            )
-          })}
+              <p className="text-xs" style={{ color: '#93C5FD' }}>{q.ratings.length} lượt đánh giá</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 pt-3">
+              {q.texts.length === 0 ? (
+                <p className="text-xs" style={{ color: '#93C5FD' }}>Chưa có câu trả lời nào.</p>
+              ) : q.texts.map((t, i) => (
+                <div key={i} className="rounded-xl px-3 py-2" style={{ backgroundColor: '#EFF6FF' }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold" style={{ color: '#0E62B1' }}>{t.name}</p>
+                    <p className="text-[10px]" style={{ color: '#93C5FD' }}>
+                      {new Date(t.submittedAt).toLocaleDateString('vi-VN')}
+                    </p>
+                  </div>
+                  <p className="text-xs" style={{ color: '#1E3A5F' }}>{t.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
