@@ -1,4 +1,3 @@
-@'
 'use client'
 import { useEffect, useRef } from 'react'
 
@@ -90,7 +89,7 @@ export default function FireworksCanvas({ onDone }: { onDone: () => void }) {
     }
     animate()
 
-    const timeout = setTimeout(finish, 4000) // an toÃ n: tá»± táº¯t tá»‘i Ä‘a 4s dÃ¹ particles chÆ°a háº¿t
+    const timeout = setTimeout(finish, 4000) // an toàn: tự tắt tối đa 4s dù particles chưa hết
 
     return () => {
       cancelAnimationFrame(rafId)
@@ -107,9 +106,8 @@ export default function FireworksCanvas({ onDone }: { onDone: () => void }) {
     >
       <canvas ref={canvasRef} className="w-full h-full" />
       <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-xs font-medium text-white/70">
-        Nháº¥n Ä‘á»ƒ bá» qua
+        Nhấn để bỏ qua
       </p>
     </div>
   )
 }
-'@ | Set-Content -Path "components/FireworksCanvas.tsx" -Encoding UTF8

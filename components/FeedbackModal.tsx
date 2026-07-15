@@ -1,4 +1,3 @@
-@'
 'use client'
 import { useState } from 'react'
 
@@ -46,17 +45,17 @@ export default function FeedbackModal({
   }
 
   return (
-    // KhÃ´ng Ä‘Ã³ng báº±ng click-outside/ESC â€” chá»‰ Ä‘Ã³ng qua 2 nÃºt bÃªn dÆ°á»›i, Ä‘á»ƒ trÃ¡nh máº¥t cÃ¢u tráº£ lá»i dá»Ÿ dang
+    // Không đóng bằng click-outside/ESC — chỉ đóng qua 2 nút bên dưới, để tránh mất câu trả lời dở dang
     <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
       <div className="rounded-3xl max-w-lg w-full my-8 shadow-2xl overflow-hidden" style={{ backgroundColor: 'white' }}>
 
         {/* Header */}
         <div className="p-6 text-center" style={{ backgroundColor: NAVY }}>
           <p className="text-xl font-bold mb-1 text-white">
-            Báº¡n vá»«a hoÃ n thÃ nh {moduleName}! ðŸŽ‰
+            Bạn vừa hoàn thành {moduleName}! 🎉
           </p>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            VÃ i phÃºt chia sáº» cáº£m nháº­n giÃºp K-Global cáº£i thiá»‡n chÆ°Æ¡ng trÃ¬nh Ä‘Ã o táº¡o.
+            Vài phút chia sẻ cảm nhận giúp K-Global cải thiện chương trình đào tạo.
           </p>
         </div>
 
@@ -75,7 +74,7 @@ export default function FeedbackModal({
                       className="text-2xl transition-transform hover:scale-110"
                       style={{ color: (ratings[q.id] ?? 0) >= star ? GOLD : BORDER }}
                     >
-                      â˜…
+                      ★
                     </button>
                   ))}
                 </div>
@@ -84,7 +83,7 @@ export default function FeedbackModal({
                   rows={3}
                   className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none resize-y"
                   style={{ border: `1px solid ${BORDER}`, backgroundColor: CREAM, color: NAVY }}
-                  placeholder="Chia sáº» cáº£m nháº­n cá»§a báº¡n..."
+                  placeholder="Chia sẻ cảm nhận của bạn..."
                   value={texts[q.id] || ''}
                   onChange={e => setTexts(prev => ({ ...prev, [q.id]: e.target.value }))}
                 />
@@ -101,7 +100,7 @@ export default function FeedbackModal({
             className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-40 hover:opacity-90"
             style={{ backgroundColor: NAVY }}
           >
-            {submitting ? 'Äang gá»­i...' : 'Gá»­i feedback'}
+            {submitting ? 'Đang gửi...' : 'Gửi feedback'}
           </button>
           <button
             onClick={onSkip}
@@ -109,11 +108,10 @@ export default function FeedbackModal({
             className="w-full text-sm font-medium py-3 rounded-xl transition-colors disabled:opacity-40"
             style={{ color: MUTED }}
           >
-            Bá» qua
+            Bỏ qua
           </button>
         </div>
       </div>
     </div>
   )
 }
-'@ | Set-Content -Path "components/FeedbackModal.tsx" -Encoding UTF8
