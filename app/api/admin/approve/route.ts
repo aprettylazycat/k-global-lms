@@ -124,4 +124,14 @@ async function checkBadges(userId: string) {
     Object.values(modules).map(id => isModulePerfect(id))
   )
   if (allPerfect.every(Boolean)) await award('perfect-member')
+
+  // Badge tự động cho MỌI module khác không nằm trong moduleMap cố định ở trên —
+  // để không phải sửa code mỗi lần thêm module mới (vd "Khóa học AI K-Global")
+  const knownModuleIds = new Set(Object.values(modules))
+  const { data: allBranchModules } = await supabaseAdmin
+    .from('modules').select('id').eq('branch_id', branchId)
+  for (const m of allBranchModules ?? []) {
+    if (knownModuleIds.has(m.id)) continue // đã xử lý ở trên rồi, khỏi trùng
+    if (await isModuleDone(m.id)) await award(`module-${m.id}`)
+  }
 }
