@@ -12,22 +12,28 @@ const IDLE_MESSAGES = [
   { icon: '❓', text: 'Bạn có đang gặp khó khăn ở đâu không? Đừng ngại hỏi mentor nhé!' },
 ]
 
-// 3 nhóm dáng — mỗi nhóm luân phiên ngẫu nhiên
-const STUDY_POSES = ['/mascot/panda-laptop.png', '/mascot/panda-reading.png']       // dùng ở trang Lesson
-const IDLE_POSES = ['/mascot/panda-noodles.png', '/mascot/panda-backview.png']      // dùng ở Dashboard/Trang chủ
-const TALK_POSES = ['/mascot/panda-wave-twig.png', '/mascot/panda-wave-normal.png', '/mascot/panda-heart.png'] // khi đang "nói"
+// 3 nhóm dáng — mỗi nhóm luân phiên ngẫu nhiên. Thêm ảnh mới chỉ cần thêm path vào đúng mảng.
+const STUDY_POSES = ['/mascot/panda-laptop.png', '/mascot/panda-reading.png', '/mascot/panda-new-4.png']       // dùng ở trang Lesson
+const IDLE_POSES = ['/mascot/panda-noodles.png', '/mascot/panda-backview.png', '/mascot/panda-new-2.png', '/mascot/panda-new-3.png']      // dùng ở Dashboard/Trang chủ
+const TALK_POSES = ['/mascot/panda-wave-twig.png', '/mascot/panda-wave-normal.png', '/mascot/panda-heart.png', '/mascot/panda-new-1.png', '/mascot/panda-new-5-hug-bamboo.png'] // khi đang "nói"
 
 const IDLE_MS = 2 * 60 * 1000        // 2 phút không có tương tác
 const WANDER_MIN_MS = 10000
 const WANDER_MAX_MS = 18000
 const WALK_DURATION_MS = 2500
-const TOP_MIN = 15                   // % chiều cao màn hình, giới hạn vùng di chuyển dọc
+const TOP_MIN = 15                   // % chiều cao màn hình, giới hạn vùng tự di chuyển dọc
 const TOP_MAX = 70
 const POSE_CYCLE_MS = 9000           // đổi dáng nghỉ (khi không nói) mỗi 9s
+const MASCOT_SIZE = 112              // px — kích thước ảnh, dùng để tính giới hạn kéo thả
+const DRAG_CLICK_THRESHOLD = 6       // px — di chuột dưới ngưỡng này khi thả tay = coi là "click", không phải "kéo"
 
 function pickRandom<T>(arr: T[], exclude?: T): T {
   const options = exclude ? arr.filter(x => x !== exclude) : arr
   return options[Math.floor(Math.random() * options.length)] ?? arr[0]
+}
+
+function clamp(val: number, min: number, max: number) {
+  return Math.min(Math.max(val, min), max)
 }
 
 export default function Mascot({
@@ -44,7 +50,10 @@ export default function Mascot({
   const restPoses = variant === 'study' ? STUDY_POSES : IDLE_POSES
   const [bubble, setBubble] = useState<{ icon?: string; text: string } | null>(null)
   const [pose, setPose] = useState(restPoses[0])
-  const [topPct, setTopPct] = useState(40)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null) // null = chưa mount xong, dùng vị trí mặc định tạm
+  const [dragging, setDragging] = useState(false)
+  const draggedRef = useRef(false)         // đã từng bị kéo tay chưa — nếu có thì tắt auto-wander
+  const dragStartRef = useRef({ px: 0, py: 0, x: 0, y: 0, moved: false })
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wanderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -58,6 +67,11 @@ export default function Mascot({
       setPose(prev => pickRandom(restPoses, prev))
     }, durationMs)
   }
+
+  // Đặt vị trí ban đầu sau khi mount (cần window để tính toán)
+  useEffect(() => {
+    setPos({ x: window.innerWidth - MASCOT_SIZE - 24, y: window.innerHeight * 0.4 })
+  }, [])
 
   // Welcome (lần đầu) / Daily (mỗi ngày)
   useEffect(() => {
@@ -101,7 +115,6 @@ export default function Mascot({
   }, [])
 
   // Đổi dáng nghỉ định kỳ khi không nói (tạo cảm giác sống động)
-
   useEffect(() => {
     const interval = setInterval(() => {
       setBubble(current => {
@@ -115,12 +128,18 @@ export default function Mascot({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant])
 
-  // Loanh quanh — đổi vị trí ngẫu nhiên theo chiều dọc, giữ cố định cạnh phải
+  // Loanh quanh tự động (chiều dọc) — CHỈ khi người dùng chưa từng tự kéo panda đi chỗ khác
   useEffect(() => {
     function scheduleNextWander() {
       const delay = WANDER_MIN_MS + Math.random() * (WANDER_MAX_MS - WANDER_MIN_MS)
       wanderTimerRef.current = setTimeout(() => {
-        setTopPct(TOP_MIN + Math.random() * (TOP_MAX - TOP_MIN))
+        if (!draggedRef.current) {
+          setPos(prev => {
+            const x = prev?.x ?? (window.innerWidth - MASCOT_SIZE - 32)
+            const y = TOP_MIN / 100 * window.innerHeight + Math.random() * ((TOP_MAX - TOP_MIN) / 100 * window.innerHeight)
+            return { x, y }
+          })
+        }
         scheduleNextWander()
       }, delay)
     }
@@ -128,10 +147,59 @@ export default function Mascot({
     return () => { if (wanderTimerRef.current) clearTimeout(wanderTimerRef.current) }
   }, [])
 
+  // Kéo thả — pointer events, gắn listener lên window trong lúc đang kéo để không bị mất theo dõi khi tay ra khỏi ảnh
+  function handlePointerDown(e: React.PointerEvent) {
+    if (!pos) return
+    dragStartRef.current = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y, moved: false }
+    setDragging(true)
+  }
+
+  useEffect(() => {
+    if (!dragging) return
+
+    function handleMove(e: PointerEvent) {
+      const start = dragStartRef.current
+      const dx = e.clientX - start.px
+      const dy = e.clientY - start.py
+      if (Math.abs(dx) > DRAG_CLICK_THRESHOLD || Math.abs(dy) > DRAG_CLICK_THRESHOLD) {
+        dragStartRef.current.moved = true
+      }
+      const newX = clamp(start.x + dx, 0, window.innerWidth - MASCOT_SIZE)
+      const newY = clamp(start.y + dy, 0, window.innerHeight - MASCOT_SIZE)
+      setPos({ x: newX, y: newY })
+    }
+
+    function handleUp() {
+      setDragging(false)
+      if (dragStartRef.current.moved) {
+        draggedRef.current = true // đã kéo thật sự → tắt auto-wander vĩnh viễn cho phiên này
+      } else {
+        // Không di chuyển đáng kể → coi là click: đổi dáng + tắt bong bóng đang hiện (nếu có)
+        setBubble(null)
+        setPose(prev => pickRandom(restPoses, prev))
+      }
+    }
+
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    return () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dragging])
+
+  if (!pos) return null // chờ tính vị trí ban đầu xong mới render, tránh nhảy vị trí lúc đầu
+
   return (
     <div
-      className="fixed z-40 flex flex-col items-center gap-2 transition-[top] ease-in-out"
-      style={{ right: '32px', top: `${topPct}%`, transitionDuration: `${WALK_DURATION_MS}ms` }}
+      className={`fixed z-40 flex flex-col items-center gap-2 select-none ${dragging ? '' : 'transition-[left,top] ease-in-out'}`}
+      style={{
+        left: `${pos.x}px`,
+        top: `${pos.y}px`,
+        transitionDuration: dragging ? '0ms' : `${WALK_DURATION_MS}ms`,
+        touchAction: 'none',
+      }}
     >
       {bubble && (
         <div className="relative max-w-[240px] rounded-2xl px-4 py-3 shadow-xl"
@@ -148,10 +216,11 @@ export default function Mascot({
       <img
         src={pose}
         alt="K-Global mascot"
-        onClick={() => setBubble(null)}
-        className="w-28 h-28 object-contain cursor-pointer transition-transform hover:scale-110 active:scale-95"
-        style={{ filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.25))' }}
-        title="Trợ lý K-Global"
+        onPointerDown={handlePointerDown}
+        draggable={false}
+        className={`object-contain transition-transform hover:scale-110 ${dragging ? 'cursor-grabbing scale-110' : 'cursor-grab active:scale-95'}`}
+        style={{ width: MASCOT_SIZE, height: MASCOT_SIZE, filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.25))' }}
+        title="Kéo để di chuyển — bấm để đổi dáng"
       />
     </div>
   )
