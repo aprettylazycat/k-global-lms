@@ -25,7 +25,7 @@ const TOP_MIN = 15                   // % chiều cao màn hình, giới hạn v
 const TOP_MAX = 70
 const POSE_CYCLE_MS = 9000           // đổi dáng nghỉ (khi không nói) mỗi 9s
 const MASCOT_SIZE_DESKTOP = 112      // px
-const MASCOT_SIZE_MOBILE = 48        // px — tương đương Tailwind size-12, dùng khi màn hình < 640px
+const MASCOT_SIZE_MOBILE = 64        // px — tương đương Tailwind size-12, dùng khi màn hình < 640px
 const MOBILE_BREAKPOINT = 640        // px — khớp breakpoint 'sm' của Tailwind
 const DRAG_CLICK_THRESHOLD = 6       // px — di chuột dưới ngưỡng này khi thả tay = coi là "click", không phải "kéo"
 
