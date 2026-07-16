@@ -24,7 +24,9 @@ const WALK_DURATION_MS = 2500
 const TOP_MIN = 15                   // % chiều cao màn hình, giới hạn vùng tự di chuyển dọc
 const TOP_MAX = 70
 const POSE_CYCLE_MS = 9000           // đổi dáng nghỉ (khi không nói) mỗi 9s
-const MASCOT_SIZE = 112              // px — kích thước ảnh, dùng để tính giới hạn kéo thả
+const MASCOT_SIZE_DESKTOP = 112      // px
+const MASCOT_SIZE_MOBILE = 48        // px — tương đương Tailwind size-12, dùng khi màn hình < 640px
+const MOBILE_BREAKPOINT = 640        // px — khớp breakpoint 'sm' của Tailwind
 const DRAG_CLICK_THRESHOLD = 6       // px — di chuột dưới ngưỡng này khi thả tay = coi là "click", không phải "kéo"
 
 function pickRandom<T>(arr: T[], exclude?: T): T {
@@ -51,6 +53,7 @@ export default function Mascot({
   const [bubble, setBubble] = useState<{ icon?: string; text: string } | null>(null)
   const [pose, setPose] = useState(restPoses[0])
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null) // null = chưa mount xong, dùng vị trí mặc định tạm
+  const [size, setSize] = useState(MASCOT_SIZE_DESKTOP)
   const [dragging, setDragging] = useState(false)
   const draggedRef = useRef(false)         // đã từng bị kéo tay chưa — nếu có thì tắt auto-wander
   const dragStartRef = useRef({ px: 0, py: 0, x: 0, y: 0, moved: false })
@@ -68,9 +71,20 @@ export default function Mascot({
     }, durationMs)
   }
 
-  // Đặt vị trí ban đầu sau khi mount (cần window để tính toán)
+  // Đặt kích thước + vị trí ban đầu sau khi mount (cần window để tính toán)
+  // Cũng tự cập nhật lại khi xoay màn hình / đổi kích thước cửa sổ
   useEffect(() => {
-    setPos({ x: window.innerWidth - MASCOT_SIZE - 24, y: window.innerHeight * 0.4 })
+    function applySize() {
+      const s = window.innerWidth < MOBILE_BREAKPOINT ? MASCOT_SIZE_MOBILE : MASCOT_SIZE_DESKTOP
+      setSize(s)
+      setPos(prev => {
+        if (!prev) return { x: window.innerWidth - s - (s === MASCOT_SIZE_MOBILE ? 16 : 32), y: window.innerHeight * 0.4 }
+        return { x: clamp(prev.x, 0, window.innerWidth - s), y: clamp(prev.y, 0, window.innerHeight - s) }
+      })
+    }
+    applySize()
+    window.addEventListener('resize', applySize)
+    return () => window.removeEventListener('resize', applySize)
   }, [])
 
   // Welcome (lần đầu) / Daily (mỗi ngày)
@@ -135,7 +149,7 @@ export default function Mascot({
       wanderTimerRef.current = setTimeout(() => {
         if (!draggedRef.current) {
           setPos(prev => {
-            const x = prev?.x ?? (window.innerWidth - MASCOT_SIZE - 32)
+            const x = prev?.x ?? (window.innerWidth - size - 32)
             const y = TOP_MIN / 100 * window.innerHeight + Math.random() * ((TOP_MAX - TOP_MIN) / 100 * window.innerHeight)
             return { x, y }
           })
@@ -145,7 +159,7 @@ export default function Mascot({
     }
     scheduleNextWander()
     return () => { if (wanderTimerRef.current) clearTimeout(wanderTimerRef.current) }
-  }, [])
+  }, [size])
 
   // Kéo thả — pointer events, gắn listener lên window trong lúc đang kéo để không bị mất theo dõi khi tay ra khỏi ảnh
   function handlePointerDown(e: React.PointerEvent) {
@@ -164,8 +178,8 @@ export default function Mascot({
       if (Math.abs(dx) > DRAG_CLICK_THRESHOLD || Math.abs(dy) > DRAG_CLICK_THRESHOLD) {
         dragStartRef.current.moved = true
       }
-      const newX = clamp(start.x + dx, 0, window.innerWidth - MASCOT_SIZE)
-      const newY = clamp(start.y + dy, 0, window.innerHeight - MASCOT_SIZE)
+      const newX = clamp(start.x + dx, 0, window.innerWidth - size)
+      const newY = clamp(start.y + dy, 0, window.innerHeight - size)
       setPos({ x: newX, y: newY })
     }
 
@@ -187,7 +201,7 @@ export default function Mascot({
       window.removeEventListener('pointerup', handleUp)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragging])
+  }, [dragging, size])
 
   if (!pos) return null // chờ tính vị trí ban đầu xong mới render, tránh nhảy vị trí lúc đầu
 
@@ -202,9 +216,9 @@ export default function Mascot({
       }}
     >
       {bubble && (
-        <div className="relative max-w-[240px] rounded-2xl px-4 py-3 shadow-xl"
+        <div className="relative max-w-[180px] sm:max-w-[240px] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl"
           style={{ backgroundColor: 'white', border: `2px solid ${BORDER}` }}>
-          <p className="text-sm leading-snug" style={{ color: NAVY }}>
+          <p className="text-xs sm:text-sm leading-snug" style={{ color: NAVY }}>
             {bubble.icon && <span className="mr-1">{bubble.icon}</span>}
             {bubble.text}
           </p>
@@ -219,7 +233,7 @@ export default function Mascot({
         onPointerDown={handlePointerDown}
         draggable={false}
         className={`object-contain transition-transform hover:scale-110 ${dragging ? 'cursor-grabbing scale-110' : 'cursor-grab active:scale-95'}`}
-        style={{ width: MASCOT_SIZE, height: MASCOT_SIZE, filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.25))' }}
+        style={{ width: size, height: size, filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.25))' }}
         title="Kéo để di chuyển — bấm để đổi dáng"
       />
     </div>
