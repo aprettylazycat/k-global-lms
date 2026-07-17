@@ -21,8 +21,8 @@ const authLimiter = redis
   ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, '10 m'), prefix: 'ratelimit:auth' })
   : null
 
-export async function middleware(req: NextRequest) {
-  const path = req.nextUrl.pathname
+export async function proxy(req: NextRequest) {
+    const path = req.nextUrl.pathname
 
   // Rate limiting — chỉ áp dụng cho API routes
   if (path.startsWith('/api/') && generalLimiter && authLimiter) {
