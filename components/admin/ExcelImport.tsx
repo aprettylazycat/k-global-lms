@@ -195,6 +195,7 @@ export default function ExcelImport() {
             module_name,
             order_index,
             youtube_id: String(row.youtube_id ?? '').trim(),
+            youtube_id_2: String(row.youtube_id_2 ?? '').trim() || null,
             intro_text: String(row.intro_text ?? '').trim(),
             practice_prompt: String(row.practice_prompt ?? '').trim(),
             recap_content: String(row.recap_content ?? '').trim(),

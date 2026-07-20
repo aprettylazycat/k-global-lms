@@ -38,6 +38,7 @@ export type Lesson = {
   title: string
   intro_text: string
   youtube_id: string
+  youtube_id_2?: string | null
   questions: Question[]
   practice_prompt: string
   is_published: boolean

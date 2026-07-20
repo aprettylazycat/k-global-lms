@@ -201,6 +201,21 @@ export default function LessonPage() {
                 />
               </div>
             )}
+            {lesson.youtube_id_2 && (
+  <div className="mt-3">
+    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: NAVY }}>
+      Video xem thêm
+    </p>
+    <div className="aspect-video rounded-2xl overflow-hidden" style={{ backgroundColor: CREAM }}>
+      <iframe
+        src={`https://www.youtube.com/embed/${lesson.youtube_id_2}`}
+        className="w-full h-full"
+        allow="autoplay"
+        allowFullScreen
+      />
+    </div>
+  </div>
+)}
             <p className="text-sm leading-relaxed" style={{ color: '#4A5568' }}>{lesson.intro_text}</p>
 
             {(lesson as any).attachment_url && (
