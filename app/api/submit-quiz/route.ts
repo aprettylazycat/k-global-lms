@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const { lessonId, answers, attempts, tfAnswers, tfQuestions } = await req.json()
 
   const { data: lesson, error: lessonError } = await supabaseAdmin
-    .from('lessons').select('questions').eq('id', lessonId).single()
+    .from('lessons').select('questions, practice_prompt').eq('id', lessonId).single()
 
   if (lessonError || !lesson) {
     return NextResponse.json({ error: 'Không tìm thấy bài học' }, { status: 404 })
@@ -82,21 +82,26 @@ export async function POST(req: Request) {
     }
   }
 
+  const hasEssay = (lesson.questions || []).some((q: any) => q.type === 'essay' && q.question?.trim())
+  const noPractice = !((lesson.practice_prompt ?? '').trim()) && !hasEssay
+
   if (!allCorrect) {
     return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
   }
 
   // Ghi progress + timestamp
   await Promise.all([
-    supabaseAdmin.from('progress').upsert(
-      { user_id: userId, lesson_id: lessonId, tick1: true },
-      { onConflict: 'user_id,lesson_id' }
-    ).then(),
-    supabaseAdmin.from('lesson_timestamps').upsert(
-      { user_id: userId, lesson_id: lessonId, quiz_completed_at: new Date().toISOString() },
-      { onConflict: 'user_id,lesson_id' }
-    ).then(),
-  ])
+  supabaseAdmin.from('progress').upsert(
+    noPractice
+      ? { user_id: userId, lesson_id: lessonId, tick1: true, tick2: true, completed_at: new Date().toISOString() }
+      : { user_id: userId, lesson_id: lessonId, tick1: true },
+    { onConflict: 'user_id,lesson_id' }
+  ).then(),
+  supabaseAdmin.from('lesson_timestamps').upsert(   // ← thiếu đoạn này
+    { user_id: userId, lesson_id: lessonId, quiz_completed_at: new Date().toISOString() },
+    { onConflict: 'user_id,lesson_id' }
+  ).then(),
+])
 
   return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
 }

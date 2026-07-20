@@ -162,6 +162,8 @@ export default function LessonPage() {
   const tick2Done = progress?.tick2 ?? false
   const currentStep = !tick1Done ? 1 : !tick2Done ? 2 : 3
 
+  const noPractice = !((lesson.practice_prompt ?? '').trim()) &&
+  lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim()).length === 0
   return (
     <div className="min-h-screen pb-16" style={{ backgroundColor: CREAM }}>
 
@@ -313,6 +315,7 @@ export default function LessonPage() {
               tick2Done={tick2Done}
               userId={userId}
               recapContent={(lesson as any).recap_content}
+              noPractice={noPractice}
             />
           )}
         </div>
@@ -764,8 +767,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 const MIN_ESSAY_CHARS = 150
 const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
-function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent }: {
-  lessonId: number; nextLessonId: number | null; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string
+function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent, noPractice }: {
+  lessonId: number; nextLessonId: number | null; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string; noPractice?: boolean
 }) {
   const [text, setText] = useState('')
   const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({})
@@ -908,6 +911,31 @@ useEffect(() => {
   }, [showCongrats])
 
   const isLocked = !tick1Done
+
+  if (noPractice && tick1Done) {
+    return (
+      <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+        <div className="flex items-center gap-2.5">
+          <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+            style={{ backgroundColor: GOLD, color: NAVY }}>
+            <i className="ti ti-check" />
+          </span>
+          <p className="text-sm font-semibold" style={{ color: NAVY }}>
+            Bài này không có phần thực hành — hoàn thành trắc nghiệm là bạn đã xong bài!
+          </p>
+        </div>
+        <div className="mt-4 space-y-3">
+          <button
+            onClick={() => window.location.href = nextLessonId ? `/lesson/${nextLessonId}` : '/dashboard'}
+            className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: NAVY }}>
+            {nextLessonId ? (<>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>)
+              : (<>Hoàn thành khóa học <i className="ti ti-trophy" style={{ fontSize: '14px' }} /></>)}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (showCongrats) return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
