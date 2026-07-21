@@ -12,6 +12,7 @@ type ModuleItem = {
   name: string
   description: string | null
   order_index: number
+  category: string
 }
 
 type LessonListItem = {
@@ -59,6 +60,7 @@ export default function DashboardPage() {
   const [badges, setBadges] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
+  const [activeTrack, setActiveTrack] = useState<'main' | 'ai'>('main')
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
 const [submissionStatusMap, setSubmissionStatusMap] = useState<Record<number, { status: string; reason: string | null }>>({})
 const [rejectPopup, setRejectPopup] = useState<{
@@ -84,15 +86,21 @@ const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
 
       if (!prof?.branch_id) { setLoading(false); return }
 
+      // Module AI dùng chung cho mọi nhánh (category = 'ai'), không lọc theo branch_id
+      const { data: aiModulesData } = await supabase
+        .from('modules').select('id').eq('category', 'ai')
+      const aiModuleIds = (aiModulesData ?? []).map((m: any) => m.id)
+      const aiLessonFilter = aiModuleIds.length > 0 ? `,module_id.in.(${aiModuleIds.join(',')})` : ''
+
       const [lessonsRes, modulesRes, badgesRes, feedbackSeenRes] = await Promise.all([
         supabase.from('lessons')
           .select('id, title, order_index, module_id')
-          .eq('branch_id', prof.branch_id)
+          .or(`branch_id.eq.${prof.branch_id}${aiLessonFilter}`)
           .eq('is_published', true)
           .order('order_index'),
         supabase.from('modules')
-          .select('id, name, description, order_index')
-          .eq('branch_id', prof.branch_id)
+          .select('id, name, description, order_index, category')
+          .or(`branch_id.eq.${prof.branch_id},category.eq.ai`)
           .order('order_index'),
         supabase.from('badges')
           .select('badge_type')
@@ -165,13 +173,22 @@ setSubmissionStatusMap(latestStatusMap)
     lessons: lessons.filter(l => l.module_id === mod.id).sort((a, b) => a.order_index - b.order_index)
   })).filter(g => g.lessons.length > 0)
 
-  const orderedLessons = lessonsByModule.flatMap(g => g.lessons)
+  // Tách track: AI đứng riêng, auto mở, không tham gia chuỗi khoá tuần tự của track chính
+  const mainLessonsByModule = lessonsByModule.filter(g => g.module.category !== 'ai')
+  const aiLessonsByModule = lessonsByModule.filter(g => g.module.category === 'ai')
+  const visibleGroups = activeTrack === 'ai' ? aiLessonsByModule : mainLessonsByModule
+
+  const orderedLessons = mainLessonsByModule.flatMap(g => g.lessons)
   const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
   const mascotDaily = dayNumber
     ? `Hôm nay là ngày thứ ${dayNumber} của bạn tại K-Global! ${nextLessonTitle ? `Bạn đang ở bài "${nextLessonTitle}"` : 'Bạn đã hoàn thành hết bài rồi'} — tiến độ ${paceLabel} nhịp trung bình đó, tiếp tục cố gắng nhé! 💪`
     : undefined
 
   function isLessonUnlocked(lessonId: number) {
+  const lessonMeta = lessons.find(l => l.id === lessonId)
+  const mod = modules.find(m => m.id === lessonMeta?.module_id)
+  if (mod?.category === 'ai') return true // AI track luôn auto mở
+
   const lesson = orderedLessons.find(l => l.id === lessonId)
   if (!lesson) return false
 
@@ -183,7 +200,7 @@ setSubmissionStatusMap(latestStatusMap)
   // Nếu bài này là bài đầu tiên của module khác module 1
   if (lesson.module_id !== prevLesson.module_id) {
     // Kiểm tra module 1 đã hoàn thành hết tick1 chưa
-    const firstModule = lessonsByModule[0]
+    const firstModule = mainLessonsByModule[0]
     if (!firstModule) return false
     const module1AllDone = firstModule.lessons.every(l => progressMap[l.id]?.tick1)
     return module1AllDone
@@ -193,9 +210,9 @@ setSubmissionStatusMap(latestStatusMap)
   return !!progressMap[prevLesson.id]?.tick1
 }
 
-  const currentModuleGroup = lessonsByModule.find(g =>
+  const currentModuleGroup = mainLessonsByModule.find(g =>
     !g.lessons.every(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2)
-  ) ?? lessonsByModule[lessonsByModule.length - 1]
+  ) ?? mainLessonsByModule[mainLessonsByModule.length - 1]
 
   const currentModuleDone = currentModuleGroup
     ? currentModuleGroup.lessons.filter(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2).length
@@ -431,14 +448,35 @@ setSubmissionStatusMap(latestStatusMap)
 
         {/* ===== CỘT PHẢI: Accordion ===== */}
         <div>
-          {lessonsByModule.length === 0 && (
+          {aiLessonsByModule.length > 0 && (
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setActiveTrack('main')}
+                className="flex-1 text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                style={activeTrack === 'main'
+                  ? { backgroundColor: NAVY, color: 'white' }
+                  : { backgroundColor: 'white', color: NAVY, border: `1px solid ${BORDER}` }}>
+                Nhánh nghề
+              </button>
+              <button
+                onClick={() => setActiveTrack('ai')}
+                className="flex-1 text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                style={activeTrack === 'ai'
+                  ? { backgroundColor: NAVY, color: 'white' }
+                  : { backgroundColor: 'white', color: NAVY, border: `1px solid ${BORDER}` }}>
+                AI Education
+              </button>
+            </div>
+          )}
+
+          {visibleGroups.length === 0 && (
             <div className="rounded-3xl p-10 text-center" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
               <p className="text-sm" style={{ color: MUTED }}>Chưa có bài học nào được xuất bản.</p>
             </div>
           )}
 
           <div className="space-y-3">
-            {lessonsByModule.map(({ module, lessons: moduleLessons }) => {
+            {visibleGroups.map(({ module, lessons: moduleLessons }) => {
               const moduleDone = moduleLessons.every(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2)
               const moduleUnlocked = isLessonUnlocked(moduleLessons[0].id)
               const isOpen = openModules.has(module.id)
