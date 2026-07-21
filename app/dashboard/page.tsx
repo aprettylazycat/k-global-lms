@@ -179,6 +179,7 @@ setSubmissionStatusMap(latestStatusMap)
   const visibleGroups = activeTrack === 'ai' ? aiLessonsByModule : mainLessonsByModule
 
   const orderedLessons = mainLessonsByModule.flatMap(g => g.lessons)
+  const aiOrderedLessons = aiLessonsByModule.flatMap(g => g.lessons)
   const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
   const mascotDaily = dayNumber
     ? `Hôm nay là ngày thứ ${dayNumber} của bạn tại K-Global! ${nextLessonTitle ? `Bạn đang ở bài "${nextLessonTitle}"` : 'Bạn đã hoàn thành hết bài rồi'} — tiến độ ${paceLabel} nhịp trung bình đó, tiếp tục cố gắng nhé! 💪`
@@ -187,20 +188,24 @@ setSubmissionStatusMap(latestStatusMap)
   function isLessonUnlocked(lessonId: number) {
   const lessonMeta = lessons.find(l => l.id === lessonId)
   const mod = modules.find(m => m.id === lessonMeta?.module_id)
-  if (mod?.category === 'ai') return true // AI track luôn auto mở
+  const isAi = mod?.category === 'ai'
 
-  const lesson = orderedLessons.find(l => l.id === lessonId)
+  // AI có chuỗi khoá tuần tự RIÊNG, độc lập với track chính (không auto mở nữa)
+  const chain = isAi ? aiOrderedLessons : orderedLessons
+  const chainGroups = isAi ? aiLessonsByModule : mainLessonsByModule
+
+  const lesson = chain.find(l => l.id === lessonId)
   if (!lesson) return false
 
-  const idx = orderedLessons.findIndex(l => l.id === lessonId)
+  const idx = chain.findIndex(l => l.id === lessonId)
   if (idx <= 0) return true
 
-  const prevLesson = orderedLessons[idx - 1]
+  const prevLesson = chain[idx - 1]
 
-  // Nếu bài này là bài đầu tiên của module khác module 1
+  // Nếu bài này là bài đầu tiên của module khác module 1 (trong cùng track)
   if (lesson.module_id !== prevLesson.module_id) {
-    // Kiểm tra module 1 đã hoàn thành hết tick1 chưa
-    const firstModule = mainLessonsByModule[0]
+    // Kiểm tra module 1 của track này đã hoàn thành hết tick1 chưa
+    const firstModule = chainGroups[0]
     if (!firstModule) return false
     const module1AllDone = firstModule.lessons.every(l => progressMap[l.id]?.tick1)
     return module1AllDone
