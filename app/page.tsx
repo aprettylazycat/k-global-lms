@@ -43,6 +43,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [activeTrack, setActiveTrack] = useState<TrackKey>('nghe')
   const [activeNghe, setActiveNghe] = useState<string>('toc')
+  const [ngheMenuOpen, setNgheMenuOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -310,19 +311,43 @@ export default function Home() {
             </div>
 
             {activeTrack === 'nghe' && (
-              <div className="flex gap-1.5 flex-wrap">
-                {ngheGroups.map(g => (
-                  <button key={g.key}
-                    onClick={() => { if (!g.locked) setActiveNghe(g.key) }}
-                    disabled={g.locked}
-                    className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5 ${g.locked ? 'cursor-not-allowed' : ''}`}
-                    style={activeNghe === g.key && !g.locked
-                      ? { backgroundColor: GOLD, color: NAVY }
-                      : { backgroundColor: 'rgba(255,255,255,0.12)', color: g.locked ? 'rgba(255,255,255,0.45)' : 'white' }}>
-                    {g.locked && <i className="ti ti-lock" style={{ fontSize: '11px' }} />}
-                    {g.label}
-                  </button>
-                ))}
+              <div className="relative">
+                <button
+                  onClick={() => setNgheMenuOpen(v => !v)}
+                  className="text-sm font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2.5 transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: GOLD, color: NAVY }}>
+                  <span>{activeNgheGroup?.label ?? 'Chọn nhánh'}</span>
+                  <i className={`ti ti-chevron-down transition-transform ${ngheMenuOpen ? 'rotate-180' : ''}`}
+                    style={{ fontSize: '15px' }} />
+                </button>
+
+                {ngheMenuOpen && (
+                  <>
+                    {/* backdrop bấm ra ngoài để đóng */}
+                    <div className="fixed inset-0 z-30" onClick={() => setNgheMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl overflow-hidden z-40 py-1.5"
+                      style={{ backgroundColor: 'white', border: `1px solid ${BORDER}`, boxShadow: '0 16px 40px rgba(0,0,0,0.18)' }}>
+                      {ngheGroups.map(g => (
+                        <button key={g.key}
+                          onClick={() => { if (!g.locked) { setActiveNghe(g.key); setNgheMenuOpen(false) } }}
+                          disabled={g.locked}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-semibold flex items-center justify-between gap-3 transition-colors ${g.locked ? 'cursor-not-allowed' : 'hover:bg-black/5'}`}
+                          style={{ color: g.locked ? '#B8B2A8' : NAVY, backgroundColor: activeNghe === g.key && !g.locked ? CREAM : 'transparent' }}>
+                          <span className="flex items-center gap-2">
+                            {g.locked && <i className="ti ti-lock" style={{ fontSize: '12px' }} />}
+                            {g.label}
+                          </span>
+                          {!g.locked && g.modules.length > 0 && (
+                            <span className="text-xs font-medium" style={{ color: MUTED }}>{g.modules.length} module</span>
+                          )}
+                          {g.locked && (
+                            <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: '#B8B2A8' }}>Sắp ra mắt</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
