@@ -348,7 +348,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
               <input className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm"
                 placeholder="Câu hỏi tự luận..." value={eq.question}
                 onChange={e => { const u = [...essays]; u[qi].question = e.target.value; setEssays(u) }} />
-              {essays.length > 1 && (
+              {essays.length > 0 && (
                 <button onClick={() => setEssays(essays.filter((_, i) => i !== qi))} className="text-gray-300 hover:text-red-500 flex-shrink-0">
                   <i className="ti ti-x" style={{fontSize:'14px'}} />
                 </button>
