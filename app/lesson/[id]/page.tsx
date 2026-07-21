@@ -218,7 +218,9 @@ export default function LessonPage() {
     </div>
   </div>
 )}
-            <p className="text-sm leading-relaxed" style={{ color: '#4A5568' }}>{lesson.intro_text}</p>
+            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#4A5568' }}>
+  {renderTextWithLinks(lesson.intro_text)}
+</p>
 
             {(lesson as any).attachment_url && (
               <div className="mt-5">
@@ -322,6 +324,24 @@ export default function LessonPage() {
       </div>
       <Mascot variant="study" />
     </div>
+  )
+}
+
+function renderTextWithLinks(text: string) {
+  if (!text) return null
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noreferrer"
+        className="underline break-all"
+        style={{ color: NAVY }}
+        onClick={e => e.stopPropagation()}>
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
   )
 }
 
