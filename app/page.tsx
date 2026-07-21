@@ -125,7 +125,8 @@ export default function Home() {
 
   const openNgheGroups = ngheGroups.filter(g => !g.locked)
   const ngheModuleCount = openNgheGroups.reduce((s, g) => s + g.modules.length, 0)
-  const ngheSub = openNgheGroups.filter(g => g.modules.length > 0).map(g => `${g.label} ${g.modules.length}`).join(' · ') + ' module'
+  const ngheActiveCount = openNgheGroups.filter(g => g.modules.length > 0).length
+  const ngheSub = `${ngheActiveCount} nhánh nghề · ${ngheModuleCount} module`
   const activeNgheGroup = ngheGroups.find(g => g.key === activeNghe)
   const stats = [
     { value: totalLessons, label: 'bài học' },
