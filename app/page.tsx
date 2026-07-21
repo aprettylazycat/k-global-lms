@@ -19,83 +19,94 @@ type ModuleItem = {
   lessonCount: number
 }
 
-type BranchStat = {
-  id: string
-  name: string
-  slug: string
-  color_bg: string
-  color_text: string
-  lessonCount: number
-  modules: ModuleItem[]
-}
+type TrackKey = 'chung' | 'nghe' | 'leader'
+type NgheKey = 'toc' | 'theu'
 
 export default function Home() {
-  const [branches, setBranches] = useState<BranchStat[]>([])
+  const [aiModules, setAiModules] = useState<ModuleItem[]>([])
+  const [tocModules, setTocModules] = useState<ModuleItem[]>([])
+  const [theuModules, setTheuModules] = useState<ModuleItem[]>([])
   const [learnerCount, setLearnerCount] = useState(0)
+  const [totalLessons, setTotalLessons] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
+  const [activeTrack, setActiveTrack] = useState<TrackKey>('nghe')
+  const [activeNghe, setActiveNghe] = useState<NgheKey>('toc')
 
   useEffect(() => {
     async function load() {
-      const { data: branchData } = await supabase
-        .from('branches')
-        .select('id, name, slug, color_bg, color_text')
+      const [branchRes, moduleRes, learnersRes, lessonCountRes] = await Promise.all([
+        supabase.from('branches').select('id, name, slug'),
+        supabase.from('modules').select('id, name, description, order_index, branch_id, category').order('order_index'),
+        fetch('/api/public/learner-count').then(r => r.json()).catch(() => ({ count: 0 })),
+        supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('is_published', true),
+      ])
 
-      const learnersRes = await fetch('/api/public/learner-count')
-      const learnersData = await learnersRes.json()
-      setLearnerCount(learnersData.count ?? 0)
-      if (!branchData) { setLoading(false); return }
+      setLearnerCount(learnersRes.count ?? 0)
+      setTotalLessons(lessonCountRes.count ?? 0)
 
-      const withData = await Promise.all(
-        branchData.map(async (b) => {
-          const { count: lessonCount } = await supabase
+      const branches = branchRes.data ?? []
+      const modules = moduleRes.data ?? []
+
+      const hairBranchIds = branches.filter(b => b.slug === 'hair').map(b => b.id)
+      const theuBranchIds = branches.filter(b => b.slug === 'k-embroidery' || b.slug === 'lotus-smock').map(b => b.id)
+
+      // Đếm số bài mỗi module
+      const withCount = async (list: any[]): Promise<ModuleItem[]> => Promise.all(
+        list.map(async m => {
+          const { count } = await supabase
             .from('lessons')
             .select('*', { count: 'exact', head: true })
-            .eq('branch_id', b.id)
+            .eq('module_id', m.id)
             .eq('is_published', true)
-
-          const { data: moduleList } = await supabase
-            .from('modules')
-            .select('id, name, description, order_index')
-            .eq('branch_id', b.id)
-            .order('order_index')
-
-          const modulesWithCount = await Promise.all(
-            (moduleList ?? []).map(async (m) => {
-              const { count: mc } = await supabase
-                .from('lessons')
-                .select('*', { count: 'exact', head: true })
-                .eq('module_id', m.id)
-                .eq('is_published', true)
-              return { ...m, lessonCount: mc ?? 0 }
-            })
-          )
-
-          return {
-            ...b,
-            color_bg: b.color_bg || '#EFF6FF',
-            color_text: b.color_text || NAVY,
-            lessonCount: lessonCount ?? 0,
-            modules: modulesWithCount,
-          }
+          return { id: m.id, name: m.name, description: m.description, order_index: m.order_index, lessonCount: count ?? 0 }
         })
       )
 
-      setBranches(withData)
-      if (withData.length > 0) setSelectedBranch(withData[0].id)
+      // Kiến thức chung = module category 'ai' (dùng chung mọi nhánh)
+      const ai = modules.filter((m: any) => m.category === 'ai')
+      // Nghề Tóc = module thuộc nhánh hair, trừ AI
+      const toc = modules.filter((m: any) => hairBranchIds.includes(m.branch_id) && m.category !== 'ai')
+      // Nghề Thêu = gộp KE + Lotus, khử trùng theo tên (2 nhánh học song song cùng lộ trình)
+      const theuRaw = modules.filter((m: any) => theuBranchIds.includes(m.branch_id) && m.category !== 'ai')
+      const seen = new Set<string>()
+      const theu = theuRaw.filter((m: any) => {
+        const key = m.name.trim().toLowerCase()
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+
+      const [aiC, tocC, theuC] = await Promise.all([withCount(ai), withCount(toc), withCount(theu)])
+      setAiModules(aiC.sort((a, b) => a.order_index - b.order_index))
+      setTocModules(tocC.sort((a, b) => a.order_index - b.order_index))
+      setTheuModules(theuC.sort((a, b) => a.order_index - b.order_index))
       setLoading(false)
     }
     load()
   }, [])
 
-  const totalLessons = branches.reduce((sum, b) => sum + b.lessonCount, 0)
-  const activeBranch = branches.find(b => b.id === selectedBranch) ?? null
-
+  const ngheModuleCount = tocModules.length + theuModules.length
   const stats = [
     { value: totalLessons, label: 'bài học' },
-    { value: branches.length, label: 'nhánh đào tạo' },
+    { value: ngheModuleCount + aiModules.length, label: 'module đào tạo' },
     { value: learnerCount, label: 'học viên' },
   ]
+
+  const tracks: { key: TrackKey; icon: string; title: string; sub: string; ready: boolean }[] = [
+    { key: 'chung', icon: 'ti-sparkles', title: 'Kiến thức chung', sub: loading ? '—' : `AI Education · ${aiModules.length} module`, ready: aiModules.length > 0 },
+    { key: 'nghe', icon: 'ti-briefcase', title: 'Nghề', sub: loading ? '—' : `Tóc ${tocModules.length} module · Thêu ${theuModules.length} module`, ready: true },
+    { key: 'leader', icon: 'ti-crown', title: 'Leader', sub: 'Sắp ra mắt', ready: false },
+  ]
+
+  const detailModules: ModuleItem[] =
+    activeTrack === 'chung' ? aiModules
+    : activeTrack === 'nghe' ? (activeNghe === 'toc' ? tocModules : theuModules)
+    : []
+
+  const detailTitle =
+    activeTrack === 'chung' ? 'AI Education — Khóa học chung cho mọi nhân sự'
+    : activeTrack === 'nghe' ? (activeNghe === 'toc' ? 'Lộ trình Nghề Tóc' : 'Lộ trình Nghề Thêu')
+    : 'Leader'
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: CREAM, color: NAVY }}>
@@ -198,154 +209,128 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Branch + Module ── */}
+      {/* ── 3 Track cards ── */}
       <div className="max-w-7xl mx-auto px-6 pt-24 pb-20 w-full">
         <p className="text-xs tracking-[0.2em] uppercase text-center mb-3 font-semibold" style={{ color: GOLD }}>
-          Lộ trình theo nhánh
+          Lộ trình đào tạo
         </p>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-12" style={{ color: NAVY }}>
-          Chọn nhánh đào tạo của bạn
+          Ba trụ cột phát triển tại K-Global
         </h2>
 
-        <div className="lg:grid lg:grid-cols-[380px_1fr] lg:gap-10 lg:items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+          {tracks.map((t, idx) => {
+            const isActive = activeTrack === t.key
+            const isLeader = t.key === 'leader'
+            return (
+              <button key={t.key}
+                onClick={() => { if (t.ready) setActiveTrack(t.key) }}
+                disabled={!t.ready}
+                className={`track-card relative text-left rounded-3xl p-7 overflow-hidden transition-all duration-300 ${t.ready ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                style={{
+                  backgroundColor: isActive ? NAVY : 'white',
+                  border: isActive ? `2px solid ${GOLD}` : isLeader ? `1px dashed ${BORDER}` : `1px solid ${BORDER}`,
+                  boxShadow: isActive ? '0 16px 40px rgba(70,104,152,0.35)' : 'none',
+                  opacity: !t.ready && !isLeader ? 0.5 : isLeader ? 0.75 : 1,
+                  transform: isActive ? 'translateY(-4px)' : 'none',
+                }}>
+                {/* số thứ tự lớn mờ phía sau — mượn phong cách numbered phase */}
+                <span className="absolute -top-2 right-4 text-[72px] font-bold leading-none select-none"
+                  style={{ color: isActive ? 'rgba(255,255,255,0.08)' : 'rgba(70,104,152,0.06)' }}>
+                  0{idx + 1}
+                </span>
 
-          {/* Branch cards */}
-          <div className="space-y-3 mb-8 lg:mb-0 lg:sticky lg:top-24">
-            {loading ? [1, 2, 3].map(i => (
-              <div key={i} className="rounded-2xl h-28 animate-pulse" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }} />
-            )) : branches.map(b => {
-              const isActive = selectedBranch === b.id
-              return (
-                <button key={b.id} onClick={() => setSelectedBranch(b.id)}
-                  className="w-full text-left rounded-2xl p-6 relative overflow-hidden transition-all"
-                  style={{
-                    backgroundColor: isActive ? NAVY : 'white',
-                    border: isActive ? `2px solid ${NAVY}` : `1px solid ${BORDER}`,
-                  }}>
-                  <div className="absolute top-0 left-0 w-6 h-6 rounded-br-xl"
-                    style={{ backgroundColor: isActive ? GOLD : NAVY }} />
-                  <div className="flex items-center justify-between mt-1">
-                    <div>
-                      <p className="text-[11px] tracking-[0.15em] uppercase mb-1.5 font-semibold"
-                        style={{ color: isActive ? GOLD : NAVY }}>{b.name}</p>
-                      <p className="text-2xl font-bold" style={{ color: isActive ? 'white' : NAVY }}>
-  {b.modules.length} module
-</p>
-<p className="text-xs mt-1 font-medium" style={{ color: isActive ? MUTED : '#9A9590' }}>
-  {b.lessonCount} bài học
-</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: isActive ? GOLD : CREAM }}>
-                      <i className="ti ti-arrow-right text-sm" style={{ color: NAVY }} />
-                    </div>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 relative"
+                  style={{ backgroundColor: isActive ? GOLD : CREAM }}>
+                  <i className={`ti ${t.icon}`} style={{ fontSize: '24px', color: isActive ? NAVY : GOLD }} />
+                </div>
+                <p className="text-lg font-bold relative" style={{ color: isActive ? 'white' : NAVY }}>{t.title}</p>
+                <p className="text-xs mt-1.5 font-medium relative" style={{ color: isActive ? 'rgba(255,255,255,0.75)' : MUTED }}>
+                  {t.sub}
+                </p>
+
+                {isLeader && (
+                  <span className="absolute top-4 right-4">
+                    <i className="ti ti-lock" style={{ fontSize: '15px', color: MUTED }} />
+                  </span>
+                )}
+                {isActive && (
+                  <div className="mt-4 h-1 rounded-full overflow-hidden relative" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: GOLD }} />
                   </div>
-                  <div className="mt-4 h-1 rounded-full overflow-hidden"
-                    style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : CREAM }}>
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: isActive ? '100%' : '35%', backgroundColor: isActive ? GOLD : NAVY, opacity: isActive ? 1 : 0.3 }} />
-                  </div>
-                </button>
-              )
-            })}
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* ── Detail panel ── */}
+        <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+          <div className="px-8 py-6 flex items-center justify-between gap-4 flex-wrap"
+            style={{ backgroundColor: NAVY, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
+            <div>
+              <p className="text-xs tracking-[0.15em] uppercase mb-1 font-semibold" style={{ color: GOLD }}>
+                {activeTrack === 'chung' ? 'Kiến thức chung' : activeTrack === 'nghe' ? 'Nghề' : 'Leader'}
+              </p>
+              <p className="text-xl sm:text-2xl font-bold" style={{ color: 'white' }}>{detailTitle}</p>
+            </div>
+
+            {activeTrack === 'nghe' && (
+              <div className="flex gap-2">
+                {([['toc', 'Tóc'], ['theu', 'Thêu']] as [NgheKey, string][]).map(([k, label]) => (
+                  <button key={k} onClick={() => setActiveNghe(k)}
+                    className="text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
+                    style={activeNghe === k
+                      ? { backgroundColor: GOLD, color: NAVY }
+                      : { backgroundColor: 'rgba(255,255,255,0.12)', color: 'white' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Module detail */}
-          <div>
-            <div className="hidden lg:block">
-              {!activeBranch ? (
-                <div className="rounded-3xl p-16 text-center min-h-[420px] flex flex-col items-center justify-center"
-                  style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
-                  <p className="text-xl font-medium" style={{ color: MUTED }}>Chọn nhánh để xem lộ trình</p>
-                </div>
-              ) : (
-                <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
-                  <div className="px-8 py-6 flex items-center gap-4"
-                    style={{ backgroundColor: NAVY, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
-                    <div>
-                      <p className="text-xs tracking-[0.15em] uppercase mb-1 font-semibold" style={{ color: GOLD }}>
-                        {activeBranch.name}
-                      </p>
-                      <p className="text-2xl font-bold" style={{ color: 'white' }}>
-                        {activeBranch.modules.length} module · {activeBranch.lessonCount} bài học
-                      </p>
+          <div className="p-8">
+            {loading ? (
+              <div className="py-12 text-center">
+                <p className="text-sm font-medium" style={{ color: MUTED }}>Đang tải lộ trình…</p>
+              </div>
+            ) : detailModules.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm font-medium" style={{ color: MUTED }}>
+                  {activeTrack === 'leader' ? 'Nội dung dành cho Leader đang được biên soạn — sắp ra mắt.' : 'Chưa có module nào.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {detailModules.map((m, idx) => (
+                  <div key={m.id} className="flex items-start gap-6">
+                    <div className="flex flex-col items-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold"
+                        style={{ borderColor: NAVY, color: NAVY, backgroundColor: CREAM }}>
+                        {idx + 1}
+                      </div>
+                      {idx < detailModules.length - 1 && (
+                        <div className="w-0.5 flex-1 my-2"
+                          style={{ backgroundColor: BORDER, minHeight: '32px' }} />
+                      )}
+                    </div>
+                    <div className="pt-1.5 pb-6 min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-4 mb-1">
+                        <p className="text-base font-semibold" style={{ color: NAVY }}>{m.name}</p>
+                        <span className="text-xs px-3 py-1 rounded-full flex-shrink-0 font-semibold"
+                          style={{ backgroundColor: CREAM, color: NAVY }}>
+                          {m.lessonCount} bài
+                        </span>
+                      </div>
+                      {m.description && (
+                        <p className="text-sm font-medium" style={{ color: MUTED }}>{m.description}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="p-8">
-                    {activeBranch.modules.length === 0 ? (
-                      <div className="py-12 text-center">
-                        <p className="text-sm font-medium" style={{ color: MUTED }}>Chưa có module nào trong nhánh này.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-0">
-                        {activeBranch.modules.map((m, idx) => (
-                          <div key={m.id} className="flex items-start gap-6">
-                            <div className="flex flex-col items-center flex-shrink-0">
-                              <div className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold"
-                                style={{ borderColor: NAVY, color: NAVY, backgroundColor: CREAM }}>
-                                {m.order_index}
-                              </div>
-                              {idx < activeBranch.modules.length - 1 && (
-                                <div className="w-0.5 flex-1 my-2"
-                                  style={{ backgroundColor: BORDER, minHeight: '32px' }} />
-                              )}
-                            </div>
-                            <div className="pt-1.5 pb-6 min-w-0 flex-1">
-                              <div className="flex items-start justify-between gap-4 mb-1">
-                                <p className="text-base font-semibold" style={{ color: NAVY }}>{m.name}</p>
-                                <span className="text-xs px-3 py-1 rounded-full flex-shrink-0 font-semibold"
-                                  style={{ backgroundColor: CREAM, color: NAVY }}>
-                                  {m.lessonCount} bài
-                                </span>
-                              </div>
-                              {m.description && (
-                                <p className="text-sm font-medium" style={{ color: MUTED }}>{m.description}</p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile */}
-            <div className="lg:hidden">
-              {!loading && activeBranch && (
-                <div className="rounded-2xl p-5" style={{ backgroundColor: 'white', border: `2px solid ${NAVY}` }}>
-                  {activeBranch.modules.length === 0 ? (
-                    <p className="text-sm font-medium text-center py-2" style={{ color: MUTED }}>Chưa có module nào.</p>
-                  ) : (
-                    <div className="space-y-1">
-                      {activeBranch.modules.map((m, idx) => (
-                        <div key={m.id} className="flex items-start gap-3">
-                          <div className="flex flex-col items-center flex-shrink-0">
-                            <span className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold"
-                              style={{ borderColor: NAVY, color: NAVY }}>
-                              {m.order_index}
-                            </span>
-                            {idx < activeBranch.modules.length - 1 && (
-                              <div className="w-px mt-1" style={{ backgroundColor: BORDER, minHeight: '16px' }} />
-                            )}
-                          </div>
-                          <div className="pt-0.5 pb-3 min-w-0">
-                            <p className="text-sm font-semibold" style={{ color: NAVY }}>{m.name}</p>
-                            {m.description && (
-                              <p className="text-xs mt-0.5 font-medium" style={{ color: MUTED }}>{m.description}</p>
-                            )}
-                            <p className="text-xs mt-0.5 font-medium" style={{ color: GOLD }}>
-                              {m.lessonCount} bài học
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -399,7 +384,14 @@ export default function Home() {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
-        @media (prefers-reduced-motion: reduce) { .stat-shimmer { animation: none; } }
+        .track-card:hover:not(:disabled) {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 40px rgba(70,104,152,0.2);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .stat-shimmer { animation: none; }
+          .track-card, .track-card:hover:not(:disabled) { transform: none; transition: none; }
+        }
       `}</style>
       <Mascot />
     </div>
