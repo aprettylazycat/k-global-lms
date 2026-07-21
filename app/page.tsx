@@ -20,17 +20,29 @@ type ModuleItem = {
 }
 
 type TrackKey = 'chung' | 'nghe' | 'leader'
-type NgheKey = 'toc' | 'theu'
+
+// ===== CẤU HÌNH CÁC KHỐI NGHỀ =====
+// Thêm nhánh/khối mới chỉ cần thêm 1 dòng ở đây:
+// - slugs: gộp 1 hay nhiều branch (theo slug trong bảng branches) thành 1 khối hiển thị
+// - locked: true = hiện tab nhưng khoá (sắp ra mắt)
+// Nhánh nào có trong bảng branches mà KHÔNG nằm trong config này sẽ tự xuất hiện
+// thành 1 tab riêng (tự động, không cần sửa code).
+const NGHE_GROUPS: { key: string; label: string; slugs: string[]; locked?: boolean }[] = [
+  { key: 'toc', label: 'Tóc', slugs: ['hair'] },
+  { key: 'theu', label: 'Thêu', slugs: ['k-embroidery', 'lotus-smock'] },
+  { key: 'hanhchinh', label: 'Khối Hành chính', slugs: [], locked: true },
+  { key: 'twc', label: 'Khối TWC', slugs: [], locked: true },
+]
 
 export default function Home() {
   const [aiModules, setAiModules] = useState<ModuleItem[]>([])
-  const [tocModules, setTocModules] = useState<ModuleItem[]>([])
-  const [theuModules, setTheuModules] = useState<ModuleItem[]>([])
+  const [aiLessons, setAiLessons] = useState<{ id: number; title: string; order_index: number }[]>([])
+  const [ngheGroups, setNgheGroups] = useState<{ key: string; label: string; locked: boolean; modules: ModuleItem[] }[]>([])
   const [learnerCount, setLearnerCount] = useState(0)
   const [totalLessons, setTotalLessons] = useState(0)
   const [loading, setLoading] = useState(true)
   const [activeTrack, setActiveTrack] = useState<TrackKey>('nghe')
-  const [activeNghe, setActiveNghe] = useState<NgheKey>('toc')
+  const [activeNghe, setActiveNghe] = useState<string>('toc')
 
   useEffect(() => {
     async function load() {
@@ -47,8 +59,6 @@ export default function Home() {
       const branches = branchRes.data ?? []
       const modules = moduleRes.data ?? []
 
-      const hairBranchIds = branches.filter(b => b.slug === 'hair').map(b => b.id)
-      const theuBranchIds = branches.filter(b => b.slug === 'k-embroidery' || b.slug === 'lotus-smock').map(b => b.id)
 
       // Đếm số bài mỗi module
       const withCount = async (list: any[]): Promise<ModuleItem[]> => Promise.all(
@@ -64,28 +74,58 @@ export default function Home() {
 
       // Kiến thức chung = module category 'ai' (dùng chung mọi nhánh)
       const ai = modules.filter((m: any) => m.category === 'ai')
-      // Nghề Tóc = module thuộc nhánh hair, trừ AI
-      const toc = modules.filter((m: any) => hairBranchIds.includes(m.branch_id) && m.category !== 'ai')
-      // Nghề Thêu = gộp KE + Lotus, khử trùng theo tên (2 nhánh học song song cùng lộ trình)
-      const theuRaw = modules.filter((m: any) => theuBranchIds.includes(m.branch_id) && m.category !== 'ai')
-      const seen = new Set<string>()
-      const theu = theuRaw.filter((m: any) => {
-        const key = m.name.trim().toLowerCase()
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
 
-      const [aiC, tocC, theuC] = await Promise.all([withCount(ai), withCount(toc), withCount(theu)])
+      // ===== Build các khối Nghề từ config + tự phát hiện nhánh mới =====
+      const coveredSlugs = new Set(NGHE_GROUPS.flatMap(g => g.slugs))
+      const autoGroups = branches
+        .filter(b => !coveredSlugs.has(b.slug))
+        .map(b => ({ key: b.slug, label: b.name, slugs: [b.slug], locked: false }))
+      const allGroupDefs = [...NGHE_GROUPS, ...autoGroups]
+
+      const builtGroups = await Promise.all(allGroupDefs.map(async g => {
+        if (g.locked || g.slugs.length === 0) {
+          return { key: g.key, label: g.label, locked: !!g.locked, modules: [] as ModuleItem[] }
+        }
+        const ids = branches.filter(b => g.slugs.includes(b.slug)).map(b => b.id)
+        const raw = modules.filter((m: any) => ids.includes(m.branch_id) && m.category !== 'ai')
+        // Khử trùng theo tên khi khối gộp nhiều nhánh học song song cùng lộ trình
+        const seen = new Set<string>()
+        const deduped = raw.filter((m: any) => {
+          const key = m.name.trim().toLowerCase()
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        const withC = await withCount(deduped)
+        return { key: g.key, label: g.label, locked: false, modules: withC.sort((a, b) => a.order_index - b.order_index) }
+      }))
+
+      const aiC = await withCount(ai)
+
+      // Lấy danh sách bài học AI để hiển thị chi tiết (track chỉ có 1 module nên show hết bài bên trong)
+      if (ai.length > 0) {
+        const { data: aiLessonList } = await supabase
+          .from('lessons')
+          .select('id, title, order_index')
+          .in('module_id', ai.map((m: any) => m.id))
+          .eq('is_published', true)
+          .order('order_index')
+        setAiLessons(aiLessonList ?? [])
+      }
+
       setAiModules(aiC.sort((a, b) => a.order_index - b.order_index))
-      setTocModules(tocC.sort((a, b) => a.order_index - b.order_index))
-      setTheuModules(theuC.sort((a, b) => a.order_index - b.order_index))
+      setNgheGroups(builtGroups)
+      const firstOpen = builtGroups.find(g => !g.locked && g.modules.length > 0)
+      if (firstOpen) setActiveNghe(firstOpen.key)
       setLoading(false)
     }
     load()
   }, [])
 
-  const ngheModuleCount = tocModules.length + theuModules.length
+  const openNgheGroups = ngheGroups.filter(g => !g.locked)
+  const ngheModuleCount = openNgheGroups.reduce((s, g) => s + g.modules.length, 0)
+  const ngheSub = openNgheGroups.filter(g => g.modules.length > 0).map(g => `${g.label} ${g.modules.length}`).join(' · ') + ' module'
+  const activeNgheGroup = ngheGroups.find(g => g.key === activeNghe)
   const stats = [
     { value: totalLessons, label: 'bài học' },
     { value: ngheModuleCount + aiModules.length, label: 'module đào tạo' },
@@ -94,18 +134,18 @@ export default function Home() {
 
   const tracks: { key: TrackKey; icon: string; title: string; sub: string; ready: boolean }[] = [
     { key: 'chung', icon: 'ti-sparkles', title: 'Kiến thức chung', sub: loading ? '—' : `AI Education · ${aiModules.length} module`, ready: aiModules.length > 0 },
-    { key: 'nghe', icon: 'ti-briefcase', title: 'Nghề', sub: loading ? '—' : `Tóc ${tocModules.length} module · Thêu ${theuModules.length} module`, ready: true },
+    { key: 'nghe', icon: 'ti-briefcase', title: 'Nghề', sub: loading ? '—' : ngheSub, ready: true },
     { key: 'leader', icon: 'ti-crown', title: 'Leader', sub: 'Sắp ra mắt', ready: false },
   ]
 
   const detailModules: ModuleItem[] =
     activeTrack === 'chung' ? aiModules
-    : activeTrack === 'nghe' ? (activeNghe === 'toc' ? tocModules : theuModules)
+    : activeTrack === 'nghe' ? (activeNgheGroup?.modules ?? [])
     : []
 
   const detailTitle =
     activeTrack === 'chung' ? 'AI Education — Khóa học chung cho mọi nhân sự'
-    : activeTrack === 'nghe' ? (activeNghe === 'toc' ? 'Lộ trình Nghề Tóc' : 'Lộ trình Nghề Thêu')
+    : activeTrack === 'nghe' ? `Lộ trình ${activeNgheGroup?.label ?? 'Nghề'}`
     : 'Leader'
 
   return (
@@ -219,7 +259,7 @@ export default function Home() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-          {tracks.map((t, idx) => {
+          {tracks.map((t) => {
             const isActive = activeTrack === t.key
             const isLeader = t.key === 'leader'
             return (
@@ -234,12 +274,6 @@ export default function Home() {
                   opacity: !t.ready && !isLeader ? 0.5 : isLeader ? 0.75 : 1,
                   transform: isActive ? 'translateY(-4px)' : 'none',
                 }}>
-                {/* số thứ tự lớn mờ phía sau — mượn phong cách numbered phase */}
-                <span className="absolute -top-2 right-4 text-[72px] font-bold leading-none select-none"
-                  style={{ color: isActive ? 'rgba(255,255,255,0.08)' : 'rgba(70,104,152,0.06)' }}>
-                  0{idx + 1}
-                </span>
-
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 relative"
                   style={{ backgroundColor: isActive ? GOLD : CREAM }}>
                   <i className={`ti ${t.icon}`} style={{ fontSize: '24px', color: isActive ? NAVY : GOLD }} />
@@ -276,14 +310,17 @@ export default function Home() {
             </div>
 
             {activeTrack === 'nghe' && (
-              <div className="flex gap-2">
-                {([['toc', 'Tóc'], ['theu', 'Thêu']] as [NgheKey, string][]).map(([k, label]) => (
-                  <button key={k} onClick={() => setActiveNghe(k)}
-                    className="text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
-                    style={activeNghe === k
+              <div className="flex gap-1.5 flex-wrap">
+                {ngheGroups.map(g => (
+                  <button key={g.key}
+                    onClick={() => { if (!g.locked) setActiveNghe(g.key) }}
+                    disabled={g.locked}
+                    className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5 ${g.locked ? 'cursor-not-allowed' : ''}`}
+                    style={activeNghe === g.key && !g.locked
                       ? { backgroundColor: GOLD, color: NAVY }
-                      : { backgroundColor: 'rgba(255,255,255,0.12)', color: 'white' }}>
-                    {label}
+                      : { backgroundColor: 'rgba(255,255,255,0.12)', color: g.locked ? 'rgba(255,255,255,0.45)' : 'white' }}>
+                    {g.locked && <i className="ti ti-lock" style={{ fontSize: '11px' }} />}
+                    {g.label}
                   </button>
                 ))}
               </div>
@@ -294,6 +331,31 @@ export default function Home() {
             {loading ? (
               <div className="py-12 text-center">
                 <p className="text-sm font-medium" style={{ color: MUTED }}>Đang tải lộ trình…</p>
+              </div>
+            ) : activeTrack === 'chung' && aiLessons.length > 0 ? (
+              <div>
+                {aiModules[0]?.description && (
+                  <p className="text-sm leading-relaxed font-medium mb-8 max-w-3xl" style={{ color: '#4A5568' }}>
+                    {aiModules[0].description}
+                  </p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {aiLessons.map((l, idx) => (
+                    <div key={l.id} className="flex items-center gap-4 rounded-2xl p-4"
+                      style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: NAVY, color: 'white' }}>
+                        {idx + 1}
+                      </div>
+                      <p className="text-sm font-semibold min-w-0" style={{ color: NAVY }}>
+                        {l.title.replace(/^BÀI\s*\d+:\s*/i, '')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-medium mt-6 text-center" style={{ color: MUTED }}>
+                  {aiLessons.length} bài học · Dành cho mọi nhân sự thuộc mọi nhánh
+                </p>
               </div>
             ) : detailModules.length === 0 ? (
               <div className="py-12 text-center">
