@@ -492,7 +492,7 @@ export default function Home() {
       {/* ── Footer ── */}
       <div className="text-center py-6" style={{ backgroundColor: '#0D0D0D', borderTop: '1px solid #222' }}>
         <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-          © {new Date().getFullYear()} K-Global — Học viên Đào tạo K-Global
+          © {new Date().getFullYear()} K-Global — Học viện Đào tạo K-Global
         </p>
       </div>
 
