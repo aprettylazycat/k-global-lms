@@ -94,7 +94,7 @@ const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
 
       const [lessonsRes, modulesRes, badgesRes, feedbackSeenRes] = await Promise.all([
         supabase.from('lessons')
-          .select('id, title, order_index, module_id')
+          .select('id, title, order_index, module_id, practice_prompt, questions')
           .or(`branch_id.eq.${prof.branch_id}${aiLessonFilter}`)
           .eq('is_published', true)
           .order('order_index'),
@@ -202,6 +202,18 @@ setSubmissionStatusMap(latestStatusMap)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, mainLessonsByModule.length, aiLessonsByModule.length])
 
+  // Bài cần nộp bài = có practice_prompt hoặc có câu tự luận
+  const lessonsNeedingSubmission = new Set(
+    lessons
+      .filter((l: any) => {
+        const hasPrompt = ((l.practice_prompt ?? '') as string).trim().length > 0
+        const hasEssay = ((l.questions ?? []) as any[])
+          .some((q: any) => q?.type === 'essay' && (q.question ?? '').trim())
+        return hasPrompt || hasEssay
+      })
+      .map(l => l.id)
+  )
+
   const orderedLessons = mainLessonsByModule.flatMap(g => g.lessons)
   const aiOrderedLessons = aiLessonsByModule.flatMap(g => g.lessons)
   const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
@@ -231,13 +243,34 @@ setSubmissionStatusMap(latestStatusMap)
     // Kiểm tra module 1 của track này đã hoàn thành hết tick1 chưa
     const firstModule = chainGroups[0]
     if (!firstModule) return false
-    const module1AllDone = firstModule.lessons.every(l => progressMap[l.id]?.tick1)
+    const module1AllDone = firstModule.lessons.every(l => isLessonPassed(l.id))
     return module1AllDone
   }
 
-  // Trong cùng module → tuần tự như cũ
-  return !!progressMap[prevLesson.id]?.tick1
+  // Trong cùng module → tuần tự
+  return isLessonPassed(prevLesson.id)
 }
+
+  // Bài trước coi là "đã làm xong" khi:
+  //  - đã được duyệt (tick2), HOẶC
+  //  - đã nộp bài thực hành (đang chờ duyệt), HOẶC
+  //  - đã qua quiz và bài đó không có phần thực hành nào để nộp
+  // Mục đích: bài chỉ có tự luận thì tick1 được set tự động khi mở bài,
+  // không thể coi đó là đã hoàn thành để mở bài kế tiếp.
+  function isLessonPassed(lessonId: number) {
+    const prog = progressMap[lessonId]
+    if (!prog?.tick1) return false
+    if (prog.tick2) return true
+    const sub = submissionStatusMap[lessonId]
+    if (sub && (sub.status === 'pending' || sub.status === 'approved')) return true
+    // Không có bài nộp nào → chỉ chấp nhận nếu bài này vốn không cần nộp
+    return !lessonNeedsSubmission(lessonId)
+  }
+
+  // Bài có yêu cầu nộp bài (practice_prompt hoặc câu tự luận) hay không
+  function lessonNeedsSubmission(lessonId: number) {
+    return lessonsNeedingSubmission.has(lessonId)
+  }
 
   const currentModuleGroup = mainLessonsByModule.find(g =>
     !g.lessons.every(l => progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2)
