@@ -142,7 +142,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
       return
     }
 
-    const endpoint = isEditMode ? '/api/admin/update-lesson' : '/api/admin/publish-lesson'
+    const endpoint = isEditMode ? '/api/admin/update-lesson' : '/api/admin/create-lesson'
     const payload = isEditMode
       ? { lessonId, ...form, module_id: form.module_id || null, attachment_url: finalAttachmentUrl || null, questions, is_published: isPublished }
       : { ...form, module_id: form.module_id || null, attachment_url: finalAttachmentUrl || null, questions, is_published: isPublished }
