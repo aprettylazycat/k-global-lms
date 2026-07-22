@@ -27,15 +27,21 @@ function tint(hex: string | null | undefined, alpha = 0.13): string {
 function branchIcon(slug: string) {
   if (slug === 'k-embroidery') return 'ti-needle'
   if (slug === 'lotus-smock') return 'ti-flower'
-  if (slug === 'office') return 'ti-building'
-  return 'ti-scissors'
+  if (slug === 'twc') return 'ti-coin'
+  if (slug === 'hanh-chinh' || slug === 'office') return 'ti-clipboard-text'
+  if (slug === 'hair') return 'ti-cut'
+  if (slug === 'ai-video') return 'ti-video'
+  return 'ti-book-2'
 }
 
 function branchDesc(slug: string) {
   if (slug === 'k-embroidery') return 'Thêu tay, OEM'
   if (slug === 'lotus-smock') return 'Smock, đầm trẻ em'
-  if (slug === 'office') return 'Hành chính, vận hành'
-  return 'Tóc, xuất khẩu, B2B'
+  if (slug === 'twc') return 'Tài chính, đầu tư'
+  if (slug === 'hanh-chinh' || slug === 'office') return 'Hành chính, vận hành'
+  if (slug === 'hair') return 'Tóc, xuất khẩu, B2B'
+  if (slug === 'ai-video') return 'Video AI, sáng tạo nội dung'
+  return 'Nhánh đào tạo'
 }
 
 // Card "ảo" gom 2 nhánh Smock

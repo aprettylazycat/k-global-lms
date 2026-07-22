@@ -195,6 +195,13 @@ setSubmissionStatusMap(latestStatusMap)
   const aiLessonsByModule = lessonsByModule.filter(g => g.module.category === 'ai')
   const visibleGroups = activeTrack === 'ai' ? aiLessonsByModule : mainLessonsByModule
 
+  // Nhánh chưa có nội dung nghề (vd TWC, Hành chính) → mở thẳng khoá AI
+  useEffect(() => {
+    if (loading) return
+    if (mainLessonsByModule.length === 0 && aiLessonsByModule.length > 0) setActiveTrack('ai')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, mainLessonsByModule.length, aiLessonsByModule.length])
+
   const orderedLessons = mainLessonsByModule.flatMap(g => g.lessons)
   const aiOrderedLessons = aiLessonsByModule.flatMap(g => g.lessons)
   const nextLessonTitle = orderedLessons.find(l => !(progressMap[l.id]?.tick1 && progressMap[l.id]?.tick2))?.title
@@ -379,18 +386,29 @@ setSubmissionStatusMap(latestStatusMap)
 
           {/* Hero tiến độ — navy */}
           <div className="rounded-3xl p-6" style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
-            <p className="text-xs mb-1 tracking-widest uppercase font-semibold" style={{ color: GOLD }}>Lộ trình nghề</p>
-            <p className="text-5xl font-bold mb-4" style={{ color: GOLD }}>{mainStats.pct}%</p>
-            <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${mainStats.pct}%`, backgroundColor: GOLD }} />
-            </div>
-            <p className="text-xs font-medium" style={{ color: MUTED }}>
-              {mainStats.done}/{mainStats.total} bài hoàn thành
-            </p>
+            {mainStats.total > 0 ? (
+              <>
+                <p className="text-xs mb-1 tracking-widest uppercase font-semibold" style={{ color: GOLD }}>Lộ trình nghề</p>
+                <p className="text-5xl font-bold mb-4" style={{ color: GOLD }}>{mainStats.pct}%</p>
+                <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${mainStats.pct}%`, backgroundColor: GOLD }} />
+                </div>
+                <p className="text-xs font-medium" style={{ color: MUTED }}>
+                  {mainStats.done}/{mainStats.total} bài hoàn thành
+                </p>
+              </>
+            ) : (
+              <div className="pb-1">
+                <p className="text-xs mb-1 tracking-widest uppercase font-semibold" style={{ color: GOLD }}>Lộ trình nghề</p>
+                <p className="text-sm font-medium" style={{ color: MUTED }}>
+                  Nội dung nhánh của bạn đang được biên soạn — hãy bắt đầu với khoá Kiến thức chung bên dưới.
+                </p>
+              </div>
+            )}
 
             {/* Kiến thức chung (AI) — lộ trình riêng, không cộng vào % nghề */}
             {aiStats.total > 0 && (
-              <div className="mt-5 pt-4" style={{ borderTop: `1px solid ${BORDER}` }}>
+              <div className={mainStats.total > 0 ? 'mt-5 pt-4' : 'mt-4 pt-4'} style={{ borderTop: `1px solid ${BORDER}` }}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs tracking-widest uppercase font-semibold flex items-center gap-1.5" style={{ color: BLUE }}>
                     <i className="ti ti-sparkles" style={{ fontSize: '13px' }} />
@@ -497,7 +515,7 @@ setSubmissionStatusMap(latestStatusMap)
 
         {/* ===== CỘT PHẢI: Accordion ===== */}
         <div>
-          {aiLessonsByModule.length > 0 && (
+          {aiLessonsByModule.length > 0 && mainLessonsByModule.length > 0 && (
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setActiveTrack('main')}

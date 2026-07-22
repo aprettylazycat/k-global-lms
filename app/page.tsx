@@ -36,8 +36,9 @@ type TrackKey = 'chung' | 'nghe' | 'leader'
 const NGHE_GROUPS: { key: string; label: string; slugs: string[]; locked?: boolean; icon?: string }[] = [
   { key: 'toc', label: 'Tóc', slugs: ['hair'], icon: 'ti-cut' },
   { key: 'theu', label: 'Thêu', slugs: ['k-embroidery', 'lotus-smock'], icon: 'ti-shirt' },
-  { key: 'twc', label: 'TWC', slugs: [], locked: true, icon: 'ti-coin' },
-  { key: 'hanhchinh', label: 'Hành chính', slugs: [], locked: true, icon: 'ti-clipboard-text' },
+  { key: 'twc', label: 'TWC', slugs: ['twc'], locked: true, icon: 'ti-coin' },
+  { key: 'hanhchinh', label: 'Hành chính', slugs: ['hanh-chinh'], locked: true, icon: 'ti-clipboard-text' },
+  { key: 'aivideo', label: 'AI Video', slugs: ['ai-video'],locked: true, icon: 'ti-video' },
 ]
 
 export default function Home() {
@@ -207,7 +208,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-6 pt-32 pb-28 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.2] mb-6"
             style={{ color: 'white' }}>
-            Hệ thống Đào tạo Đỉnh cao K-Global<br />- Learning Management System (LMS) -
+            Làm chủ tay nghề<br />theo cách của K-Global
           </h1>
           <p className="text-sm sm:text-base leading-relaxed mb-10 max-w-lg mx-auto"
             style={{ color: 'rgba(255,255,255,0.95)' }}>
