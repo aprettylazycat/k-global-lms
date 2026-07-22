@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { verifyUser } from '@/lib/auth-server'
+import { checkBadges } from '@/lib/badges'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
@@ -30,6 +31,9 @@ export async function POST(req: Request) {
     { onConflict: 'user_id,lesson_id' }
   )
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Bài no_quiz hoàn thành tại đây (không qua approve) → check badge luôn
+  await checkBadges(userId)
 
   return NextResponse.json({ success: true })
 }
