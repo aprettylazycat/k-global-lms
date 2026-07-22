@@ -208,7 +208,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-6 pt-32 pb-28 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.2] mb-6"
             style={{ color: 'white' }}>
-            Làm chủ tay nghề<br />theo cách của K-Global
+            Hệ thống Đào tạo Đỉnh cao K-Global<br />- Learning Management System (LMS) -
           </h1>
           <p className="text-sm sm:text-base leading-relaxed mb-10 max-w-lg mx-auto"
             style={{ color: 'rgba(255,255,255,0.95)' }}>
