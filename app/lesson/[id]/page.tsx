@@ -33,14 +33,26 @@ export default function LessonPage() {
 
       // Kiểm tra thật sự đã mở khoá bài này chưa — không chỉ dựa vào UI dashboard
       if (lessonData) {
-        const { data: allModules } = await supabase
-          .from('modules').select('id, order_index')
-          .eq('branch_id', lessonData.branch_id)
-          .order('order_index', { ascending: true })
+        // Bài AI (module category='ai') dùng chung mọi nhánh, có chuỗi khoá RIÊNG
+        // — đồng bộ với logic isLessonUnlocked trên dashboard
+        const { data: lessonMod } = await supabase
+          .from('modules').select('id, category')
+          .eq('id', lessonData.module_id).single()
+        const isAi = lessonMod?.category === 'ai'
 
+        const { data: allModules } = isAi
+          ? await supabase.from('modules').select('id, order_index')
+              .eq('category', 'ai')
+              .order('order_index', { ascending: true })
+          : await supabase.from('modules').select('id, order_index')
+              .eq('branch_id', lessonData.branch_id)
+              .neq('category', 'ai')
+              .order('order_index', { ascending: true })
+
+        const moduleIds = (allModules ?? []).map((m: any) => m.id)
         const { data: allLessons } = await supabase
           .from('lessons').select('id, module_id, order_index')
-          .eq('branch_id', lessonData.branch_id)
+          .in('module_id', moduleIds)
           .eq('is_published', true)
 
         const { data: allProgress } = await supabase
@@ -78,7 +90,6 @@ export default function LessonPage() {
         const { data: nextLesson } = await supabase
           .from('lessons')
           .select('id')
-          .eq('branch_id', lessonData.branch_id)
           .eq('module_id', lessonData.module_id)
           .eq('is_published', true)
           .gt('order_index', lessonData.order_index)
