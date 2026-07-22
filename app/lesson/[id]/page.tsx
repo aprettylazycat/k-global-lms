@@ -932,6 +932,10 @@ useEffect(() => {
 
   const isLocked = !tick1Done
 
+  // Bài có practice_prompt thật sự mới hiện ô mô tả tự do + upload file.
+  // Bài chỉ có câu tự luận (essay) thì ẩn 2 phần đó — học viên chỉ trả lời essay rồi nộp.
+  const hasPrompt = ((prompt ?? '') as string).trim().length > 0
+
   if (noPractice && tick1Done) {
     return (
       <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
@@ -1155,7 +1159,7 @@ useEffect(() => {
               {essays.map((q: any, qi: number) => (
                 <div key={q.id} className="p-5 py-4 rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
                   <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#8AABC8' }}>Câu hỏi tự luận {qi + 1}</p>
-                  <p className="text-base font-semibold leading-6 mb-4" style={{ color: NAVY }}>{q.question}</p>
+                  <p className="text-base font-semibold leading-6 mb-4 whitespace-pre-line" style={{ color: NAVY }}>{q.question}</p>
                   <textarea rows={6}
                     className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none transition-colors resize-y"
                     style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
@@ -1173,7 +1177,7 @@ useEffect(() => {
             </div>
           )}
 
-          {prompt && (
+          {hasPrompt && (
   <div
     className="rounded-2xl p-5 mb-6"
     style={{
@@ -1195,13 +1199,15 @@ useEffect(() => {
     </div>
 
     <p
-      className="text-sm leading-7"
+      className="text-sm leading-7 whitespace-pre-line"
       style={{ color: '#4A5568' }}
     >
       {prompt}
     </p>
   </div>
 )}
+          {hasPrompt && (
+          <>
           <textarea rows={12}
             className="w-full text-sm rounded-xl px-3.5 py-2.5 mb-3 focus:outline-none transition-colors resize-none"
             style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
@@ -1267,9 +1273,11 @@ Chọn ảnh hoặc PDF
   onChange={e => setFile(e.target.files?.[0] ?? null)}
 />
 </label>
+          </>
+          )}
 
           <button onClick={handleSubmit}
-            disabled={loading || !text || essays.some((q: any) => (essayAnswers[q.id] || '').length < MIN_ESSAY_CHARS)}
+            disabled={loading || (hasPrompt && !text) || essays.some((q: any) => (essayAnswers[q.id] || '').length < MIN_ESSAY_CHARS)}
             className="w-full text-sm font-semibold text-white px-5 py-3 rounded-xl disabled:opacity-40 hover:opacity-90 transition-opacity"
             style={{ backgroundColor: NAVY }}>
             {loading ? (

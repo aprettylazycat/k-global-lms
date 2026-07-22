@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json()
-  const { lessonId, title, branch_id, module_id, order_index, youtube_id, intro_text, practice_prompt, recap_content, attachment_url, questions, is_published } = body
+  const { lessonId, title, branch_id, module_id, order_index, youtube_id, youtube_id_2, intro_text, practice_prompt, recap_content, attachment_url, questions, is_published } = body
 
   if (!lessonId) {
     return NextResponse.json({ error: 'Thiếu lessonId' }, { status: 400 })
@@ -45,6 +45,7 @@ export async function POST(req: Request) {
       module_id: module_id || null,
       order_index,
       youtube_id: youtube_id || null,
+      youtube_id_2: youtube_id_2 || null,
       intro_text: intro_text || null,
       practice_prompt: practice_prompt || null,
       recap_content: recap_content || null,        // ← thêm dòng này

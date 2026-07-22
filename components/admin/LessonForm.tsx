@@ -14,7 +14,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
   const [loadingModules, setLoadingModules] = useState(false)
   const [form, setForm] = useState({
     title: '', branch_id: '', module_id: '', order_index: 1,
-    youtube_id: '', intro_text: '', practice_prompt: '', recap_content: ''
+    youtube_id: '', youtube_id_2: '', intro_text: '', practice_prompt: '', recap_content: ''
   })
   const [mcqs, setMcqs] = useState([
     { question: '', options: ['', '', '', ''], correct: 0 }
@@ -69,6 +69,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
           module_id: l.module_id ? String(l.module_id) : '',
           order_index: l.order_index || 1,
           youtube_id: l.youtube_id || '',
+          youtube_id_2: l.youtube_id_2 || '',
           intro_text: l.intro_text || '',
           practice_prompt: l.practice_prompt || '',
           recap_content: l.recap_content || ''
@@ -168,7 +169,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
       onSaved?.()
     } else {
       setSuccess(`Đã ${isPublished ? 'xuất bản' : 'lưu nháp'} "${form.title}"`)
-      setForm({ title: '', branch_id: '', module_id: '', order_index: 1, youtube_id: '', intro_text: '', practice_prompt: '', recap_content: '' })
+      setForm({ title: '', branch_id: '', module_id: '', order_index: 1, youtube_id: '', youtube_id_2: '', intro_text: '', practice_prompt: '', recap_content: '' })
       setMcqs([{ question: '', options: ['', '', '', ''], correct: 0 }])
       setEssays([{ question: '' }])
       setTfGroups([])
@@ -228,6 +229,11 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
         <input className={`${inputCls} mb-4`}
           placeholder="dQw4w9WgXcQ"
           value={form.youtube_id} onChange={e => setForm({...form, youtube_id: e.target.value})} />
+
+        <label className={labelCls}>YouTube video ID 2 <span className="text-gray-400 font-normal">(video phụ, để trống nếu không có)</span></label>
+        <input className={`${inputCls} mb-4`}
+          placeholder="dQw4w9WgXcQ"
+          value={form.youtube_id_2} onChange={e => setForm({...form, youtube_id_2: e.target.value})} />
 
         <label className={labelCls}>Nội dung giới thiệu</label>
         <textarea rows={3} className={inputCls}
@@ -341,15 +347,15 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
 
         <div className="space-y-2">
           {essays.map((eq, qi) => (
-            <div key={qi} className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+            <div key={qi} className="flex items-start gap-2">
+              <span className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-500 flex-shrink-0 mt-1.5">
                 {qi + 1}
               </span>
-              <input className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                placeholder="Câu hỏi tự luận..." value={eq.question}
+              <textarea rows={2} className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm resize-y"
+                placeholder="Câu hỏi tự luận... (Enter để xuống dòng)" value={eq.question}
                 onChange={e => { const u = [...essays]; u[qi].question = e.target.value; setEssays(u) }} />
               {essays.length > 0 && (
-                <button onClick={() => setEssays(essays.filter((_, i) => i !== qi))} className="text-gray-300 hover:text-red-500 flex-shrink-0">
+                <button onClick={() => setEssays(essays.filter((_, i) => i !== qi))} className="text-gray-300 hover:text-red-500 flex-shrink-0 mt-2">
                   <i className="ti ti-x" style={{fontSize:'14px'}} />
                 </button>
               )}

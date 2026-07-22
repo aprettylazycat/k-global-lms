@@ -251,7 +251,7 @@ export default function ReviewPanel() {
                                     <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
                                       Câu hỏi {i + 1}
                                     </p>
-                                    <p className="text-sm font-semibold mb-3 leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                    <p className="text-sm font-semibold mb-3 leading-relaxed whitespace-pre-line" style={{ color: '#1E3A5F' }}>
                                       {qa.question}
                                     </p>
                                     <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
@@ -268,7 +268,7 @@ export default function ReviewPanel() {
                                       Bài thực hành
                                     </p>
                                     {sub.lesson?.practice_prompt && (
-                                      <p className="text-sm font-semibold mb-3 leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                      <p className="text-sm font-semibold mb-3 leading-relaxed whitespace-pre-line" style={{ color: '#1E3A5F' }}>
                                         {sub.lesson.practice_prompt}
                                       </p>
                                     )}
