@@ -1,107 +1,49 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
-import { verifyUser } from '@/lib/auth-server'
 import { NextResponse } from 'next/server'
+import { checkBadges } from '@/lib/badges'
+
+function extractStoragePath(fileUrl: string, bucket: string): string | null {
+  const marker = `/storage/v1/object/public/${bucket}/`
+  const idx = fileUrl.indexOf(marker)
+  if (idx === -1) return null
+  return decodeURIComponent(fileUrl.slice(idx + marker.length))
+}
 
 export async function POST(req: Request) {
-  const check = await verifyUser(req)
-  if (check.error) return check.error
-  const userId = check.user.id   // ← lấy từ token, KHÔNG lấy từ body nữa
+  const { submissionId, userId, lessonId, perfectScore } = await req.json()
 
-  const { lessonId, answers, attempts, tfAnswers, tfQuestions } = await req.json()
+  const { data: submissionRow } = await supabaseAdmin
+    .from('submissions')
+    .select('file_url')
+    .eq('id', submissionId)
+    .single()
 
-  const { data: lesson, error: lessonError } = await supabaseAdmin
-    .from('lessons').select('questions, practice_prompt').eq('id', lessonId).single()
+  await supabaseAdmin
+    .from('submissions')
+    .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+    .eq('id', submissionId)
 
-  if (lessonError || !lesson) {
-    return NextResponse.json({ error: 'Không tìm thấy bài học' }, { status: 404 })
-  }
-
-  // Chấm MCQ
-  const mcqs = (lesson.questions || []).filter((q: any) => q.type === 'mcq')
-  const results: { id: string; correct: boolean }[] = mcqs.map((q: any) => ({
-    id: q.id,
-    correct: answers[q.id] === q.correct
-  }))
-  const mcqAllCorrect = mcqs.length === 0 || results.every(r => r.correct)
-
-  // Chấm TF
-  const tfAllCorrect = !tfQuestions || tfQuestions.length === 0 || tfQuestions.every((group: any) => {
-    const groupAnswers = tfAnswers?.[group.id] || {}
-    return group.items.every((item: any) => groupAnswers[item.id] === item.correct)
-  })
-
-  const allCorrect = mcqAllCorrect  // TF chỉ lưu data, không block progress
-
-  // Ghi MCQ attempts
-  if (attempts && Object.keys(attempts).length > 0) {
-    const attemptRows = Object.entries(attempts).flatMap(([questionId, tryList]: [string, any]) =>
-      (tryList as any[]).map((t: any, idx: number) => ({
-        user_id: userId,
-        lesson_id: lessonId,
-        question_id: questionId,
-        selected_option: t.selectedOption,
-        is_correct: t.isCorrect,
-        is_first_attempt: idx === 0,
-      }))
-    )
-    if (attemptRows.length > 0) {
-      await supabaseAdmin.from('quiz_attempts').insert(attemptRows)
+  // Xóa ảnh khỏi Storage để tiết kiệm dung lượng — bài đã duyệt không cần giữ file gốc
+  if (submissionRow?.file_url) {
+    const path = extractStoragePath(submissionRow.file_url, 'submissions')
+    if (path) {
+      await supabaseAdmin.storage.from('submissions').remove([path])
+      await supabaseAdmin.from('submissions').update({ file_url: '' }).eq('id', submissionId)
     }
   }
 
-  // Ghi TF attempts — lưu số câu đúng/sai và chi tiết từng câu
-  if (tfQuestions && tfQuestions.length > 0 && tfAnswers) {
-    const tfRows: any[] = tfQuestions.map((group: any) => {
-      const groupAnswers = tfAnswers[group.id] || {}
-      const itemDetails = group.items.map((item: any) => ({
-        id: item.id,
-        statement: item.statement,
-        selected: groupAnswers[item.id] ?? null,
-        correct: item.correct,
-        isCorrect: groupAnswers[item.id] === item.correct
-      }))
-      const correctCount = itemDetails.filter((i: any) => i.isCorrect).length
-      return {
-        user_id: userId,
-        lesson_id: lessonId,
-        question_id: `tf_group_${group.id}`,
-        selected_option: correctCount,           // số câu đúng
-        is_correct: correctCount === group.items.length,
-        is_first_attempt: true,
-        extra_data: JSON.stringify({
-          group_question: group.question,
-          total: group.items.length,
-          correct: correctCount,
-          wrong: group.items.length - correctCount,
-          items: itemDetails
-        })
-      }
-    })
-    if (tfRows.length > 0) {
-      await supabaseAdmin.from('quiz_attempts').insert(tfRows)
-    }
-  }
+  await supabaseAdmin
+    .from('progress')
+    .upsert({
+      user_id: userId,
+      lesson_id: lessonId,
+      tick2: true,
+      completed_at: new Date().toISOString(),
+      ...(perfectScore ? { perfect_score: true } : {}),
+    }, { onConflict: 'user_id,lesson_id' })
 
-  const hasEssay = (lesson.questions || []).some((q: any) => q.type === 'essay' && q.question?.trim())
-  const noPractice = !((lesson.practice_prompt ?? '').trim()) && !hasEssay
+  await checkBadges(userId)
 
-  if (!allCorrect) {
-    return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
-  }
-
-  // Ghi progress + timestamp
-  await Promise.all([
-  supabaseAdmin.from('progress').upsert(
-    noPractice
-      ? { user_id: userId, lesson_id: lessonId, tick1: true, tick2: true, completed_at: new Date().toISOString() }
-      : { user_id: userId, lesson_id: lessonId, tick1: true },
-    { onConflict: 'user_id,lesson_id' }
-  ).then(),
-  supabaseAdmin.from('lesson_timestamps').upsert(   // ← thiếu đoạn này
-    { user_id: userId, lesson_id: lessonId, quiz_completed_at: new Date().toISOString() },
-    { onConflict: 'user_id,lesson_id' }
-  ).then(),
-])
-
-  return NextResponse.json({ success: true, allCorrect, results, newBadge: null })
+  return NextResponse.json({ success: true })
 }
