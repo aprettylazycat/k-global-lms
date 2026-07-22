@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FAF8F4;
-  --foreground: #1C1917;
+  --background: #070B15;
+  --foreground: #EEF3FB;
   --font-heading: var(--font-be-vietnam);
   --font-body: var(--font-be-vietnam);
 }
@@ -22,11 +22,37 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-be-vietnam), 'Be Vietnam Pro', sans-serif;
-  color: #1C1917;
+  color: inherit;
 }
 
 /* font-heading giờ = cùng font, dùng để tăng weight heading */
 .font-heading {
   font-family: var(--font-be-vietnam), 'Be Vietnam Pro', sans-serif;
   font-weight: 700;
+}
+
+/* ── Space theme: ô nhập liệu ── */
+input, textarea, select {
+  background-color: #0E1526;
+  color: #EEF3FB;
+  border-color: rgba(155,196,232,0.16);
+}
+input::placeholder, textarea::placeholder {
+  color: #5F7796;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(255,201,77,0.5);
+  outline: none;
+}
+select option {
+  background-color: #0E1526;
+  color: #EEF3FB;
+}
+/* Checkbox / radio giữ được màu nhấn */
+input[type="checkbox"], input[type="radio"] {
+  accent-color: #FFC94D;
+}
+/* Thanh cuộn hợp tone tối */
+* {
+  scrollbar-color: rgba(155,196,232,0.3) transparent;
 }

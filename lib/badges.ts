@@ -1,5 +1,24 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
 
+/**
+ * Badge riêng cho MODULE 4 (khoá nghề) của từng nhánh.
+ * Module 1, 2, 3, 5 dùng chung badge cho mọi nhánh nên không cần khai báo.
+ * Nhánh không có trong bảng này sẽ nhận badge tự động `module-{id}`.
+ */
+const MODULE4_BADGE: Record<string, string> = {
+  'k-embroidery': 'k-smock-expert',
+  'lotus-smock': 'k-smock-expert',
+  'hair': 'k-hair-expert',
+}
+
+/** Badge dùng chung theo thứ tự module trong nhánh (order_index). */
+const SHARED_BADGE_BY_ORDER: Record<number, { done: string; perfect?: string }> = {
+  1: { done: 'k-starter' },
+  2: { done: 'k-member', perfect: 'k-member-super' },
+  3: { done: 'k-sales', perfect: 'k-super-sales' },
+  5: { done: 'chien-binh' },
+}
+
 export async function checkBadges(userId: string) {
   const { data: profile } = await supabaseAdmin
     .from('profiles').select('branch_id').eq('id', userId).single()
@@ -7,49 +26,45 @@ export async function checkBadges(userId: string) {
 
   const branchId = profile.branch_id
 
-  // Lấy branch slug để xác định mapping module
   const { data: branch } = await supabaseAdmin
     .from('branches').select('slug').eq('id', branchId).single()
-  const slug = branch?.slug
+  const slug = branch?.slug ?? ''
 
-  // Mapping module_id theo branch — branch không có trong map (hair, office)
-  // vẫn được trao badge tự động module-{id} ở cuối hàm
-  const moduleMap: Record<string, Record<string, number>> = {
-    'k-embroidery': { intro: 3, mindset: 6, sales: 9, smock: 10, warrior: 13 },
-    'lotus-smock':  { intro: 4, mindset: 7, sales: 11, smock: 12, warrior: 14 },
-  }
-  const modules = moduleMap[slug ?? ''] ?? null
+  // Lấy toàn bộ module của nhánh — không hardcode ID nữa
+  const { data: branchModules } = await supabaseAdmin
+    .from('modules')
+    .select('id, order_index, category')
+    .eq('branch_id', branchId)
 
-  // Helper: kiểm tra user đã hoàn thành tick1+tick2 hết tất cả bài trong module chưa
-  async function isModuleDone(moduleId: number): Promise<boolean> {
-    const { data: lessons } = await supabaseAdmin
+  if (!branchModules || branchModules.length === 0) return
+
+  // ── Helpers ──
+  async function lessonIdsOf(moduleId: number): Promise<number[]> {
+    const { data } = await supabaseAdmin
       .from('lessons').select('id')
       .eq('module_id', moduleId).eq('is_published', true)
-    if (!lessons || lessons.length === 0) return false
-    const ids = lessons.map(l => l.id)
+    return (data ?? []).map(l => l.id)
+  }
+
+  async function isModuleDone(moduleId: number): Promise<boolean> {
+    const ids = await lessonIdsOf(moduleId)
+    if (ids.length === 0) return false
     const { data: prog } = await supabaseAdmin
       .from('progress').select('lesson_id, tick1, tick2')
       .eq('user_id', userId).in('lesson_id', ids)
     return ids.every(id => {
-      const p = prog?.find(p => p.lesson_id === id)
+      const p = prog?.find(x => x.lesson_id === id)
       return p?.tick1 && p?.tick2
     })
   }
 
-  // Helper: kiểm tra perfect score hết bài trong module
   async function isModulePerfect(moduleId: number): Promise<boolean> {
-    const { data: lessons } = await supabaseAdmin
-      .from('lessons').select('id')
-      .eq('module_id', moduleId).eq('is_published', true)
-    if (!lessons || lessons.length === 0) return false
-    const ids = lessons.map(l => l.id)
+    const ids = await lessonIdsOf(moduleId)
+    if (ids.length === 0) return false
     const { data: prog } = await supabaseAdmin
       .from('progress').select('lesson_id, perfect_score')
       .eq('user_id', userId).in('lesson_id', ids)
-    return ids.every(id => {
-      const p = prog?.find(p => p.lesson_id === id)
-      return p?.perfect_score === true
-    })
+    return ids.every(id => prog?.find(x => x.lesson_id === id)?.perfect_score === true)
   }
 
   async function award(badgeType: string) {
@@ -59,34 +74,44 @@ export async function checkBadges(userId: string) {
     )
   }
 
-  // Badge có tên riêng — chỉ chạy với branch có trong moduleMap
-  if (modules) {
-    if (await isModuleDone(modules.intro)) await award('k-starter')
-    if (await isModuleDone(modules.mindset)) {
-      await award('k-member')
-      if (await isModulePerfect(modules.mindset)) await award('k-member-super')
-    }
-    if (await isModuleDone(modules.sales)) {
-      await award('k-sales')
-      if (await isModulePerfect(modules.sales)) await award('k-super-sales')
-    }
-    if (await isModuleDone(modules.smock)) await award('k-smock-expert')
-    if (await isModuleDone(modules.warrior)) await award('chien-binh')
+  // Module AI là khoá chung, có bảng xếp hạng riêng → không tính vào badge nghề
+  const careerModules = branchModules.filter(m => m.category !== 'ai')
+  const aiModules = branchModules.filter(m => m.category === 'ai')
 
-    // Perfect Member — tất cả module đều perfect
-    const allPerfect = await Promise.all(
-      Object.values(modules).map(id => isModulePerfect(id))
-    )
-    if (allPerfect.every(Boolean)) await award('perfect-member')
+  const namedModuleIds = new Set<number>()
+
+  // ── Badge dùng chung: module 1, 2, 3, 5 ──
+  for (const m of careerModules) {
+    const rule = SHARED_BADGE_BY_ORDER[m.order_index]
+    if (!rule) continue
+    namedModuleIds.add(m.id)
+    if (await isModuleDone(m.id)) {
+      await award(rule.done)
+      if (rule.perfect && await isModulePerfect(m.id)) await award(rule.perfect)
+    }
   }
 
-  // Badge tự động cho mọi module còn lại — hair/office chạy toàn bộ qua nhánh này,
-  // và các module mới thêm sau này (vd Khóa học AI) cũng tự có badge không cần sửa code
-  const knownModuleIds = new Set(modules ? Object.values(modules) : [])
-  const { data: allBranchModules } = await supabaseAdmin
-    .from('modules').select('id').eq('branch_id', branchId)
-  for (const m of allBranchModules ?? []) {
-    if (knownModuleIds.has(m.id)) continue
+  // ── Badge module 4 — khoá nghề riêng của từng nhánh ──
+  const module4 = careerModules.find(m => m.order_index === 4)
+  if (module4) {
+    const badgeName = MODULE4_BADGE[slug]
+    if (badgeName) {
+      namedModuleIds.add(module4.id)
+      if (await isModuleDone(module4.id)) await award(badgeName)
+    }
+  }
+
+  // ── Perfect Member: perfect toàn bộ module nghề có badge tên riêng ──
+  if (namedModuleIds.size > 0) {
+    const allPerfect = await Promise.all(
+      Array.from(namedModuleIds).map(id => isModulePerfect(id))
+    )
+    if (allPerfect.length > 0 && allPerfect.every(Boolean)) await award('perfect-member')
+  }
+
+  // ── Badge tự động cho module còn lại (kể cả module AI) ──
+  for (const m of [...careerModules, ...aiModules]) {
+    if (namedModuleIds.has(m.id)) continue
     if (await isModuleDone(m.id)) await award(`module-${m.id}`)
   }
 }

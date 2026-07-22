@@ -1,12 +1,9 @@
 'use client'
 import { useState } from 'react'
+import { PANEL, CHIP, RAISED, TEXT, MUTED, GOLD, NAVY, BORDER, BORDER_STRONG, CREAM } from '@/lib/theme'
 
-const NAVY = '#466898'
-const GOLD = '#C9A84C'
-const DEEP_GOLD = '#B8860B'
-const CREAM = '#F5F0E8'
-const BORDER = '#E2D8C8'
-const MUTED = '#8AABC8'
+const DEEP_GOLD = '#FBBF24'
+const DARK_ON_GOLD = '#0A0E1A'
 
 const RATING_FACES: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: '😢',
@@ -56,7 +53,7 @@ export default function FeedbackModal({
   return (
     // Không đóng bằng click-outside/ESC — chỉ đóng qua 2 nút bên dưới, để tránh mất câu trả lời dở dang
     <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="rounded-3xl max-w-lg w-full my-8 shadow-2xl overflow-hidden" style={{ backgroundColor: 'white' }}>
+      <div className="rounded-3xl max-w-lg w-full my-8 shadow-2xl overflow-hidden" style={{ backgroundColor: RAISED, border: `1px solid ${BORDER_STRONG}` }}>
 
         {/* Header */}
         <div className="p-6 text-center" style={{ backgroundColor: NAVY, borderBottom: `3px solid ${GOLD}` }}>
@@ -75,7 +72,7 @@ export default function FeedbackModal({
         <div className="p-6 space-y-6 max-h-[55vh] overflow-y-auto">
           {sorted.map(q => (
             <div key={q.id}>
-              <p className="text-sm font-semibold mb-3" style={{ color: NAVY }}>{q.question_text}</p>
+              <p className="text-sm font-semibold mb-3" style={{ color: TEXT }}>{q.question_text}</p>
               {q.question_type === 'rating' ? (
                 <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map(star => (
@@ -97,7 +94,7 @@ export default function FeedbackModal({
                 <textarea
                   rows={3}
                   className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none resize-y"
-                  style={{ border: `1px solid ${BORDER}`, backgroundColor: CREAM, color: NAVY }}
+                  style={{ border: `1px solid ${BORDER}`, backgroundColor: CHIP, color: TEXT }}
                   placeholder="Chia sẻ cảm nhận của bạn..."
                   value={texts[q.id] || ''}
                   onChange={e => setTexts(prev => ({ ...prev, [q.id]: e.target.value }))}
@@ -113,7 +110,7 @@ export default function FeedbackModal({
             onClick={handleSubmit}
             disabled={submitting || !hasAnyAnswer}
             className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-40 hover:opacity-90"
-            style={{ backgroundColor: NAVY }}
+            style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}
           >
             {submitting ? 'Đang gửi...' : 'Gửi feedback'}
           </button>

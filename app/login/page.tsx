@@ -38,34 +38,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#FAF8F4' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#070B15', color: '#EEF3FB' }}>
       <div className="w-full max-w-sm">
 
         {/* Back về trang chủ */}
         <button
           onClick={() => router.push('/')}
-          className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition-colors mb-6"
+          className="flex items-center gap-1.5 text-sm text-[#8FA9C6] hover:text-[#FFC94D] transition-colors mb-6"
         >
           <i className="ti ti-arrow-left" style={{ fontSize: '15px' }} />
           Về trang chủ
         </button>
 
-        <div className="bg-white rounded-3xl border border-stone-200 p-8 shadow-sm">
+        <div className="bg-[#0E1526] rounded-3xl border border-[#22304C] p-8 shadow-sm">
           {/* Logo / tiêu đề */}
           <div className="mb-6">
-            <h1 className="font-heading text-2xl font-bold text-stone-900 mb-1">Đăng nhập</h1>
-            <p className="text-sm text-stone-500">Hệ thống đào tạo nội bộ K-Global</p>
+            <h1 className="font-heading text-2xl font-bold text-[#EEF3FB] mb-1">Đăng nhập</h1>
+            <p className="text-sm text-[#8FA9C6]">Hệ thống đào tạo nội bộ K-Global</p>
           </div>
 
           {/* Form */}
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-stone-600 block mb-1.5 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-[#C6D5E8] block mb-1.5 uppercase tracking-wide">
                 Email
               </label>
               <input
                 type="email"
-                className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
+                className="w-full border border-[#22304C] rounded-xl px-4 py-2.5 text-sm text-[#EEF3FB] placeholder:text-[#5F7796] focus:outline-none focus:border-[rgba(255,201,77,0.5)] transition-colors"
                 placeholder="email@k-global.vn"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
@@ -73,12 +73,12 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-stone-600 block mb-1.5 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-[#C6D5E8] block mb-1.5 uppercase tracking-wide">
                 Mật khẩu
               </label>
               <input
                 type="password"
-                className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 transition-colors"
+                className="w-full border border-[#22304C] rounded-xl px-4 py-2.5 text-sm text-[#EEF3FB] placeholder:text-[#5F7796] focus:outline-none focus:border-[rgba(255,201,77,0.5)] transition-colors"
                 placeholder="••••••••"
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
@@ -97,7 +97,7 @@ export default function LoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full mt-5 bg-stone-900 text-white rounded-2xl py-3 text-sm font-semibold disabled:opacity-50 hover:bg-stone-800 transition-colors"
+            className="w-full mt-5 bg-[#FFC94D] text-[#0A0E1A] rounded-2xl py-3 text-sm font-semibold disabled:opacity-50 hover:bg-[#FFD76B] transition-colors"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -107,9 +107,9 @@ export default function LoginPage() {
             ) : 'Đăng nhập →'}
           </button>
 
-          <p className="text-xs text-center text-stone-400 mt-5">
+          <p className="text-xs text-center text-[#8FA9C6] mt-5">
             Chưa có tài khoản?{' '}
-            <a href="/register" className="text-stone-700 font-semibold hover:underline">Đăng ký ngay</a>
+            <a href="/register" className="text-[#FFC94D] font-semibold hover:underline">Đăng ký ngay</a>
           </p>
         </div>
       </div>

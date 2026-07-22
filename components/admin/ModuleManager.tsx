@@ -133,7 +133,7 @@ export default function ModuleManager() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-[rgba(96,165,250,0.3)] border-t-blue-600 rounded-full animate-spin" />
     </div>
   )
 
@@ -144,16 +144,16 @@ export default function ModuleManager() {
 
       {/* Header stats */}
       <div className="rounded-2xl p-5 flex items-center justify-between"
-        style={{ backgroundColor: '#0E62B1' }}>
+        style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
         <div>
           <p className="text-2xl font-bold text-white">{totalModules} module</p>
-          <p className="text-sm mt-0.5" style={{ color: '#BFDBFE' }}>
+          <p className="text-sm mt-0.5" style={{ color: 'rgba(96,165,250,0.3)' }}>
             {branches.length} nhánh · Quản lý lộ trình học
           </p>
         </div>
         <button onClick={loadAll}
           className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl"
-          style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+          style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#0E1526' }}>
           <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
           Làm mới
         </button>
@@ -162,7 +162,7 @@ export default function ModuleManager() {
       {/* Error */}
       {error && (
         <div className="rounded-xl px-4 py-3 text-sm font-medium"
-          style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
+          style={{ backgroundColor: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid #FECACA' }}>
           <i className="ti ti-alert-circle mr-2" />
           {error}
         </div>
@@ -180,14 +180,14 @@ export default function ModuleManager() {
             {/* Branch header */}
             <div className="flex items-center justify-between mb-3 px-1">
               <p className="text-xs font-bold uppercase tracking-widest"
-                style={{ color: '#0E62B1' }}>
+                style={{ color: '#3B82F6' }}>
                 {branch.name}
               </p>
               {!isCreatingHere && (
                 <button
                   onClick={() => startCreate(branch.id)}
                   className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
-                  style={{ backgroundColor: '#EFF6FF', color: '#0E62B1', border: '1.5px solid #BFDBFE' }}>
+                  style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#3B82F6', border: '1.5px solid #BFDBFE' }}>
                   <i className="ti ti-plus" style={{ fontSize: '12px' }} />
                   Thêm module
                 </button>
@@ -198,9 +198,9 @@ export default function ModuleManager() {
               {/* Empty state */}
               {branchModules.length === 0 && !isCreatingHere && (
                 <div className="rounded-2xl p-6 text-center"
-                  style={{ backgroundColor: '#EFF6FF', border: '2px dashed #BFDBFE' }}>
-                  <i className="ti ti-layout-list" style={{ fontSize: '24px', color: '#BFDBFE' }} />
-                  <p className="text-xs font-medium mt-2" style={{ color: '#93C5FD' }}>
+                  style={{ backgroundColor: 'rgba(96,165,250,0.12)', border: '2px dashed #BFDBFE' }}>
+                  <i className="ti ti-layout-list" style={{ fontSize: '24px', color: 'rgba(96,165,250,0.3)' }} />
+                  <p className="text-xs font-medium mt-2" style={{ color: '#60A5FA' }}>
                     Chưa có module nào trong nhánh này.
                   </p>
                 </div>
@@ -225,22 +225,22 @@ export default function ModuleManager() {
                 return (
                   <div key={mod.id} className="space-y-0">
                     <div
-                      className="bg-white px-5 py-4 flex items-center gap-4 shadow-sm"
+                      className="bg-[#0E1526] px-5 py-4 flex items-center gap-4 shadow-sm"
                       style={{
-                        border: '2px solid #BFDBFE',
+                        border: '1px solid rgba(96,165,250,0.3)',
                         borderBottom: isFeedbackOpen ? 'none' : '2px solid #BFDBFE',
                         borderRadius: isFeedbackOpen ? '16px 16px 0 0' : '16px',
                       }}>
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                        style={{ backgroundColor: '#EFF6FF', color: '#0E62B1' }}>
+                        style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#3B82F6' }}>
                         {mod.order_index}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: '#1E3A5F' }}>
+                        <p className="text-sm font-semibold truncate" style={{ color: '#EEF3FB' }}>
                           {mod.name}
                         </p>
                         {mod.description && (
-                          <p className="text-xs mt-0.5 truncate" style={{ color: '#93C5FD' }}>
+                          <p className="text-xs mt-0.5 truncate" style={{ color: '#60A5FA' }}>
                             {mod.description}
                           </p>
                         )}
@@ -250,9 +250,9 @@ export default function ModuleManager() {
                           onClick={() => setExpandedFeedbackId(isFeedbackOpen ? null : mod.id)}
                           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors"
                           style={{
-                            borderColor: isFeedbackOpen ? '#0E62B1' : '#BFDBFE',
-                            color: '#0E62B1',
-                            backgroundColor: isFeedbackOpen ? '#EFF6FF' : 'white',
+                            borderColor: isFeedbackOpen ? '#3B82F6' : 'rgba(96,165,250,0.3)',
+                            color: '#3B82F6',
+                            backgroundColor: isFeedbackOpen ? 'rgba(96,165,250,0.12)' : '#0E1526',
                           }}>
                           <i className="ti ti-message-star" style={{ fontSize: '12px' }} />
                           Feedback
@@ -261,14 +261,14 @@ export default function ModuleManager() {
                         <button
                           onClick={() => startEdit(mod)}
                           className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors"
-                          style={{ borderColor: '#BFDBFE', color: '#0E62B1' }}>
+                          style={{ borderColor: 'rgba(96,165,250,0.3)', color: '#3B82F6' }}>
                           Sửa
                         </button>
                         <button
                           onClick={() => handleDelete(mod)}
                           disabled={deletingId === mod.id}
                           className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-40"
-                          style={{ borderColor: '#FECACA', color: '#DC2626' }}>
+                          style={{ borderColor: 'rgba(248,113,113,0.35)', color: '#F87171' }}>
                           {deletingId === mod.id ? '...' : 'Xóa'}
                         </button>
                       </div>
@@ -307,61 +307,61 @@ function ModuleForm({
 }) {
   return (
     <div className="rounded-2xl p-5 space-y-4"
-      style={{ backgroundColor: '#EFF6FF', border: '2px solid #0E62B1' }}>
+      style={{ backgroundColor: 'rgba(96,165,250,0.12)', border: '2px solid #0E62B1' }}>
       <div>
-        <label className="text-xs font-semibold block mb-1.5" style={{ color: '#0E62B1' }}>
+        <label className="text-xs font-semibold block mb-1.5" style={{ color: '#3B82F6' }}>
           Tên module
         </label>
         <input
-          className="w-full rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none"
-          style={{ border: '2px solid #BFDBFE' }}
+          className="w-full rounded-xl px-4 py-2.5 text-sm bg-[#0E1526] focus:outline-none"
+          style={{ border: '1px solid rgba(96,165,250,0.3)' }}
           placeholder="Ví dụ: Module 1. Giới thiệu chung"
           value={form.name}
           onChange={e => setForm({ ...form, name: e.target.value })}
-          onFocus={e => e.target.style.borderColor = '#0E62B1'}
-          onBlur={e => e.target.style.borderColor = '#BFDBFE'}
+          onFocus={e => e.target.style.borderColor = '#3B82F6'}
+          onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
         />
       </div>
       <div>
-        <label className="text-xs font-semibold block mb-1.5" style={{ color: '#0E62B1' }}>
-          Mô tả <span style={{ color: '#93C5FD', fontWeight: 400 }}>(tùy chọn)</span>
+        <label className="text-xs font-semibold block mb-1.5" style={{ color: '#3B82F6' }}>
+          Mô tả <span style={{ color: '#60A5FA', fontWeight: 400 }}>(tùy chọn)</span>
         </label>
         <input
-          className="w-full rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none"
-          style={{ border: '2px solid #BFDBFE' }}
+          className="w-full rounded-xl px-4 py-2.5 text-sm bg-[#0E1526] focus:outline-none"
+          style={{ border: '1px solid rgba(96,165,250,0.3)' }}
           placeholder="Mô tả ngắn về module này"
           value={form.description}
           onChange={e => setForm({ ...form, description: e.target.value })}
-          onFocus={e => e.target.style.borderColor = '#0E62B1'}
-          onBlur={e => e.target.style.borderColor = '#BFDBFE'}
+          onFocus={e => e.target.style.borderColor = '#3B82F6'}
+          onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
         />
       </div>
       <div>
-        <label className="text-xs font-semibold block mb-1.5" style={{ color: '#0E62B1' }}>
+        <label className="text-xs font-semibold block mb-1.5" style={{ color: '#3B82F6' }}>
           Thứ tự
         </label>
         <input
           type="number"
           min={1}
-          className="w-24 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none"
-          style={{ border: '2px solid #BFDBFE' }}
+          className="w-24 rounded-xl px-4 py-2.5 text-sm bg-[#0E1526] focus:outline-none"
+          style={{ border: '1px solid rgba(96,165,250,0.3)' }}
           value={form.order_index}
           onChange={e => setForm({ ...form, order_index: Number(e.target.value) })}
-          onFocus={e => e.target.style.borderColor = '#0E62B1'}
-          onBlur={e => e.target.style.borderColor = '#BFDBFE'}
+          onFocus={e => e.target.style.borderColor = '#3B82F6'}
+          onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
         />
       </div>
       <div className="flex items-center gap-3 pt-1">
         <button
           onClick={onSave}
           className="text-sm font-bold px-5 py-2.5 rounded-xl text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: '#0E62B1' }}>
+          style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
           {saveLabel}
         </button>
         <button
           onClick={onCancel}
           className="text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
-          style={{ color: '#93C5FD' }}>
+          style={{ color: '#60A5FA' }}>
           Hủy
         </button>
       </div>
@@ -448,23 +448,23 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
 
   return (
     <div className="rounded-b-2xl p-5 space-y-3"
-      style={{ backgroundColor: '#F8FBFF', border: '2px solid #BFDBFE', borderTop: 'none' }}>
+      style={{ backgroundColor: '#0E1526', border: '1px solid rgba(96,165,250,0.3)', borderTop: 'none' }}>
 
       {error && (
         <div className="rounded-xl px-3 py-2 text-xs font-medium"
-          style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
+          style={{ backgroundColor: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid #FECACA' }}>
           {error}
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-[rgba(96,165,250,0.3)] border-t-blue-600 rounded-full animate-spin" />
         </div>
       ) : (
         <>
           {questions.length === 0 && !creating && (
-            <p className="text-xs font-medium py-2" style={{ color: '#93C5FD' }}>
+            <p className="text-xs font-medium py-2" style={{ color: '#60A5FA' }}>
               Chưa có câu hỏi feedback nào cho module này. Nếu không thêm câu hỏi, hệ thống sẽ chỉ hiện pháo hoa + badge khi học viên hoàn thành, bỏ qua bước feedback.
             </p>
           )}
@@ -473,7 +473,7 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
             const isEditingThis = editingId === q.id
             if (isEditingThis) {
               return (
-                <div key={q.id} className="rounded-xl p-4 space-y-2.5 bg-white" style={{ border: '2px solid #0E62B1' }}>
+                <div key={q.id} className="rounded-xl p-4 space-y-2.5 bg-[#0E1526]" style={{ border: '2px solid #0E62B1' }}>
                   <input
                     className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
                     style={{ border: '1.5px solid #BFDBFE' }}
@@ -499,12 +499,12 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
                     <div className="flex-1" />
                     <button onClick={() => handleSaveEdit(q.id)}
                       className="text-xs font-bold px-3 py-1.5 rounded-lg text-white"
-                      style={{ backgroundColor: '#0E62B1' }}>
+                      style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
                       Lưu
                     </button>
                     <button onClick={() => setEditingId(null)}
                       className="text-xs font-medium px-3 py-1.5 rounded-lg"
-                      style={{ color: '#93C5FD' }}>
+                      style={{ color: '#60A5FA' }}>
                       Hủy
                     </button>
                   </div>
@@ -513,26 +513,26 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
             }
             return (
               <div key={q.id}
-                className="rounded-xl px-4 py-3 flex items-center gap-3 bg-white"
+                className="rounded-xl px-4 py-3 flex items-center gap-3 bg-[#0E1526]"
                 style={{ border: '1.5px solid #E2E8F0', opacity: q.is_active ? 1 : 0.5 }}>
                 <span className="text-base flex-shrink-0">{q.question_type === 'rating' ? '⭐' : '💬'}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: '#1E3A5F' }}>{q.question_text}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: '#EEF3FB' }}>{q.question_text}</p>
                   {!q.is_active && (
-                    <p className="text-xs mt-0.5" style={{ color: '#93C5FD' }}>Đã ẩn — không hiện cho học viên</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#60A5FA' }}>Đã ẩn — không hiện cho học viên</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button onClick={() => startEditQuestion(q)}
                     className="text-xs font-semibold px-2.5 py-1 rounded-lg border"
-                    style={{ borderColor: '#BFDBFE', color: '#0E62B1' }}>
+                    style={{ borderColor: 'rgba(96,165,250,0.3)', color: '#3B82F6' }}>
                     Sửa
                   </button>
                   <button onClick={() => toggleActive(q)} disabled={busyId === q.id}
                     className="text-xs font-semibold px-2.5 py-1 rounded-lg border disabled:opacity-40"
                     style={q.is_active
-                      ? { borderColor: '#FECACA', color: '#DC2626' }
-                      : { borderColor: '#BBF7D0', color: '#16A34A' }}>
+                      ? { borderColor: 'rgba(248,113,113,0.35)', color: '#F87171' }
+                      : { borderColor: 'rgba(74,222,128,0.35)', color: '#4ADE80' }}>
                     {busyId === q.id ? '...' : q.is_active ? 'Ẩn' : 'Khôi phục'}
                   </button>
                 </div>
@@ -541,7 +541,7 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
           })}
 
           {creating ? (
-            <div className="rounded-xl p-4 space-y-2.5 bg-white" style={{ border: '2px solid #0E62B1' }}>
+            <div className="rounded-xl p-4 space-y-2.5 bg-[#0E1526]" style={{ border: '2px solid #0E62B1' }}>
               <input
                 className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
                 style={{ border: '1.5px solid #BFDBFE' }}
@@ -569,12 +569,12 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
                 <div className="flex-1" />
                 <button onClick={handleCreate}
                   className="text-xs font-bold px-3 py-1.5 rounded-lg text-white"
-                  style={{ backgroundColor: '#0E62B1' }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
                   Tạo câu hỏi
                 </button>
                 <button onClick={() => { setCreating(false); setNewQ(emptyQuestionForm()) }}
                   className="text-xs font-medium px-3 py-1.5 rounded-lg"
-                  style={{ color: '#93C5FD' }}>
+                  style={{ color: '#60A5FA' }}>
                   Hủy
                 </button>
               </div>
@@ -583,7 +583,7 @@ function FeedbackQuestionsPanel({ moduleId }: { moduleId: number }) {
             <button
               onClick={() => setCreating(true)}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
-              style={{ backgroundColor: '#EFF6FF', color: '#0E62B1', border: '1.5px solid #BFDBFE' }}>
+              style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#3B82F6', border: '1.5px solid #BFDBFE' }}>
               <i className="ti ti-plus" style={{ fontSize: '12px' }} />
               Thêm câu hỏi feedback
             </button>

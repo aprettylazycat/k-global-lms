@@ -266,37 +266,37 @@ export default function ExcelImport() {
   return (
     <div className="space-y-4">
       {/* Hướng dẫn format */}
-      <div className="border rounded-xl p-4 bg-gray-50">
+      <div className="border rounded-xl p-4 bg-[#141E36]">
         <p className="text-sm font-medium mb-2">Format file Excel (.xlsx)</p>
-        <p className="text-xs text-gray-500 mb-1">
+        <p className="text-xs text-[#8FA9C6] mb-1">
           File cần có 4 sheet: <code>lessons</code>, <code>mcq</code>, <code>essay</code>, <code>true_false</code>
         </p>
-        <p className="text-xs text-gray-500 mb-1">
+        <p className="text-xs text-[#8FA9C6] mb-1">
           Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>, <code>no_quiz</code> (TRUE/FALSE)
         </p>
-        <p className="text-xs text-gray-500 mb-1">
+        <p className="text-xs text-[#8FA9C6] mb-1">
           Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code> đến <code>option_f</code> (tối thiểu a-b, tối đa a-f), <code>correct</code> (A/B/C/D/E/F)
         </p>
-        <p className="text-xs text-gray-500 mb-1">
+        <p className="text-xs text-[#8FA9C6] mb-1">
           Sheet <code>essay</code>: <code>lesson_title</code>, <code>question</code>
         </p>
-        <p className="text-xs text-gray-500 mb-1">
+        <p className="text-xs text-[#8FA9C6] mb-1">
           Sheet <code>true_false</code>: <code>lesson_title</code>, <code>group_id</code>, <code>group_question</code>, <code>item_id</code>, <code>statement</code>, <code>correct</code> (TRUE/FALSE)
         </p>
-        <div className="mt-2 pt-2 border-t border-gray-200 space-y-1">
-          <p className="text-xs text-gray-400">
+        <div className="mt-2 pt-2 border-t border-[#22304C] space-y-1">
+          <p className="text-xs text-[#8FA9C6]">
             <code>branch_slug</code>: dùng slug của nhánh trong DB (ví dụ: <code>k-embroidery</code>, <code>lotus-smock</code>, <code>hair</code>)
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#8FA9C6]">
             <code>module_name</code>: tên module chính xác như trong DB. Để trống nếu bài không thuộc module nào.
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#8FA9C6]">
             <code>lesson_title</code> ở sheet mcq/essay/true_false phải khớp chính xác với <code>title</code> ở sheet lessons.
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#8FA9C6]">
             Sheet <code>true_false</code>: mỗi nhóm câu hỏi có cùng <code>group_id</code>, mỗi item là một dòng riêng với <code>item_id</code> tăng dần.
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#8FA9C6]">
             <code>no_quiz</code>: ghi TRUE nếu bài không có câu hỏi (ví dụ: Bài 0 chỉ xem video).
           </p>
         </div>
@@ -306,20 +306,20 @@ export default function ExcelImport() {
       <label className="block cursor-pointer" htmlFor="excel-upload">
         <input type="file" accept=".xlsx,.xls"
           onChange={handleFile} className="hidden" id="excel-upload" />
-        <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-gray-400 hover:bg-gray-50 transition-all">
-          <i className="ti ti-file-spreadsheet text-3xl text-gray-300" />
+        <div className="border-2 border-dashed border-[#22304C] rounded-2xl p-8 text-center hover:border-[#2C3B5C] hover:bg-[#141E36] transition-all">
+          <i className="ti ti-file-spreadsheet text-3xl text-[#5F7796]" />
           <p className="text-sm font-medium mt-3">Chọn file Excel (.xlsx)</p>
-          <p className="text-xs text-gray-400 mt-1">hoặc kéo thả vào đây</p>
+          <p className="text-xs text-[#8FA9C6] mt-1">hoặc kéo thả vào đây</p>
         </div>
       </label>
 
       {/* Lỗi parse */}
       {parseErrors.length > 0 && (
-        <div className="border border-red-200 bg-red-50 rounded-xl p-4">
-          <p className="text-sm font-medium text-red-700 mb-2">Phát hiện {parseErrors.length} lỗi:</p>
+        <div className="border border-[rgba(248,113,113,0.35)] bg-[rgba(248,113,113,0.12)] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#F87171] mb-2">Phát hiện {parseErrors.length} lỗi:</p>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {parseErrors.map((err, i) => (
-              <p key={i} className="text-xs text-red-600">• {err}</p>
+              <p key={i} className="text-xs text-[#F87171]">• {err}</p>
             ))}
           </div>
         </div>
@@ -333,31 +333,31 @@ export default function ExcelImport() {
           </p>
           <div className="space-y-2 mb-4 max-h-72 overflow-y-auto">
             {preview.map((l, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm border-b border-gray-100 pb-2 last:border-0">
+              <div key={i} className="flex items-start gap-2 text-sm border-b border-[#22304C] pb-2 last:border-0">
                 <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5 ${
-                  l.valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                  l.valid ? 'bg-[rgba(74,222,128,0.16)] text-[#4ADE80]' : 'bg-[rgba(248,113,113,0.16)] text-[#F87171]'
                 }`}>{l.valid ? '✓' : '!'}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium truncate">{l.title || '(chưa có tên)'}</span>
-                    <span className="text-xs text-gray-400 flex-shrink-0">{l.branch_slug}</span>
+                    <span className="text-xs text-[#8FA9C6] flex-shrink-0">{l.branch_slug}</span>
                     {l.module_name && (
-                      <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">
+                      <span className="text-xs text-[#60A5FA] bg-[rgba(96,165,250,0.12)] px-1.5 py-0.5 rounded flex-shrink-0">
                         {l.module_name}
                       </span>
                     )}
                     {l.no_quiz && (
-                      <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">
+                      <span className="text-xs text-[#A78BFA] bg-[rgba(167,139,250,0.12)] px-1.5 py-0.5 rounded flex-shrink-0">
                         no quiz
                       </span>
                     )}
                   </div>
                   {l.valid && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-[#8FA9C6]">
                       {l.mcqCount} trắc nghiệm · {l.tfCount} đúng/sai · {l.essayCount} tự luận · thứ tự {l.order_index}
                     </p>
                   )}
-                  {l.error && <p className="text-xs text-red-500">{l.error}</p>}
+                  {l.error && <p className="text-xs text-[#F87171]">{l.error}</p>}
                 </div>
               </div>
             ))}
@@ -372,7 +372,7 @@ export default function ExcelImport() {
         </div>
       )}
 
-      {success && <p className="text-sm text-green-600 bg-green-50 rounded-lg p-3">{success}</p>}
+      {success && <p className="text-sm text-[#4ADE80] bg-[rgba(74,222,128,0.12)] rounded-lg p-3">{success}</p>}
     </div>
   )
 }

@@ -31,8 +31,33 @@ export async function GET() {
     .from('badges')
     .select('user_id, badge_type')
 
+  // ── Xác định module AI trước, để loại badge AI khỏi điểm nhánh ──
+  const { data: aiModules } = await supabaseAdmin
+    .from('modules')
+    .select('id, name')
+    .eq('category', 'ai')
+
+  const aiModuleIds = new Set((aiModules || []).map(m => m.id))
+  const aiBadgeTypes = new Set(Array.from(aiModuleIds).map(id => `module-${id}`))
+
+  const { data: aiLessons } = aiModuleIds.size > 0
+    ? await supabaseAdmin
+        .from('lessons')
+        .select('id, module_id')
+        .eq('is_published', true)
+        .in('module_id', Array.from(aiModuleIds))
+    : { data: [] as any[] }
+
+  const aiLessonIds = new Set((aiLessons || []).map(l => l.id))
+  const aiTotalLessons = aiLessonIds.size
+
   const result = branches.map(branch => {
-    const branchLessonIds = new Set((lessons || []).filter(l => l.branch_id === branch.id).map(l => l.id))
+    // Chỉ tính bài của nhánh, KHÔNG tính bài thuộc khóa AI (khóa chung, có bảng riêng)
+    const branchLessonIds = new Set(
+      (lessons || [])
+        .filter(l => l.branch_id === branch.id && !aiLessonIds.has(l.id))
+        .map(l => l.id)
+    )
     const totalLessons = branchLessonIds.size
 
     const branchProfiles = (profiles || []).filter(p => p.branch_id === branch.id)
@@ -44,7 +69,10 @@ export async function GET() {
       const tick1Count = userProgress.filter(p => p.tick1).length
       const tick2Count = userProgress.filter(p => p.tick2).length
       const perfectCount = userProgress.filter(p => p.perfect_score).length
-      const badgeCount = (allBadges || []).filter(b => b.user_id === profile.id).length
+      // Chỉ đếm badge nghề — bỏ badge của module AI ra khỏi điểm nhánh
+      const badgeCount = (allBadges || []).filter(
+        b => b.user_id === profile.id && !aiBadgeTypes.has(b.badge_type)
+      ).length
 
       const progressPct = totalLessons > 0
         ? Math.round(((tick1Count / totalLessons) + (tick2Count / totalLessons)) / 2 * 100)
@@ -72,5 +100,52 @@ export async function GET() {
     }
   })
 
-  return NextResponse.json({ branches: result })
+  // ══════════════════════════════════════════════════════
+  //  BẢNG XẾP HẠNG MODULE AI (Kiến thức chung — mọi nhánh)
+  // ══════════════════════════════════════════════════════
+  const branchNameById: Record<string, string> = {}
+  branches.forEach(b => { branchNameById[b.id] = b.name })
+
+  // Toàn bộ học viên đã đăng ký (mọi nhánh), không chỉ nhánh có bài AI
+  const aiLeaderboard = (profiles || []).map(profile => {
+    const userProgress = (allProgress || []).filter(
+      p => p.user_id === profile.id && aiLessonIds.has(p.lesson_id)
+    )
+    const doneCount = userProgress.filter(p => p.tick1 && p.tick2).length
+    const perfectCount = userProgress.filter(p => p.perfect_score).length
+
+    const progressPct = aiTotalLessons > 0
+      ? Math.round((doneCount / aiTotalLessons) * 100)
+      : 0
+
+    // Badge của riêng khóa AI (nếu có) — chỉ tính ở bảng này
+    const aiBadgeCount = (allBadges || []).filter(
+      b => b.user_id === profile.id && aiBadgeTypes.has(b.badge_type)
+    ).length
+
+    const score = progressPct + perfectCount * 5 + aiBadgeCount * 7
+
+    return {
+      userId: profile.id,
+      name: profile.name || 'Học viên',
+      branchName: branchNameById[profile.branch_id] || '—',
+      lessonsDone: doneCount,
+      totalLessons: aiTotalLessons,
+      progressPct,
+      perfectCount,
+      aiBadgeCount,
+      score,
+    }
+  })
+  // Xếp theo điểm; ai chưa học bài AI nào thì xuống cuối
+  .sort((a, b) => b.score - a.score || b.lessonsDone - a.lessonsDone)
+
+  return NextResponse.json({
+    branches: result,
+    ai: {
+      moduleName: (aiModules || [])[0]?.name || 'Kiến thức chung',
+      totalLessons: aiTotalLessons,
+      leaderboard: aiLeaderboard.slice(0, 100),
+    },
+  })
 }

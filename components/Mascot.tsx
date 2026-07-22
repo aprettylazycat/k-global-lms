@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { RAISED, TEXT, GOLD, NAVY, BORDER_STRONG as BORDER } from '@/lib/theme'
 
-const NAVY = '#466898'
-const BORDER = '#E2D8C8'
+
 
 const IDLE_MESSAGES = [
   { icon: '⏰', text: 'Ơ, bạn vẫn đang học đấy chứ? Đồng hồ đang chạy nè 👀' },
@@ -217,13 +217,13 @@ export default function Mascot({
     >
       {bubble && (
         <div className="relative max-w-[180px] sm:max-w-[240px] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl"
-          style={{ backgroundColor: 'white', border: `2px solid ${BORDER}` }}>
-          <p className="text-xs sm:text-sm leading-snug" style={{ color: NAVY }}>
+          style={{ backgroundColor: RAISED, border: `2px solid ${BORDER}` }}>
+          <p className="text-xs sm:text-sm leading-snug" style={{ color: TEXT }}>
             {bubble.icon && <span className="mr-1">{bubble.icon}</span>}
             {bubble.text}
           </p>
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
-            style={{ backgroundColor: 'white', borderRight: `2px solid ${BORDER}`, borderBottom: `2px solid ${BORDER}` }} />
+            style={{ backgroundColor: RAISED, borderRight: `2px solid ${BORDER}`, borderBottom: `2px solid ${BORDER}` }} />
         </div>
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}

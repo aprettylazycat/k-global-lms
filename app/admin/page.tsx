@@ -30,14 +30,15 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="min-h-screen" style={{ backgroundColor: '#070B15', color: '#EEF3FB' }}>
+      <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-lg font-medium mb-6">Admin Panel</h1>
 
       {/* Tab chính */}
       <div className="flex gap-0 mb-6 border rounded-lg overflow-hidden">
         {TABS.map(t => (
           <button key={t.key} onClick={() => handleTabChange(t.key)}
-            className={`flex-1 py-2 text-sm ${tab === t.key ? 'bg-gray-100 font-medium' : 'text-gray-500'}`}>
+            className={`flex-1 py-2 text-sm ${tab === t.key ? 'bg-[#1A2542] font-medium' : 'text-[#8FA9C6]'}`}>
             {t.label}
           </button>
         ))}
@@ -47,11 +48,11 @@ export default function AdminPage() {
       <div className={tab === 'upload' ? '' : 'hidden'}>
         <div className="flex gap-0 mb-6 border rounded-lg overflow-hidden">
           <button onClick={() => setUploadTab('form')}
-            className={`flex-1 py-2 text-sm ${uploadTab === 'form' ? 'bg-gray-100 font-medium' : 'text-gray-500'}`}>
+            className={`flex-1 py-2 text-sm ${uploadTab === 'form' ? 'bg-[#1A2542] font-medium' : 'text-[#8FA9C6]'}`}>
             Nhập tay
           </button>
           <button onClick={() => setUploadTab('excel')}
-            className={`flex-1 py-2 text-sm ${uploadTab === 'excel' ? 'bg-gray-100 font-medium' : 'text-gray-500'}`}>
+            className={`flex-1 py-2 text-sm ${uploadTab === 'excel' ? 'bg-[#1A2542] font-medium' : 'text-[#8FA9C6]'}`}>
             Import Excel / CSV
           </button>
         </div>
@@ -63,6 +64,7 @@ export default function AdminPage() {
       {mounted.has('manage')  && <div className={tab === 'manage'  ? '' : 'hidden'}><LessonList /></div>}
       {mounted.has('modules') && <div className={tab === 'modules' ? '' : 'hidden'}><ModuleManager /></div>}
       {mounted.has('report')  && <div className={tab === 'report'  ? '' : 'hidden'}><ReportPanel /></div>}
+      </div>
     </div>
   )
 }

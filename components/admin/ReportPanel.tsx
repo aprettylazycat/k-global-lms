@@ -58,26 +58,26 @@ function LessonRow({ l }: { l: LessonProgress }) {
     <div style={{ borderBottom: '1px solid #EFF6FF' }} className="last:border-0">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-blue-50"
+        className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-[rgba(96,165,250,0.14)]"
       >
         <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-          style={{ backgroundColor: '#EFF6FF', color: '#0E62B1' }}>
+          style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#3B82F6' }}>
           {l.orderIndex}
         </span>
-        <p className="text-xs flex-1 truncate" style={{ color: '#1E3A5F' }}>{l.title}</p>
+        <p className="text-xs flex-1 truncate" style={{ color: '#EEF3FB' }}>{l.title}</p>
         <div className="flex gap-1.5 flex-shrink-0">
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-            l.tick1 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'
+            l.tick1 ? 'bg-[rgba(74,222,128,0.16)] text-[#4ADE80]' : 'bg-[#1A2542] text-[#8FA9C6]'
           }`}>Đã nộp</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-            l.tick2 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'
+            l.tick2 ? 'bg-[rgba(74,222,128,0.16)] text-[#4ADE80]' : 'bg-[#1A2542] text-[#8FA9C6]'
           }`}>Đạt LT</span>
           {(l as any).perfectScore && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">⭐</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-[rgba(251,191,36,0.16)] text-[#FBBF24]">⭐</span>
           )}
         </div>
         <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          style={{ fontSize: '11px', color: '#BFDBFE' }} />
+          style={{ fontSize: '11px', color: 'rgba(96,165,250,0.3)' }} />
       </button>
 
       {open && (
@@ -91,14 +91,14 @@ function LessonRow({ l }: { l: LessonProgress }) {
               { label: '✅ TF đúng/sai', value: (l as any).tfSummary || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl px-2.5 py-1.5"
-                style={{ backgroundColor: '#EFF6FF' }}>
-                <p className="text-[10px]" style={{ color: '#93C5FD' }}>{label}</p>
-                <p className="text-xs font-semibold" style={{ color: '#1E3A5F' }}>{value}</p>
+                style={{ backgroundColor: 'rgba(96,165,250,0.12)' }}>
+                <p className="text-[10px]" style={{ color: '#60A5FA' }}>{label}</p>
+                <p className="text-xs font-semibold" style={{ color: '#EEF3FB' }}>{value}</p>
               </div>
             ))}
           </div>
           {l.completedAt && (
-            <p className="text-[10px]" style={{ color: '#93C5FD' }}>
+            <p className="text-[10px]" style={{ color: '#60A5FA' }}>
               Hoàn thành: {new Date(l.completedAt).toLocaleDateString('vi-VN')}
             </p>
           )}
@@ -234,13 +234,13 @@ export default function ReportPanel() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-[rgba(96,165,250,0.3)] border-t-blue-600 rounded-full animate-spin" />
     </div>
   )
 
   if (error) return (
     <div className="rounded-xl px-4 py-3 text-sm font-medium"
-      style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
+      style={{ backgroundColor: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid #FECACA' }}>
       <i className="ti ti-alert-circle mr-2" />{error}
     </div>
   )
@@ -253,8 +253,8 @@ export default function ReportPanel() {
         <button onClick={() => setViewTab('learners')}
           className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
           style={{
-            backgroundColor: viewTab === 'learners' ? '#0E62B1' : 'white',
-            color: viewTab === 'learners' ? 'white' : '#0E62B1',
+            backgroundColor: viewTab === 'learners' ? '#3B82F6' : '#0E1526',
+            color: viewTab === 'learners' ? '#FFFFFF' : '#60A5FA',
             border: '2px solid #0E62B1'
           }}>
           <i className="ti ti-users mr-1.5" style={{ fontSize: '13px' }} />
@@ -263,8 +263,8 @@ export default function ReportPanel() {
         <button onClick={() => setViewTab('feedback')}
           className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
           style={{
-            backgroundColor: viewTab === 'feedback' ? '#0E62B1' : 'white',
-            color: viewTab === 'feedback' ? 'white' : '#0E62B1',
+            backgroundColor: viewTab === 'feedback' ? '#3B82F6' : '#0E1526',
+            color: viewTab === 'feedback' ? '#FFFFFF' : '#60A5FA',
             border: '2px solid #0E62B1'
           }}>
           <i className="ti ti-message-star mr-1.5" style={{ fontSize: '13px' }} />
@@ -279,7 +279,7 @@ export default function ReportPanel() {
       {/* Header stats */}
       {stats && (
         <div className="rounded-2xl p-5 flex items-center justify-between"
-          style={{ backgroundColor: '#0E62B1' }}>
+          style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
           <div className="grid grid-cols-4 gap-6 flex-1">
             {[
               { label: 'Tổng học viên', value: stats.total },
@@ -289,13 +289,13 @@ export default function ReportPanel() {
             ].map((s, i) => (
               <div key={i} className="text-center">
                 <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#BFDBFE' }}>{s.label}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(96,165,250,0.3)' }}>{s.label}</p>
               </div>
             ))}
           </div>
           <button onClick={load}
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl ml-6 flex-shrink-0"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#0E1526' }}>
             <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
             Làm mới
           </button>
@@ -305,21 +305,21 @@ export default function ReportPanel() {
       {/* Search */}
       <div className="relative">
         <i className="ti ti-search absolute left-4 top-1/2 -translate-y-1/2"
-          style={{ fontSize: '15px', color: '#0E62B1' }} />
+          style={{ fontSize: '15px', color: '#3B82F6' }} />
         <input
           type="text"
           placeholder="Tìm tên, email, vị trí, mentor..."
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
-          className="w-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-colors bg-white"
-          style={{ border: '2px solid #BFDBFE' }}
-          onFocus={e => e.target.style.borderColor = '#0E62B1'}
-          onBlur={e => e.target.style.borderColor = '#BFDBFE'}
+          className="w-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-colors bg-[#0E1526]"
+          style={{ border: '1px solid rgba(96,165,250,0.3)' }}
+          onFocus={e => e.target.style.borderColor = '#3B82F6'}
+          onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
         />
         {searchText && (
           <button onClick={() => setSearchText('')}
             className="absolute right-4 top-1/2 -translate-y-1/2"
-            style={{ color: '#93C5FD' }}>
+            style={{ color: '#60A5FA' }}>
             <i className="ti ti-x" style={{ fontSize: '14px' }} />
           </button>
         )}
@@ -331,16 +331,16 @@ export default function ReportPanel() {
           <button onClick={() => setFilterBranch('all')}
             className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
             style={{
-              backgroundColor: filterBranch === 'all' ? '#0E62B1' : 'white',
-              color: filterBranch === 'all' ? 'white' : '#0E62B1',
+              backgroundColor: filterBranch === 'all' ? '#3B82F6' : '#0E1526',
+              color: filterBranch === 'all' ? '#FFFFFF' : '#60A5FA',
               border: '2px solid #0E62B1'
             }}>
             Tất cả ({learners.length})
           </button>
           {branches.map(b => {
             const branchLearner = learners.find(l => l.branch?.name === b)
-            const bg = branchLearner?.branch?.color_bg || '#EFF6FF'
-            const fg = branchLearner?.branch?.color_text || '#0E62B1'
+            const bg = branchLearner?.branch?.color_bg || 'rgba(96,165,250,0.12)'
+            const fg = branchLearner?.branch?.color_text || '#3B82F6'
             const count = learners.filter(l => (l.branch?.name || 'Không rõ') === b).length
             const isActive = filterBranch === b
             return (
@@ -357,33 +357,33 @@ export default function ReportPanel() {
         </div>
         <button onClick={exportAllExcel}
           className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-colors flex-shrink-0"
-          style={{ backgroundColor: '#EFF6FF', color: '#0E62B1', border: '2px solid #BFDBFE' }}>
+          style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#3B82F6', border: '1px solid rgba(96,165,250,0.3)' }}>
           <i className="ti ti-download" style={{ fontSize: '14px' }} />
           Xuất Excel
         </button>
       </div>
 
       {(searchText || filterBranch !== 'all') && (
-        <p className="text-xs" style={{ color: '#93C5FD' }}>
+        <p className="text-xs" style={{ color: '#60A5FA' }}>
           {filtered.length === 0 ? 'Không tìm thấy học viên nào.' : `Hiển thị ${filtered.length}/${learners.length} học viên`}
         </p>
       )}
 
       {/* Danh sách học viên */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#EFF6FF', border: '2px solid #BFDBFE' }}>
-          <i className="ti ti-users-off" style={{ fontSize: '40px', color: '#BFDBFE' }} />
-          <p className="text-sm mt-3 font-medium" style={{ color: '#93C5FD' }}>Chưa có học viên nào.</p>
+        <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.3)' }}>
+          <i className="ti ti-users-off" style={{ fontSize: '40px', color: 'rgba(96,165,250,0.3)' }} />
+          <p className="text-sm mt-3 font-medium" style={{ color: '#60A5FA' }}>Chưa có học viên nào.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map(learner => {
             const highestBadge = ['diamond', 'gold', 'silver', 'bronze'].find(b => learner.badges.includes(b))
-            const bg = learner.branch?.color_bg || '#EFF6FF'
-            const fg = learner.branch?.color_text || '#0E62B1'
+            const bg = learner.branch?.color_bg || 'rgba(96,165,250,0.12)'
+            const fg = learner.branch?.color_text || '#3B82F6'
             return (
               <div key={learner.id}
-                className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm"
+                className="bg-[#0E1526] rounded-2xl p-4 flex items-center gap-3 shadow-sm"
                 style={{ border: '2px solid #EFF6FF' }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                   style={{ backgroundColor: bg, color: fg }}>
@@ -391,28 +391,28 @@ export default function ReportPanel() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#1E3A5F' }}>{learner.name}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: '#EEF3FB' }}>{learner.name}</p>
                     {highestBadge && (
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
-                        style={{ backgroundColor: '#FEF3C7', color: '#B45309' }}>
+                        style={{ backgroundColor: 'rgba(251,191,36,0.14)', color: '#FBBF24' }}>
                         {BADGE_LABELS[highestBadge]}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs mt-0.5 truncate" style={{ color: '#93C5FD' }}>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: '#60A5FA' }}>
                     {learner.email} · {learner.branch?.name}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right hidden sm:block">
-                  <p className="text-sm font-bold" style={{ color: '#1E3A5F' }}>{learner.pct}%</p>
-                  <div className="w-20 h-1.5 rounded-full mt-1 overflow-hidden" style={{ backgroundColor: '#EFF6FF' }}>
+                  <p className="text-sm font-bold" style={{ color: '#EEF3FB' }}>{learner.pct}%</p>
+                  <div className="w-20 h-1.5 rounded-full mt-1 overflow-hidden" style={{ backgroundColor: 'rgba(96,165,250,0.12)' }}>
                     <div className="h-full rounded-full transition-all" style={{ width: `${learner.pct}%`, backgroundColor: fg }} />
                   </div>
                 </div>
                 <button
                   onClick={() => { setSelectedLearner(learner); setOpenModuleKeys(new Set()) }}
                   className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors flex-shrink-0"
-                  style={{ borderColor: '#BFDBFE', color: '#0E62B1' }}>
+                  style={{ borderColor: 'rgba(96,165,250,0.3)', color: '#3B82F6' }}>
                   Chi tiết
                 </button>
               </div>
@@ -424,31 +424,31 @@ export default function ReportPanel() {
       {/* Modal chi tiết */}
       {selectedLearner && (
         <div className="fixed inset-0 bg-black/40 flex items-start justify-center p-4 overflow-y-auto z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full my-8 relative">
+          <div className="bg-[#0E1526] rounded-2xl max-w-2xl w-full my-8 relative">
 
             {/* Modal header */}
             <div className="flex items-center justify-between p-5"
               style={{ borderBottom: '2px solid #EFF6FF' }}>
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold"
-                  style={{ backgroundColor: selectedLearner.branch?.color_bg || '#EFF6FF', color: selectedLearner.branch?.color_text || '#0E62B1' }}>
+                  style={{ backgroundColor: selectedLearner.branch?.color_bg || 'rgba(96,165,250,0.12)', color: selectedLearner.branch?.color_text || '#3B82F6' }}>
                   {selectedLearner.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-base font-bold" style={{ color: '#1E3A5F' }}>{selectedLearner.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#93C5FD' }}>{selectedLearner.email}</p>
+                  <p className="text-base font-bold" style={{ color: '#EEF3FB' }}>{selectedLearner.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#60A5FA' }}>{selectedLearner.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => exportExcel(selectedLearner)}
                   className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors"
-                  style={{ borderColor: '#BFDBFE', color: '#0E62B1' }}>
+                  style={{ borderColor: 'rgba(96,165,250,0.3)', color: '#3B82F6' }}>
                   <i className="ti ti-download" style={{ fontSize: '13px' }} />
                   Xuất Excel
                 </button>
                 <button onClick={() => setSelectedLearner(null)}
                   className="text-sm font-medium px-2 py-1.5 rounded-xl transition-colors"
-                  style={{ color: '#93C5FD' }}>✕</button>
+                  style={{ color: '#60A5FA' }}>✕</button>
               </div>
             </div>
 
@@ -457,7 +457,7 @@ export default function ReportPanel() {
               {/* Thông tin onboarding */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest mb-3"
-                  style={{ color: '#BFDBFE' }}>Thông tin onboarding</p>
+                  style={{ color: 'rgba(96,165,250,0.3)' }}>Thông tin onboarding</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                    {[
                     ['Nhánh', selectedLearner.branch?.name],
@@ -465,21 +465,21 @@ export default function ReportPanel() {
                     ['Ngày OB', selectedLearner.onboardingDate],
                   ].map(([label, value]) => (
                     <div key={label}>
-                      <p className="text-xs" style={{ color: '#93C5FD' }}>{label}</p>
-                      <p className="text-sm font-semibold mt-0.5" style={{ color: '#1E3A5F' }}>{value || '—'}</p>
+                      <p className="text-xs" style={{ color: '#60A5FA' }}>{label}</p>
+                      <p className="text-sm font-semibold mt-0.5" style={{ color: '#EEF3FB' }}>{value || '—'}</p>
                     </div>
                   ))}
                 </div>
                 {selectedLearner.goal && (
                   <div className="mt-3">
-                    <p className="text-xs mb-0.5" style={{ color: '#93C5FD' }}>Mục tiêu sau OB</p>
-                    <p className="text-sm" style={{ color: '#1E3A5F' }}>{selectedLearner.goal}</p>
+                    <p className="text-xs mb-0.5" style={{ color: '#60A5FA' }}>Mục tiêu sau OB</p>
+                    <p className="text-sm" style={{ color: '#EEF3FB' }}>{selectedLearner.goal}</p>
                   </div>
                 )}
                 {selectedLearner.expectation && (
                   <div className="mt-2">
-                    <p className="text-xs mb-0.5" style={{ color: '#93C5FD' }}>Kỳ vọng</p>
-                    <p className="text-sm" style={{ color: '#1E3A5F' }}>{selectedLearner.expectation}</p>
+                    <p className="text-xs mb-0.5" style={{ color: '#60A5FA' }}>Kỳ vọng</p>
+                    <p className="text-sm" style={{ color: '#EEF3FB' }}>{selectedLearner.expectation}</p>
                   </div>
                 )}
               </div>
@@ -487,7 +487,7 @@ export default function ReportPanel() {
               {/* Reset mật khẩu */}
               <div className="rounded-2xl p-4" style={{ border: '2px solid #EFF6FF' }}>
                 <p className="text-xs font-bold uppercase tracking-widest mb-3"
-                  style={{ color: '#BFDBFE' }}>Đặt lại mật khẩu</p>
+                  style={{ color: 'rgba(96,165,250,0.3)' }}>Đặt lại mật khẩu</p>
                 {resetTargetId === selectedLearner.id ? (
                   <div className="space-y-2">
                     <input
@@ -495,13 +495,13 @@ export default function ReportPanel() {
                       placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
                       value={resetPassword}
                       onChange={e => { setResetPassword(e.target.value); setResetMsg(null) }}
-                      className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-colors bg-white"
-                      style={{ border: '2px solid #BFDBFE' }}
-                      onFocus={e => e.target.style.borderColor = '#0E62B1'}
-                      onBlur={e => e.target.style.borderColor = '#BFDBFE'}
+                      className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-colors bg-[#0E1526]"
+                      style={{ border: '1px solid rgba(96,165,250,0.3)' }}
+                      onFocus={e => e.target.style.borderColor = '#3B82F6'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
                     />
                     {resetMsg && (
-                      <p className={`text-xs px-3 py-2 rounded-xl ${resetMsg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                      <p className={`text-xs px-3 py-2 rounded-xl ${resetMsg.ok ? 'bg-[rgba(74,222,128,0.12)] text-[#4ADE80]' : 'bg-[rgba(248,113,113,0.12)] text-[#F87171]'}`}>
                         {resetMsg.text}
                       </p>
                     )}
@@ -510,13 +510,13 @@ export default function ReportPanel() {
                         onClick={handleResetPassword}
                         disabled={resetLoading || resetPassword.length < 6}
                         className="flex-1 text-white text-sm rounded-xl py-2.5 font-bold disabled:opacity-40 transition-opacity hover:opacity-90"
-                        style={{ backgroundColor: '#0E62B1' }}>
+                        style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
                         {resetLoading ? 'Đang xử lý...' : 'Xác nhận đặt lại'}
                       </button>
                       <button
                         onClick={() => { setResetTargetId(null); setResetPassword(''); setResetMsg(null) }}
                         className="px-4 text-sm font-medium rounded-xl border transition-colors"
-                        style={{ borderColor: '#BFDBFE', color: '#93C5FD' }}>
+                        style={{ borderColor: 'rgba(96,165,250,0.3)', color: '#60A5FA' }}>
                         Huỷ
                       </button>
                     </div>
@@ -525,7 +525,7 @@ export default function ReportPanel() {
                   <button
                     onClick={() => { setResetTargetId(selectedLearner.id); setResetPassword(''); setResetMsg(null) }}
                     className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl border transition-colors"
-                    style={{ borderColor: '#BFDBFE', color: '#0E62B1' }}>
+                    style={{ borderColor: 'rgba(96,165,250,0.3)', color: '#3B82F6' }}>
                     <i className="ti ti-key" style={{ fontSize: '14px' }} />
                     Đặt lại mật khẩu cho học viên này
                   </button>
@@ -533,21 +533,21 @@ export default function ReportPanel() {
               </div>
 
               {/* Tiến độ tổng quan */}
-              <div className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF' }}>
+              <div className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(96,165,250,0.12)' }}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="text-center flex-shrink-0">
-                    <p className="text-3xl font-bold" style={{ color: '#0E62B1' }}>{selectedLearner.pct}%</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#93C5FD' }}>Tiến độ</p>
+                    <p className="text-3xl font-bold" style={{ color: '#3B82F6' }}>{selectedLearner.pct}%</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#60A5FA' }}>Tiến độ</p>
                   </div>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#BFDBFE' }}>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(96,165,250,0.3)' }}>
                     <div className="h-full rounded-full transition-all"
-                      style={{ width: `${selectedLearner.pct}%`, backgroundColor: '#0E62B1' }} />
+                      style={{ width: `${selectedLearner.pct}%`, backgroundColor: '#3B82F6' }} />
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-xs mb-1" style={{ color: '#93C5FD' }}>Huy hiệu</p>
+                    <p className="text-xs mb-1" style={{ color: '#60A5FA' }}>Huy hiệu</p>
                     <div className="flex gap-1 justify-end">
                       {selectedLearner.badges.length === 0
-                        ? <span className="text-xs" style={{ color: '#BFDBFE' }}>Chưa có</span>
+                        ? <span className="text-xs" style={{ color: 'rgba(96,165,250,0.3)' }}>Chưa có</span>
                         : selectedLearner.badges.map(b => (
                           <span key={b} className="text-xs">{BADGE_LABELS[b]}</span>
                         ))
@@ -561,10 +561,10 @@ export default function ReportPanel() {
                     { label: '⏱ Tổng thời gian', value: (selectedLearner as any).totalMinutesAll > 0 ? `${(selectedLearner as any).totalMinutesAll} phút` : '—' },
                     { label: '⭐ Perfect Score', value: `${(selectedLearner as any).perfectScoreCount ?? 0} bài` },
                   ].map(({ label, value }) => (
-                    <div key={label} className="bg-white rounded-xl p-2.5 text-center"
+                    <div key={label} className="bg-[#0E1526] rounded-xl p-2.5 text-center"
                       style={{ border: '1px solid #BFDBFE' }}>
-                      <p className="text-[10px]" style={{ color: '#93C5FD' }}>{label}</p>
-                      <p className="text-sm font-bold mt-0.5" style={{ color: '#1E3A5F' }}>{value}</p>
+                      <p className="text-[10px]" style={{ color: '#60A5FA' }}>{label}</p>
+                      <p className="text-sm font-bold mt-0.5" style={{ color: '#EEF3FB' }}>{value}</p>
                     </div>
                   ))}
                 </div>
@@ -573,9 +573,9 @@ export default function ReportPanel() {
               {/* Tiến độ bài học theo module */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest mb-3"
-                  style={{ color: '#BFDBFE' }}>Tiến độ bài học</p>
+                  style={{ color: 'rgba(96,165,250,0.3)' }}>Tiến độ bài học</p>
                 {selectedLearner.lessonProgress.length === 0 ? (
-                  <p className="text-sm text-center py-4" style={{ color: '#93C5FD' }}>
+                  <p className="text-sm text-center py-4" style={{ color: '#60A5FA' }}>
                     Chưa bắt đầu bài học nào.
                   </p>
                 ) : (() => {
@@ -596,33 +596,33 @@ export default function ReportPanel() {
                         const isOpen = openModuleKeys.has(key)
                         return (
                           <div key={gi} className="rounded-2xl overflow-hidden"
-                            style={{ border: '2px solid #BFDBFE' }}>
+                            style={{ border: '1px solid rgba(96,165,250,0.3)' }}>
                             <button
                               onClick={() => toggleModuleKey(key)}
                               className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-                              style={{ backgroundColor: isOpen ? '#EFF6FF' : 'white' }}>
+                              style={{ backgroundColor: isOpen ? 'rgba(96,165,250,0.12)' : '#0E1526' }}>
                               <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                                 style={{
-                                  backgroundColor: allDone ? '#D1FAE5' : '#EFF6FF',
-                                  color: allDone ? '#059669' : '#0E62B1'
+                                  backgroundColor: allDone ? 'rgba(74,222,128,0.14)' : 'rgba(96,165,250,0.12)',
+                                  color: allDone ? '#4ADE80' : '#3B82F6'
                                 }}>
                                 {allDone ? '✓' : gi + 1}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold truncate" style={{ color: '#1E3A5F' }}>
+                                <p className="text-xs font-semibold truncate" style={{ color: '#EEF3FB' }}>
                                   {group.moduleName}
                                 </p>
-                                <p className="text-[10px] mt-0.5" style={{ color: '#93C5FD' }}>
+                                <p className="text-[10px] mt-0.5" style={{ color: '#60A5FA' }}>
                                   {done}/{total} hoàn thành
                                 </p>
                               </div>
                               <div className="w-16 h-1.5 rounded-full overflow-hidden flex-shrink-0"
-                                style={{ backgroundColor: '#BFDBFE' }}>
+                                style={{ backgroundColor: 'rgba(96,165,250,0.3)' }}>
                                 <div className="h-full rounded-full transition-all"
-                                  style={{ width: `${Math.round(done / total * 100)}%`, backgroundColor: '#0E62B1' }} />
+                                  style={{ width: `${Math.round(done / total * 100)}%`, backgroundColor: '#3B82F6' }} />
                               </div>
                               <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                                style={{ fontSize: '13px', color: '#BFDBFE' }} />
+                                style={{ fontSize: '13px', color: 'rgba(96,165,250,0.3)' }} />
                             </button>
                             {isOpen && (
                               <div style={{ borderTop: '2px solid #EFF6FF' }}>

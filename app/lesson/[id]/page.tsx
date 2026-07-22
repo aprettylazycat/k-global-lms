@@ -5,12 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Lesson, Progress } from '@/types'
 import Mascot from '@/components/Mascot'
+import { SPACE, PANEL, CHIP, RAISED, TEXT, MUTED, FAINT, GOLD, GOLD_GLOW, GOLD_SOFT, NAVY, BLUE, BORDER, BORDER_STRONG, CREAM, OK, OK_BG, OK_BORDER, WARN, WARN_BG, WARN_BORDER, ERR, ERR_BG, ERR_BORDER, INFO, INFO_BG, INFO_BORDER, SHADOW } from '@/lib/theme'
 
-const NAVY = '#466898'
-const GOLD = '#C9A84C'
-const BLUE = '#0E62B1'
-const CREAM = '#F5F0E8'
-const BORDER = '#E2D8C8'
+const DARK_ON_GOLD = '#0A0E1A'
 
 export default function LessonPage() {
   const params = useParams()
@@ -128,29 +125,29 @@ export default function LessonPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: CREAM }}>
-        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: BORDER, borderTopColor: NAVY }} />
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: SPACE, color: TEXT }}>
+        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: BORDER, borderTopColor: GOLD }} />
       </div>
     )
   }
   if (!lesson) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-sm" style={{ backgroundColor: CREAM, color: NAVY }}>
+      <div className="flex items-center justify-center min-h-screen text-sm" style={{ backgroundColor: SPACE, color: TEXT }}>
         Không tìm thấy bài học.
       </div>
     )
   }
   if (locked) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6" style={{ backgroundColor: CREAM }}>
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'white', border: `2px solid ${BORDER}` }}>
-          <i className="ti ti-lock" style={{ fontSize: '24px', color: NAVY }} />
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6" style={{ backgroundColor: SPACE, color: TEXT }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: PANEL, border: `2px solid ${BORDER}` }}>
+          <i className="ti ti-lock" style={{ fontSize: '24px', color: TEXT }} />
         </div>
-        <p className="text-base font-bold mb-2" style={{ color: NAVY }}>Bài học này chưa được mở khoá</p>
-        <p className="text-sm mb-6" style={{ color: '#8AABC8' }}>Hoàn thành bài học trước đó để mở bài này nhé.</p>
+        <p className="text-base font-bold mb-2" style={{ color: TEXT }}>Bài học này chưa được mở khoá</p>
+        <p className="text-sm mb-6" style={{ color: MUTED }}>Hoàn thành bài học trước đó để mở bài này nhé.</p>
         <button onClick={() => router.push('/dashboard')}
           className="text-sm font-semibold text-white px-5 py-3 rounded-xl"
-          style={{ backgroundColor: NAVY }}>
+          style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
           Về Dashboard
         </button>
       </div>
@@ -165,15 +162,15 @@ export default function LessonPage() {
   const noPractice = !((lesson.practice_prompt ?? '').trim()) &&
   lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim()).length === 0
   return (
-    <div className="min-h-screen pb-16" style={{ backgroundColor: CREAM }}>
+    <div className="min-h-screen pb-16" style={{ backgroundColor: SPACE, color: TEXT }}>
 
       {/* Top bar — navy */}
-      <div className="px-5 py-3.5 sticky top-0 z-10" style={{ backgroundColor: NAVY, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="px-5 py-3.5 sticky top-0 z-10" style={{ backgroundColor: 'rgba(7,11,21,0.88)', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER}` }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={() => router.push('/dashboard')}
             className="flex items-center gap-1.5 font-medium transition-opacity hover:opacity-70"
-            style={{ color: 'white', fontSize: '14px' }}
+            style={{ color: TEXT, fontSize: '14px' }}
           >
             <i className="ti ti-arrow-left" style={{ fontSize: '14px' }} />
             Dashboard
@@ -187,12 +184,12 @@ export default function LessonPage() {
 
         {/* Cột trái */}
         <div className="space-y-5">
-          <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
-            <h1 className="text-xl lg:text-2xl font-bold mb-4" style={{ color: NAVY }}>
+          <div className="rounded-3xl p-6" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
+            <h1 className="text-xl lg:text-2xl font-bold mb-4" style={{ color: TEXT }}>
               {lesson.title}
             </h1>
             {(lesson.youtube_id || lesson.video_url) && (
-              <div className="aspect-video rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: CREAM }}>
+              <div className="aspect-video rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: SPACE, color: TEXT }}>
                 <iframe
                   src={lesson.youtube_id
                   ? `https://www.youtube.com/embed/${lesson.youtube_id}`
@@ -205,10 +202,10 @@ export default function LessonPage() {
             )}
             {lesson.youtube_id_2 && (
   <div className="mt-3">
-    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: NAVY }}>
+    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: TEXT }}>
       Video xem thêm
     </p>
-    <div className="aspect-video rounded-2xl overflow-hidden" style={{ backgroundColor: CREAM }}>
+    <div className="aspect-video rounded-2xl overflow-hidden" style={{ backgroundColor: SPACE, color: TEXT }}>
       <iframe
         src={`https://www.youtube.com/embed/${lesson.youtube_id_2}`}
         className="w-full h-full"
@@ -218,15 +215,15 @@ export default function LessonPage() {
     </div>
   </div>
 )}
-            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#4A5568' }}>
+            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: MUTED }}>
   {renderTextWithLinks(lesson.intro_text)}
 </p>
 
             {(lesson as any).attachment_url && (
               <div className="mt-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <i className="ti ti-file-type-pdf" style={{ fontSize: '14px', color: NAVY }} />
-                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: NAVY }}>Tài liệu đính kèm</p>
+                  <i className="ti ti-file-type-pdf" style={{ fontSize: '14px', color: TEXT }} />
+                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: TEXT }}>Tài liệu đính kèm</p>
                 </div>
                 <div className="rounded-2xl overflow-hidden" style={{ height: '520px', border: `1px solid ${BORDER}` }}>
                   <iframe
@@ -246,13 +243,13 @@ export default function LessonPage() {
           </div>
 
           {noQuiz ? (
-            <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+            <div className="rounded-3xl p-6" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
               <div className="flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ backgroundColor: GOLD, color: NAVY }}>
+                  style={{ backgroundColor: GOLD, color: TEXT }}>
                   <i className="ti ti-check" />
                 </span>
-                <p className="text-sm font-semibold" style={{ color: NAVY }}>
+                <p className="text-sm font-semibold" style={{ color: TEXT }}>
                   Bài này không có bài kiểm tra — xem xong video là hoàn thành phần lý thuyết.
                 </p>
               </div>
@@ -271,13 +268,13 @@ export default function LessonPage() {
         {/* Cột phải */}
         <div className="space-y-5">
           {noQuiz ? (
-            <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+            <div className="rounded-3xl p-6" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
               <div className="flex items-center gap-3">
                 <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  style={{ backgroundColor: GOLD, color: NAVY }}>
+                  style={{ backgroundColor: GOLD, color: TEXT }}>
                   <i className="ti ti-check" />
                 </span>
-                <p className="text-sm font-semibold" style={{ color: NAVY }}>
+                <p className="text-sm font-semibold" style={{ color: TEXT }}>
                   Bài học này không có bài tập — xem xong video là hoàn thành!
                 </p>
               </div>
@@ -291,7 +288,7 @@ export default function LessonPage() {
                     }
                   }}
                   className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: NAVY }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
                   {nextLessonId ? (
                     <>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
                   ) : (
@@ -301,7 +298,7 @@ export default function LessonPage() {
                 <button
                   onClick={() => window.location.href = '/dashboard'}
                   className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
-                  style={{ border: `1px solid ${BORDER}`, color: '#8AABC8' }}>
+                  style={{ border: `1px solid ${BORDER}`, color: MUTED }}>
                   <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
                   Về Dashboard
                 </button>
@@ -335,7 +332,7 @@ function renderTextWithLinks(text: string) {
     urlRegex.test(part) ? (
       <a key={i} href={part} target="_blank" rel="noreferrer"
         className="underline break-all"
-        style={{ color: NAVY }}
+        style={{ color: TEXT }}
         onClick={e => e.stopPropagation()}>
         {part}
       </a>
@@ -361,12 +358,12 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
               <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
                 style={{
                   backgroundColor: isDone || isActive ? GOLD : 'rgba(255,255,255,0.15)',
-                  color: isDone || isActive ? NAVY : 'rgba(255,255,255,0.4)',
+                  color: isDone || isActive ? DARK_ON_GOLD : FAINT,
                 }}>
                 {isDone ? <i className="ti ti-check" style={{ fontSize: '10px' }} /> : s.n}
               </span>
               <span className="text-xs hidden sm:inline font-medium"
-                style={{ color: isActive ? 'white' : 'rgba(255,255,255,0.5)' }}>
+                style={{ color: isActive ? TEXT : FAINT }}>
                 {s.label}
               </span>
             </div>
@@ -483,17 +480,17 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 
   if (submitted) {
     return (
-      <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+      <div className="rounded-3xl p-6" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center gap-2.5 mb-4">
           <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ backgroundColor: GOLD, color: NAVY }}>
+            style={{ backgroundColor: GOLD, color: TEXT }}>
             <i className="ti ti-check" />
           </span>
-          <h2 className="font-semibold" style={{ color: NAVY }}>Bài kiểm tra</h2>
+          <h2 className="font-semibold" style={{ color: TEXT }}>Bài kiểm tra</h2>
         </div>
-        <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
-          <i className="ti ti-check" style={{ color: '#27500A' }} />
-          <p className="text-sm font-medium" style={{ color: '#27500A' }}>Đã hoàn thành bài kiểm tra — xem bài tập bên cạnh.</p>
+        <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
+          <i className="ti ti-check" style={{ color: OK }} />
+          <p className="text-sm font-medium" style={{ color: OK }}>Đã hoàn thành bài kiểm tra — xem bài tập bên cạnh.</p>
         </div>
       </div>
     )
@@ -503,18 +500,18 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
     <div className="space-y-4">
       {/* MCQ slides */}
       {mcqs.length > 0 && q && (
-        <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+        <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
           {/* Header */}
           <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  style={{ backgroundColor: NAVY, color: 'white' }}>1</span>
-                <h2 className="font-semibold" style={{ color: NAVY }}>Bài kiểm tra</h2>
+                  style={{ backgroundColor: CHIP, color: GOLD }}>1</span>
+                <h2 className="font-semibold" style={{ color: TEXT }}>Bài kiểm tra</h2>
               </div>
-              <span className="text-xs font-semibold" style={{ color: '#8AABC8' }}>Câu {currentSlide + 1}/{mcqs.length}</span>
+              <span className="text-xs font-semibold" style={{ color: MUTED }}>Câu {currentSlide + 1}/{mcqs.length}</span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: CREAM }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: SPACE, color: TEXT }}>
               <div className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${((currentSlide + (slideState === 'correct' ? 1 : 0)) / mcqs.length) * 100}%`, backgroundColor: GOLD }} />
             </div>
@@ -522,26 +519,26 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 
           {/* Slide */}
           <div className="px-6 py-5">
-            <p className="text-base font-semibold mb-4 leading-snug" style={{ color: NAVY }}>{q.question}</p>
+            <p className="text-base font-semibold mb-4 leading-snug" style={{ color: TEXT }}>{q.question}</p>
             <div className="space-y-2.5 mb-5">
               {q.options.map((opt: string, i: number) => {
                 const isSelected = selectedAnswer === i
-                let optStyle: React.CSSProperties = { borderColor: BORDER, backgroundColor: 'white' }
-                let labelStyle: React.CSSProperties = { backgroundColor: CREAM, color: NAVY }
+                let optStyle: React.CSSProperties = { borderColor: BORDER, backgroundColor: PANEL }
+                let labelStyle: React.CSSProperties = { backgroundColor: CHIP, color: MUTED }
                 if (slideState !== 'idle') {
                   if (isSelected && slideState === 'wrong') {
-                    optStyle = { borderColor: '#DC2626', backgroundColor: '#FEF2F2' }
-                    labelStyle = { backgroundColor: '#DC2626', color: 'white' }
+                    optStyle = { borderColor: ERR, backgroundColor: ERR_BG }
+                    labelStyle = { backgroundColor: ERR, color: DARK_ON_GOLD }
                   } else if (isSelected && slideState === 'correct') {
-                    optStyle = { borderColor: '#27500A', backgroundColor: '#EAF3DE' }
-                    labelStyle = { backgroundColor: '#27500A', color: 'white' }
+                    optStyle = { borderColor: OK, backgroundColor: OK_BG }
+                    labelStyle = { backgroundColor: OK, color: DARK_ON_GOLD }
                   } else {
-                    optStyle = { borderColor: BORDER, backgroundColor: '#FAFAF9', opacity: 0.5 }
-                    labelStyle = { backgroundColor: CREAM, color: '#A8A29E' }
+                    optStyle = { borderColor: BORDER, backgroundColor: PANEL, opacity: 0.5 }
+                    labelStyle = { backgroundColor: SPACE, color: FAINT }
                   }
                 } else if (isSelected) {
-                  optStyle = { borderColor: NAVY, backgroundColor: '#EFF4F9' }
-                  labelStyle = { backgroundColor: NAVY, color: 'white' }
+                  optStyle = { borderColor: GOLD, backgroundColor: GOLD_SOFT }
+                  labelStyle = { backgroundColor: CHIP, color: GOLD }
                 }
                 return (
                   <button key={i} onClick={() => handleSelectOption(i)}
@@ -556,20 +553,20 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                         ? <i className="ti ti-x" style={{ fontSize: '11px' }} />
                         : ['A', 'B', 'C', 'D', 'E', 'F'][i]}
                     </span>
-                    <span className="flex-1 font-medium" style={{ color: NAVY }}>{opt}</span>
+                    <span className="flex-1 font-medium" style={{ color: TEXT }}>{opt}</span>
                   </button>
                 )
               })}
             </div>
             {slideState === 'correct' && (
               <div className="space-y-3">
-                <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
-                  <i className="ti ti-circle-check text-lg" style={{ color: '#27500A' }} />
-                  <p className="text-sm font-semibold" style={{ color: '#27500A' }}>Chính xác!</p>
+                <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
+                  <i className="ti ti-circle-check text-lg" style={{ color: OK }} />
+                  <p className="text-sm font-semibold" style={{ color: OK }}>Chính xác!</p>
                 </div>
                 <button onClick={handleNext} disabled={submitting || (isLastSlide && !allTfDone)}
                   className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-                  style={{ backgroundColor: NAVY }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
                   {submitting ? (
                     <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
                   ) : isLastSlide ? (
@@ -590,7 +587,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                 </div>
                 <button onClick={handleRetry}
                   className="w-full text-sm font-semibold py-3 rounded-xl transition-colors"
-                  style={{ border: `1px solid ${BORDER}`, color: NAVY, backgroundColor: 'white' }}>
+                  style={{ border: `1px solid ${BORDER}`, color: TEXT, backgroundColor: PANEL }}>
                   Chọn lại đáp án
                 </button>
               </div>
@@ -607,7 +604,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                   style={{
                     width: isCurrent ? '20px' : '6px',
                     height: '6px',
-                    backgroundColor: isDone ? GOLD : isCurrent ? NAVY : BORDER,
+                    backgroundColor: isDone ? GOLD : isCurrent ? BLUE : BORDER,
                   }} />
               )
             })}
@@ -623,31 +620,31 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
   const isSubmitted = tfSubmitted[group.id]
 
   return (
-    <div key={group.id} className="rounded-3xl overflow-hidden" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+    <div key={group.id} className="rounded-3xl overflow-hidden" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
       {/* Header */}
       <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <span className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: isSubmitted ? (tfResults[group.id] ? '#EAF3DE' : '#FEF2F2') : CREAM }}>
+              style={{ backgroundColor: isSubmitted ? (tfResults[group.id] ? OK_BG : ERR_BG) : CHIP }}>
               {isSubmitted
-                ? <i className={`ti ti-${tfResults[group.id] ? 'check' : 'x'}`} style={{ fontSize: '16px', color: tfResults[group.id] ? '#27500A' : '#DC2626' }} />
-                : <i className="ti ti-list-check" style={{ fontSize: '16px', color: NAVY }} />}
+                ? <i className={`ti ti-${tfResults[group.id] ? 'check' : 'x'}`} style={{ fontSize: '16px', color: tfResults[group.id] ? OK : ERR }} />
+                : <i className="ti ti-list-check" style={{ fontSize: '16px', color: TEXT }} />}
             </span>
             <div>
-              <h2 className="font-semibold text-sm" style={{ color: NAVY }}>Đúng / Sai</h2>
-              <p className="text-xs mt-0.5" style={{ color: '#8AABC8' }}>{group.question}</p>
+              <h2 className="font-semibold text-sm" style={{ color: TEXT }}>Đúng / Sai</h2>
+              <p className="text-xs mt-0.5" style={{ color: MUTED }}>{group.question}</p>
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="text-xs font-semibold" style={{ color: answeredCount === totalCount ? '#27500A' : NAVY }}>
+            <p className="text-xs font-semibold" style={{ color: answeredCount === totalCount ? OK : MUTED }}>
               Đã trả lời {answeredCount}/{totalCount} câu
             </p>
-            <div className="w-24 h-1.5 rounded-full mt-1.5 overflow-hidden" style={{ backgroundColor: CREAM }}>
+            <div className="w-24 h-1.5 rounded-full mt-1.5 overflow-hidden" style={{ backgroundColor: SPACE, color: TEXT }}>
               <div className="h-full rounded-full transition-all duration-300"
-                style={{ width: `${pct}%`, backgroundColor: answeredCount === totalCount ? '#27500A' : GOLD }} />
+                style={{ width: `${pct}%`, backgroundColor: answeredCount === totalCount ? OK : GOLD }} />
             </div>
-            <p className="text-xs mt-1" style={{ color: '#8AABC8' }}>{pct}%</p>
+            <p className="text-xs mt-1" style={{ color: MUTED }}>{pct}%</p>
           </div>
         </div>
       </div>
@@ -660,14 +657,14 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
           return (
             <div key={item.id} className="flex items-start gap-3 py-3 px-4 rounded-2xl transition-all"
               style={{
-                border: `1px solid ${isSubmitted ? (isCorrect ? '#B7DFA4' : '#FCA5A5') : BORDER}`,
-                backgroundColor: isSubmitted ? (isCorrect ? '#EAF3DE' : '#FEF2F2') : '#FAFAF8'
+                border: `1px solid ${isSubmitted ? (isCorrect ? OK_BORDER : ERR_BORDER) : BORDER}`,
+                backgroundColor: isSubmitted ? (isCorrect ? OK_BG : ERR_BG) : PANEL
               }}>
               {/* Số thứ tự */}
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
                 style={{
-                  backgroundColor: isSubmitted ? (isCorrect ? '#27500A' : '#DC2626') : (selected !== undefined ? NAVY : BORDER),
-                  color: 'white'
+                  backgroundColor: isSubmitted ? (isCorrect ? OK : ERR) : (selected !== undefined ? BLUE : BORDER),
+                  color: DARK_ON_GOLD
                 }}>
                 {isSubmitted
                   ? <i className={`ti ti-${isCorrect ? 'check' : 'x'}`} style={{ fontSize: '10px' }} />
@@ -675,7 +672,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
               </span>
 
               {/* Statement */}
-              <p className="flex-1 text-sm font-medium" style={{ color: NAVY }}>{item.statement}</p>
+              <p className="flex-1 text-sm font-medium" style={{ color: TEXT }}>{item.statement}</p>
 
               {/* Buttons */}
               <div className="flex gap-2 flex-shrink-0">
@@ -685,12 +682,12 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                   const showResult = isSubmitted && isSelected
                   const resultCorrect = showResult && isCorrect
 
-                  let bg = 'white'
+                  let bg = PANEL
                   let border = BORDER
-                  let color = '#6B7280'
-                  if (!isSubmitted && isSelected) { bg = NAVY; border = NAVY; color = 'white' }
-                  if (isSubmitted && isSelected && isCorrect) { bg = '#27500A'; border = '#27500A'; color = 'white' }
-                  if (isSubmitted && isSelected && !isCorrect) { bg = '#DC2626'; border = '#DC2626'; color = 'white' }
+                  let color = MUTED
+                  if (!isSubmitted && isSelected) { bg = BLUE; border = BLUE; color = DARK_ON_GOLD }
+                  if (isSubmitted && isSelected && isCorrect) { bg = OK; border = OK; color = DARK_ON_GOLD }
+                  if (isSubmitted && isSelected && !isCorrect) { bg = ERR; border = ERR; color = DARK_ON_GOLD }
 
                   return (
                     <button key={String(val)}
@@ -709,7 +706,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 
               {/* Đáp án đúng nếu sai */}
               {isSubmitted && !isCorrect && (
-                <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#DC2626' }}>
+                <span className="text-xs font-semibold flex-shrink-0" style={{ color: ERR }}>
                   → {item.correct ? 'Đúng' : 'Sai'}
                 </span>
               )}
@@ -726,21 +723,21 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
               onClick={() => handleTfSubmit(group)}
               disabled={answeredCount === 0}
               className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{ backgroundColor: NAVY }}>
+              style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
               <i className="ti ti-clipboard-check" style={{ fontSize: '14px' }} />
               Kiểm tra đáp án
             </button>
-            <p className="text-xs text-center mt-2" style={{ color: '#8AABC8' }}>
+            <p className="text-xs text-center mt-2" style={{ color: MUTED }}>
               <i className="ti ti-lock" style={{ fontSize: '11px' }} /> Bạn có thể kiểm tra đáp án bất cứ lúc nào trước khi hoàn thành.
             </p>
           </div>
         ) : (
           <div className="rounded-xl px-4 py-3 flex items-center gap-2.5"
-            style={{ backgroundColor: tfResults[group.id] ? '#EAF3DE' : '#FEF2F2' }}>
+            style={{ backgroundColor: tfResults[group.id] ? OK_BG : ERR_BG }}>
             <i className={`ti ti-${tfResults[group.id] ? 'circle-check' : 'circle-x'}`}
-              style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626', fontSize: '18px' }} />
+              style={{ color: tfResults[group.id] ? OK : ERR, fontSize: '18px' }} />
             <div>
-              <p className="text-sm font-semibold" style={{ color: tfResults[group.id] ? '#27500A' : '#DC2626' }}>
+              <p className="text-sm font-semibold" style={{ color: tfResults[group.id] ? OK : ERR }}>
                 {tfResults[group.id]
                   ? `Xuất sắc! Tất cả ${totalCount} câu đều đúng.`
                   : `${group.items.filter((i: any) => tfAnswers[group.id]?.[i.id] === i.correct).length}/${totalCount} câu đúng — xem đáp án bên trên.`}
@@ -774,7 +771,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
             }
         }} disabled={submitting}
           className="w-full text-sm font-semibold text-white py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ backgroundColor: NAVY }}>
+          style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
           {submitting
             ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
             : <>Nộp bài kiểm tra <i className="ti ti-send" style={{ fontSize: '14px' }} /></>}
@@ -932,19 +929,44 @@ useEffect(() => {
 
   const isLocked = !tick1Done
 
+  // ── Tự chữa bài noPractice bị kẹt ──
+  // Học viên làm xong quiz (tick1) từ khi bài CÒN phần thực hành, sau đó admin xoá
+  // phần thực hành đi → bài thành noPractice nhưng tick2 không ai set, kẹt vĩnh viễn.
+  // Gọi API đóng bài để hoàn tất; server tự xác minh lại nên không tick khống được.
+  useEffect(() => {
+    if (!noPractice || !tick1Done || tick2Done || !userId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session || cancelled) return
+        const res = await fetch('/api/close-no-practice', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ lessonId }),
+        })
+        if (res.ok && !cancelled) window.location.reload()
+      } catch { /* im lặng — lần vào bài sau sẽ thử lại */ }
+    })()
+    return () => { cancelled = true }
+  }, [noPractice, tick1Done, tick2Done, userId, lessonId])
+
   // Bài có practice_prompt thật sự mới hiện ô mô tả tự do + upload file.
   // Bài chỉ có câu tự luận (essay) thì ẩn 2 phần đó — học viên chỉ trả lời essay rồi nộp.
   const hasPrompt = ((prompt ?? '') as string).trim().length > 0
 
   if (noPractice && tick1Done) {
     return (
-      <div className="rounded-3xl p-6" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+      <div className="rounded-3xl p-6" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ backgroundColor: GOLD, color: NAVY }}>
+            style={{ backgroundColor: GOLD, color: TEXT }}>
             <i className="ti ti-check" />
           </span>
-          <p className="text-sm font-semibold" style={{ color: NAVY }}>
+          <p className="text-sm font-semibold" style={{ color: TEXT }}>
             Bài này không có phần thực hành — hoàn thành trắc nghiệm là bạn đã xong bài!
           </p>
         </div>
@@ -952,7 +974,7 @@ useEffect(() => {
           <button
             onClick={() => window.location.href = nextLessonId ? `/lesson/${nextLessonId}` : '/dashboard'}
             className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: NAVY }}>
+            style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
             {nextLessonId ? (<>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>)
               : (<>Hoàn thành khóa học <i className="ti ti-trophy" style={{ fontSize: '14px' }} /></>)}
           </button>
@@ -963,18 +985,18 @@ useEffect(() => {
 
   if (showCongrats) return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="relative bg-white rounded-3xl max-w-lg w-full my-8 overflow-hidden shadow-2xl">
+      <div className="relative rounded-3xl max-w-lg w-full my-8 overflow-hidden" style={{ backgroundColor: RAISED, border: `1px solid ${BORDER_STRONG}`, boxShadow: SHADOW }}>
         <canvas id="congrats-canvas" className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
         <div className="relative" style={{ zIndex: 1 }}>
 
           {/* Header chúc mừng */}
           <div className="p-8 text-center" style={{ borderBottom: recapContent ? `1px solid ${BORDER}` : 'none' }}>
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: NAVY }}>
+              style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
               <i className="ti ti-trophy" style={{ color: GOLD, fontSize: '28px' }} />
             </div>
-            <p className="text-2xl font-bold mb-2" style={{ color: NAVY }}>Chúc mừng!</p>
-            <p className="text-sm font-medium" style={{ color: '#8AABC8' }}>
+            <p className="text-2xl font-bold mb-2" style={{ color: TEXT }}>Chúc mừng!</p>
+            <p className="text-sm font-medium" style={{ color: MUTED }}>
               Bài tập đã được nộp thành công —<br />đang chờ admin duyệt.
             </p>
           </div>
@@ -1017,27 +1039,27 @@ useEffect(() => {
             const principle = sections.find(s => s.type === 'principle')
 
             return (
-              <div style={{ backgroundColor: CREAM, borderBottom: `1px solid ${BORDER}` }}>
+              <div style={{ backgroundColor: SPACE, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
                 {/* Header */}
                 <div className="px-6 pt-5 pb-3 flex items-center gap-2">
                   <i className="ti ti-bulb" style={{ fontSize: '16px', color: GOLD }} />
-                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: NAVY }}>Điểm quan trọng cần nhớ</p>
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: TEXT }}>Điểm quan trọng cần nhớ</p>
                 </div>
 
                 {/* Point cards */}
                 {pointSections.length > 0 && (
                   <div className="px-6 pb-4 space-y-3 max-h-72 overflow-y-auto">
                     {pointSections.map((s, idx) => (
-                      <div key={idx} className="rounded-2xl p-4 bg-white"
-                        style={{ border: `1px solid ${BORDER}` }}>
+                      <div key={idx} className="rounded-2xl p-4"
+                        style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
                         <div className="flex items-start gap-3">
                           <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-                            style={{ backgroundColor: NAVY, color: GOLD }}>
+                            style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
                             {idx + 1}
                           </span>
                           <div>
-                            <p className="text-sm font-bold mb-1" style={{ color: NAVY }}>{s.title}</p>
-                            {s.body && <p className="text-xs leading-relaxed" style={{ color: '#4A5568' }}>{s.body}</p>}
+                            <p className="text-sm font-bold mb-1" style={{ color: TEXT }}>{s.title}</p>
+                            {s.body && <p className="text-xs leading-relaxed" style={{ color: MUTED }}>{s.body}</p>}
                           </div>
                         </div>
                       </div>
@@ -1048,12 +1070,12 @@ useEffect(() => {
                 {/* Principle box */}
                 {principle && (
                   <div className="mx-6 mb-5 rounded-2xl p-4"
-                    style={{ backgroundColor: NAVY }}>
+                    style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
                     <div className="flex items-center gap-2 mb-2">
                       <i className="ti ti-star" style={{ fontSize: '13px', color: GOLD }} />
                       <p className="text-xs font-bold uppercase tracking-wide" style={{ color: GOLD }}>{principle.title}</p>
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                    <p className="text-xs leading-relaxed" style={{ color: TEXT }}>
                       {principle.body}
                     </p>
                   </div>
@@ -1072,8 +1094,8 @@ useEffect(() => {
                   window.location.href = '/dashboard'
                 }
               }}
-              className="w-full text-sm font-semibold text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: NAVY }}>
+              className="w-full text-sm font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: GOLD, color: DARK_ON_GOLD, boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
               {nextLessonId ? (
                 <>Sang bài tiếp theo <i className="ti ti-arrow-right" style={{ fontSize: '14px' }} /></>
               ) : (
@@ -1083,7 +1105,7 @@ useEffect(() => {
             <button
               onClick={() => window.location.href = '/dashboard'}
               className="w-full text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
-              style={{ border: `1px solid ${BORDER}`, color: '#8AABC8' }}>
+              style={{ border: `1px solid ${BORDER}`, color: MUTED }}>
               <i className="ti ti-layout-dashboard" style={{ fontSize: '14px' }} />
               Về Dashboard
             </button>
@@ -1095,26 +1117,26 @@ useEffect(() => {
 
   return (
     <div className={`rounded-3xl p-8 lg:p-10 transition-opacity ${isLocked ? 'opacity-50' : ''}`}
-      style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+      style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
             style={
-              tick2Done ? { backgroundColor: '#EAF3DE', color: '#27500A' } :
-              isLocked ? { backgroundColor: CREAM, color: '#A8A29E' } :
-              { backgroundColor: GOLD, color: NAVY }
+              tick2Done ? { backgroundColor: OK_BG, color: OK } :
+              isLocked ? { backgroundColor: SPACE, color: FAINT } :
+              { backgroundColor: GOLD, color: DARK_ON_GOLD }
             }>
             {tick2Done ? <i className="ti ti-check" /> : isLocked ? <i className="ti ti-lock" style={{ fontSize: '12px' }} /> : '2'}
           </span>
           <div>
-            <h2 className="font-semibold" style={{ color: NAVY }}>Bài tập thực hành</h2>
-            <p className="text-xs font-medium mt-0.5" style={{ color: '#8AABC8' }}>Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
+            <h2 className="font-semibold" style={{ color: TEXT }}>Bài tập thực hành</h2>
+            <p className="text-xs font-medium mt-0.5" style={{ color: MUTED }}>Tối thiểu {MIN_ESSAY_CHARS} ký tự mỗi câu tự luận</p>
           </div>
         </div>
         {/* Draft indicator */}
         {draftSaved && (
           <span className="text-xs font-medium flex items-center gap-1 transition-opacity"
-            style={{ color: '#27500A' }}>
+            style={{ color: OK }}>
             <i className="ti ti-check" style={{ fontSize: '11px' }} />
             Đã lưu nháp
           </span>
@@ -1122,20 +1144,20 @@ useEffect(() => {
       </div>
 
       {isLocked ? (
-        <p className="text-sm font-medium" style={{ color: '#8AABC8' }}>Hoàn thành bài kiểm tra để mở phần này.</p>
+        <p className="text-sm font-medium" style={{ color: MUTED }}>Hoàn thành bài kiểm tra để mở phần này.</p>
       ) : tick2Done ? (
-        <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: '#EAF3DE' }}>
-          <i className="ti ti-check" style={{ color: '#27500A' }} />
-          <p className="text-sm font-semibold" style={{ color: '#27500A' }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
+        <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
+          <i className="ti ti-check" style={{ color: OK }} />
+          <p className="text-sm font-semibold" style={{ color: OK }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
         </div>
       ) : submitted ? (
-        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: '#EAF3DE' }}>
+        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
           <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
-            style={{ backgroundColor: '#27500A' }}>
-            <i className="ti ti-trophy" style={{ color: '#EAF3DE', fontSize: '24px' }} />
+            style={{ backgroundColor: OK }}>
+            <i className="ti ti-trophy" style={{ color: DARK_ON_GOLD, fontSize: '24px' }} />
           </div>
-          <p className="text-lg font-bold mb-1" style={{ color: '#173404' }}>Chúc mừng!</p>
-          <p className="text-sm font-medium" style={{ color: '#3D6B1E' }}>
+          <p className="text-lg font-bold mb-1" style={{ color: OK }}>Chúc mừng!</p>
+          <p className="text-sm font-medium" style={{ color: OK }}>
             Bài tập đã được nộp thành công — đang chờ admin duyệt.
           </p>
         </div>
@@ -1143,32 +1165,32 @@ useEffect(() => {
         <>
           {submissionStatus === 'rejected' && (
             <div className="rounded-2xl p-4 mb-6 flex items-start gap-3"
-              style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
-              <i className="ti ti-alert-circle" style={{ color: '#DC2626', fontSize: '20px', marginTop: '2px' }} />
+              style={{ backgroundColor: ERR_BG, border: `1px solid ${ERR_BORDER}` }}>
+              <i className="ti ti-alert-circle" style={{ color: ERR, fontSize: '20px', marginTop: '2px' }} />
               <div>
-                <p className="text-sm font-bold" style={{ color: '#DC2626' }}>Bài làm trước đã bị từ chối</p>
+                <p className="text-sm font-bold" style={{ color: ERR }}>Bài làm trước đã bị từ chối</p>
                 {rejectReason && (
-                  <p className="text-xs mt-1" style={{ color: '#991B1B' }}>Lý do: {rejectReason}</p>
+                  <p className="text-xs mt-1" style={{ color: ERR }}>Lý do: {rejectReason}</p>
                 )}
-                <p className="text-xs mt-1" style={{ color: '#991B1B' }}>Hãy chỉnh sửa và nộp lại bên dưới.</p>
+                <p className="text-xs mt-1" style={{ color: ERR }}>Hãy chỉnh sửa và nộp lại bên dưới.</p>
               </div>
             </div>
           )}
           {essays.length > 0 && (
             <div className="space-y-6 mb-6">
               {essays.map((q: any, qi: number) => (
-                <div key={q.id} className="p-5 py-4 rounded-2xl" style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
-                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#8AABC8' }}>Câu hỏi tự luận {qi + 1}</p>
-                  <p className="text-base font-semibold leading-6 mb-4 whitespace-pre-line" style={{ color: NAVY }}>{q.question}</p>
+                <div key={q.id} className="p-5 py-4 rounded-2xl" style={{ backgroundColor: SPACE, border: `1px solid ${BORDER}` }}>
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: MUTED }}>Câu hỏi tự luận {qi + 1}</p>
+                  <p className="text-base font-semibold leading-6 mb-4 whitespace-pre-line" style={{ color: TEXT }}>{q.question}</p>
                   <textarea rows={6}
                     className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none transition-colors resize-y"
-                    style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
+                    style={{ border: `1px solid ${BORDER}`, backgroundColor: PANEL, color: TEXT }}
                     placeholder="Nhập câu trả lời..."
                     value={essayAnswers[q.id] || ''}
                     onChange={e => setEssayAnswers({ ...essayAnswers, [q.id]: e.target.value })} />
                   <div className="flex justify-end mt-1">
                     <span className="text-xs font-medium"
-                      style={{ color: (essayAnswers[q.id] || '').length >= MIN_ESSAY_CHARS ? '#27500A' : '#8AABC8' }}>
+                      style={{ color: (essayAnswers[q.id] || '').length >= MIN_ESSAY_CHARS ? OK : MUTED }}>
                       {(essayAnswers[q.id] || '').length}/{MIN_ESSAY_CHARS} ký tự
                     </span>
                   </div>
@@ -1181,7 +1203,7 @@ useEffect(() => {
   <div
     className="rounded-2xl p-5 mb-6"
     style={{
-      backgroundColor: CREAM,
+      backgroundColor: SPACE,
       border: `1px solid ${BORDER}`,
     }}
   >
@@ -1192,7 +1214,7 @@ useEffect(() => {
       />
       <p
         className="text-xs font-bold uppercase tracking-wide"
-        style={{ color: NAVY }}
+        style={{ color: TEXT }}
       >
         Yêu cầu thực hành
       </p>
@@ -1200,7 +1222,7 @@ useEffect(() => {
 
     <p
       className="text-sm leading-7 whitespace-pre-line"
-      style={{ color: '#4A5568' }}
+      style={{ color: MUTED }}
     >
       {prompt}
     </p>
@@ -1210,7 +1232,7 @@ useEffect(() => {
           <>
           <textarea rows={12}
             className="w-full text-sm rounded-xl px-3.5 py-2.5 mb-3 focus:outline-none transition-colors resize-none"
-            style={{ border: `1px solid ${BORDER}`, backgroundColor: 'white', color: NAVY }}
+            style={{ border: `1px solid ${BORDER}`, backgroundColor: PANEL, color: TEXT }}
             placeholder="Mô tả bài làm của bạn..."
             value={text} onChange={e => setText(e.target.value)} />
 
@@ -1218,7 +1240,7 @@ useEffect(() => {
   className="block rounded-2xl p-6 mb-2 cursor-pointer transition-colors"
   style={{
     border: `2px dashed ${BORDER}`,
-    backgroundColor: CREAM,
+    backgroundColor: SPACE,
   }}
 >
             <div className="flex flex-col items-center justify-center text-center gap-2">
@@ -1227,13 +1249,13 @@ useEffect(() => {
     className="ti ti-cloud-upload"
     style={{
       fontSize: '34px',
-      color: NAVY
+      color: TEXT
     }}
   />
 
   <p
     className="font-semibold"
-    style={{ color: NAVY }}
+    style={{ color: TEXT }}
   >
     {file ? (
 <>
@@ -1250,7 +1272,7 @@ Chọn ảnh hoặc PDF
 
   <p
     className="text-xs"
-    style={{ color: '#8AABC8' }}
+    style={{ color: MUTED }}
   >
     JPG • PNG • PDF (tối đa 10MB)
   </p>
@@ -1258,7 +1280,7 @@ Chọn ảnh hoặc PDF
   {!file && (
     <p
       className="text-xs"
-      style={{ color: '#A8A29E' }}
+      style={{ color: FAINT }}
     >
       Nhấn để chọn tệp từ máy tính
     </p>
@@ -1279,7 +1301,7 @@ Chọn ảnh hoặc PDF
           <button onClick={handleSubmit}
             disabled={loading || (hasPrompt && !text) || essays.some((q: any) => (essayAnswers[q.id] || '').length < MIN_ESSAY_CHARS)}
             className="w-full text-sm font-semibold text-white px-5 py-3 rounded-xl disabled:opacity-40 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: NAVY }}>
+            style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${BORDER_STRONG}` }}>
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

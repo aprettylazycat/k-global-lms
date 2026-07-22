@@ -102,7 +102,7 @@ export default function ReviewPanel() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-[rgba(96,165,250,0.3)] border-t-blue-600 rounded-full animate-spin" />
     </div>
   )
 
@@ -122,23 +122,23 @@ export default function ReviewPanel() {
 
       {/* Header stats */}
       <div className="rounded-2xl p-5 flex items-center justify-between"
-        style={{ backgroundColor: '#0E62B1' }}>
+        style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
         <div>
           <p className="text-2xl font-bold text-white">{submissions.length} bài chờ duyệt</p>
-          <p className="text-sm mt-0.5" style={{ color: '#BFDBFE' }}>
+          <p className="text-sm mt-0.5" style={{ color: 'rgba(96,165,250,0.3)' }}>
             {Object.keys(grouped).length} học viên · Cập nhật mới nhất
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={loadSubmissions}
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#0E1526' }}>
             <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
             Làm mới
           </button>
           <button onClick={handleCleanupStorage}
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}>
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#0E1526' }}>
             <i className="ti ti-trash" style={{ fontSize: '14px' }} />
             Dọn ảnh cũ
           </button>
@@ -147,31 +147,31 @@ export default function ReviewPanel() {
 
       {/* Thanh tìm kiếm */}
       <div className="relative">
-        <i className="ti ti-search absolute left-4 top-1/2 -translate-y-1/2" style={{ fontSize: '15px', color: '#0E62B1' }} />
+        <i className="ti ti-search absolute left-4 top-1/2 -translate-y-1/2" style={{ fontSize: '15px', color: '#3B82F6' }} />
         <input
           type="text"
           placeholder="Tìm tên hoặc email học viên..."
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
-          className="w-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-colors bg-white"
-          style={{ border: '2px solid #BFDBFE' }}
-          onFocus={e => e.target.style.borderColor = '#0E62B1'}
-          onBlur={e => e.target.style.borderColor = '#BFDBFE'}
+          className="w-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-colors bg-[#0E1526]"
+          style={{ border: '1px solid rgba(96,165,250,0.3)' }}
+          onFocus={e => e.target.style.borderColor = '#3B82F6'}
+          onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
         />
         {searchText && (
           <button onClick={() => setSearchText('')}
             className="absolute right-4 top-1/2 -translate-y-1/2"
-            style={{ color: '#93C5FD' }}>
+            style={{ color: '#60A5FA' }}>
             <i className="ti ti-x" style={{ fontSize: '14px' }} />
           </button>
         )}
       </div>
 
       {filteredGroups.length === 0 && (
-        <div className="bg-white rounded-2xl p-12 text-center"
+        <div className="bg-[#0E1526] rounded-2xl p-12 text-center"
           style={{ border: '2px solid #EFF6FF' }}>
-          <i className="ti ti-inbox-off" style={{ fontSize: '40px', color: '#BFDBFE' }} />
-          <p className="text-sm mt-3 font-medium" style={{ color: '#93C5FD' }}>
+          <i className="ti ti-inbox-off" style={{ fontSize: '40px', color: 'rgba(96,165,250,0.3)' }} />
+          <p className="text-sm mt-3 font-medium" style={{ color: '#60A5FA' }}>
             {submissions.length === 0 ? 'Không có bài nộp nào chờ duyệt.' : 'Không tìm thấy học viên.'}
           </p>
         </div>
@@ -181,30 +181,30 @@ export default function ReviewPanel() {
       {filteredGroups.map(([userId, { user, subs }]) => {
         const isUserOpen = openUsers.has(userId)
         return (
-          <div key={userId} className="bg-white rounded-2xl overflow-hidden shadow-sm"
-            style={{ border: '2px solid #BFDBFE' }}>
+          <div key={userId} className="bg-[#0E1526] rounded-2xl overflow-hidden shadow-sm"
+            style={{ border: '1px solid rgba(96,165,250,0.3)' }}>
 
             {/* Header user */}
             <button
               onClick={() => toggleUser(userId)}
               className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors"
-              style={{ backgroundColor: isUserOpen ? '#EFF6FF' : 'white' }}
+              style={{ backgroundColor: isUserOpen ? 'rgba(96,165,250,0.12)' : '#0E1526' }}
             >
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                style={{ backgroundColor: '#0E62B1' }}>
+                style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
                 {user?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-base font-bold" style={{ color: '#1E3A5F' }}>{user?.name ?? 'Không rõ'}</p>
+                <p className="text-base font-bold" style={{ color: '#EEF3FB' }}>{user?.name ?? 'Không rõ'}</p>
                 <p className="text-sm mt-0.5" style={{ color: '#60A5FA' }}>{user?.email}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className="text-sm font-bold px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: '#DBEAFE', color: '#0E62B1' }}>
+                  style={{ backgroundColor: 'rgba(96,165,250,0.16)', color: '#3B82F6' }}>
                   {subs.length} bài chờ
                 </span>
                 <i className={`ti ti-chevron-down transition-transform duration-200 ${isUserOpen ? 'rotate-180' : ''}`}
-                  style={{ fontSize: '18px', color: '#0E62B1' }} />
+                  style={{ fontSize: '18px', color: '#3B82F6' }} />
               </div>
             </button>
 
@@ -219,22 +219,22 @@ export default function ReviewPanel() {
                       {/* Header bài */}
                       <button
                         onClick={() => toggleSub(sub.id)}
-                        className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-blue-50"
+                        className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-[rgba(96,165,250,0.14)]"
                       >
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                          style={{ backgroundColor: '#DBEAFE', color: '#0E62B1' }}>
+                          style={{ backgroundColor: 'rgba(96,165,250,0.16)', color: '#3B82F6' }}>
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: '#1E3A5F' }}>
+                          <p className="text-sm font-semibold truncate" style={{ color: '#EEF3FB' }}>
                             {sub.lesson?.title}
                           </p>
-                          <p className="text-xs mt-0.5" style={{ color: '#93C5FD' }}>
+                          <p className="text-xs mt-0.5" style={{ color: '#60A5FA' }}>
                             Nộp ngày {new Date(sub.submitted_at).toLocaleDateString('vi-VN')}
                           </p>
                         </div>
                         <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${isSubOpen ? 'rotate-180' : ''}`}
-                          style={{ fontSize: '16px', color: '#93C5FD' }} />
+                          style={{ fontSize: '16px', color: '#60A5FA' }} />
                       </button>
 
                       {/* Nội dung bài */}
@@ -247,35 +247,35 @@ export default function ReviewPanel() {
                             return (
                               <div className="space-y-3">
                                 {qas.map((qa, i) => (
-                                  <div key={i} className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                                  <div key={i} className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(96,165,250,0.12)', border: '1px solid #BFDBFE' }}>
                                     <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
                                       Câu hỏi {i + 1}
                                     </p>
-                                    <p className="text-sm font-semibold mb-3 leading-relaxed whitespace-pre-line" style={{ color: '#1E3A5F' }}>
+                                    <p className="text-sm font-semibold mb-3 leading-relaxed whitespace-pre-line" style={{ color: '#EEF3FB' }}>
                                       {qa.question}
                                     </p>
                                     <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
                                       Trả lời
                                     </p>
-                                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#EEF3FB' }}>
                                       {qa.answer}
                                     </p>
                                   </div>
                                 ))}
                                 {freeText.trim() && (
-                                  <div className="rounded-2xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                                  <div className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(96,165,250,0.12)', border: '1px solid #BFDBFE' }}>
                                     <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
                                       Bài thực hành
                                     </p>
                                     {sub.lesson?.practice_prompt && (
-                                      <p className="text-sm font-semibold mb-3 leading-relaxed whitespace-pre-line" style={{ color: '#1E3A5F' }}>
+                                      <p className="text-sm font-semibold mb-3 leading-relaxed whitespace-pre-line" style={{ color: '#EEF3FB' }}>
                                         {sub.lesson.practice_prompt}
                                       </p>
                                     )}
                                     <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#60A5FA' }}>
                                       Trả lời
                                     </p>
-                                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#1E3A5F' }}>
+                                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#EEF3FB' }}>
                                       {freeText}
                                     </p>
                                   </div>
@@ -287,7 +287,7 @@ export default function ReviewPanel() {
                           {sub.file_url && (
                             <a href={sub.file_url} target="_blank" rel="noreferrer"
                               className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
-                              style={{ color: '#0E62B1' }}>
+                              style={{ color: '#3B82F6' }}>
                               <i className="ti ti-paperclip" style={{ fontSize: '14px' }} />
                               Xem file đính kèm
                             </a>
@@ -295,7 +295,7 @@ export default function ReviewPanel() {
 
                           {/* Perfect Score */}
                           <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl transition-colors"
-                            style={{ border: '1.5px solid #BFDBFE', backgroundColor: perfectScores[sub.id] ? '#EFF6FF' : 'white' }}>
+                            style={{ border: '1.5px solid #BFDBFE', backgroundColor: perfectScores[sub.id] ? 'rgba(96,165,250,0.12)' : '#0E1526' }}>
                             <input
                               type="checkbox"
                               checked={perfectScores[sub.id] ?? false}
@@ -303,8 +303,8 @@ export default function ReviewPanel() {
                               className="w-4 h-4 rounded"
                             />
                             <div>
-                              <p className="text-sm font-semibold" style={{ color: '#1E3A5F' }}>⭐ Perfect Score</p>
-                              <p className="text-xs" style={{ color: '#93C5FD' }}>Đánh dấu nếu bài làm xuất sắc</p>
+                              <p className="text-sm font-semibold" style={{ color: '#EEF3FB' }}>⭐ Perfect Score</p>
+                              <p className="text-xs" style={{ color: '#60A5FA' }}>Đánh dấu nếu bài làm xuất sắc</p>
                             </div>
                           </label>
 
@@ -324,7 +324,7 @@ export default function ReviewPanel() {
     onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
     disabled={processingId === sub.id}
     className="flex-1 text-white rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-    style={{ backgroundColor: '#0E62B1' }}>
+    style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
     {processingId === sub.id ? (
       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
     ) : (
@@ -334,10 +334,10 @@ export default function ReviewPanel() {
   <button
     onClick={() => handleReject(sub)}
     disabled={processingId === sub.id}
-    className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-red-50 disabled:opacity-50 flex items-center justify-center gap-2"
-    style={{ border: '2px solid #FECACA', color: '#DC2626' }}>
+    className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-[rgba(248,113,113,0.14)] disabled:opacity-50 flex items-center justify-center gap-2"
+    style={{ border: '2px solid #FECACA', color: '#F87171' }}>
     {processingId === sub.id ? (
-      <div className="w-4 h-4 border-2 border-red-200 border-t-red-600 rounded-full animate-spin" />
+      <div className="w-4 h-4 border-2 border-[rgba(248,113,113,0.35)] border-t-red-600 rounded-full animate-spin" />
     ) : (
       <><i className="ti ti-x" style={{ fontSize: '16px' }} />Từ chối</>
     )}
