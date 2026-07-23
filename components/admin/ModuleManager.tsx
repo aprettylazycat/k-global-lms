@@ -57,7 +57,10 @@ export default function ModuleManager() {
     setError('')
     const { data: branchData } = await supabase.from('branches').select('id, name, slug').order('name')
     setBranches(branchData ?? [])
-    const res = await fetch('/api/admin/modules-list')
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/modules-list', {
+      headers: { 'Authorization': `Bearer ${session?.access_token}` }
+    })
     const data = await res.json()
     if (res.ok) setModules(data.modules ?? [])
     else setError(data.error || 'Không tải được danh sách module')

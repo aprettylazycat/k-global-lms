@@ -71,9 +71,10 @@ export default function ReviewPanel() {
 
   async function handleApprove(sub: any, perfectScore: boolean = false) {
     setProcessingId(sub.id)
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/admin/approve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
       body: JSON.stringify({ submissionId: sub.id, userId: sub.user_id, lessonId: sub.lesson_id, perfectScore })
     })
     if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))
@@ -83,9 +84,10 @@ export default function ReviewPanel() {
 
   async function handleReject(sub: any) {
     setProcessingId(sub.id)
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/admin/reject', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
       body: JSON.stringify({ submissionId: sub.id, reason: rejectReasons[sub.id] || '' })
     })
     if (res.ok) setSubmissions(prev => prev.filter(s => s.id !== sub.id))

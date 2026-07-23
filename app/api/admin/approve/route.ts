@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { verifyAdmin } from '@/lib/auth-server'
 import { checkBadges } from '@/lib/badges'
 
 function extractStoragePath(fileUrl: string, bucket: string): string | null {
@@ -11,6 +12,9 @@ function extractStoragePath(fileUrl: string, bucket: string): string | null {
 }
 
 export async function POST(req: Request) {
+  const check = await verifyAdmin(req)
+  if (check.error) return check.error
+
   const { submissionId, userId, lessonId, perfectScore } = await req.json()
 
   const { data: submissionRow } = await supabaseAdmin

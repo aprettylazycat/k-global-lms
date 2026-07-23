@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { verifyAdmin } from '@/lib/auth-server'
 
 function extractStoragePath(fileUrl: string, bucket: string): string | null {
   const marker = `/storage/v1/object/public/${bucket}/`
@@ -10,6 +11,9 @@ function extractStoragePath(fileUrl: string, bucket: string): string | null {
 }
 
 export async function POST(req: Request) {
+  const check = await verifyAdmin(req)
+  if (check.error) return check.error
+
   const { submissionId, reason } = await req.json()
 
   if (!submissionId) {

@@ -11,3 +11,17 @@ export async function verifyUser(req: Request) {
 
   return { user }
 }
+
+export async function verifyAdmin(req: Request) {
+  const check = await verifyUser(req)
+  if (check.error) return check
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles').select('role').eq('id', check.user!.id).single()
+
+  if (profile?.role !== 'admin') {
+    return { error: NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 }) }
+  }
+
+  return { user: check.user }
+}

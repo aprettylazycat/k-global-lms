@@ -42,10 +42,18 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
       return
     }
     setLoadingModules(true)
-    fetch(`/api/admin/modules-list?branch_id=${form.branch_id}`)
-      .then(res => res.json())
-      .then(data => setModules(data.modules ?? []))
-      .finally(() => setLoadingModules(false))
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      try {
+        const res = await fetch(`/api/admin/modules-list?branch_id=${form.branch_id}`, {
+          headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        })
+        const data = await res.json()
+        setModules(data.modules ?? [])
+      } finally {
+        setLoadingModules(false)
+      }
+    })()
   }, [form.branch_id])
 
   // Chế độ edit: nạp dữ liệu bài học cũ

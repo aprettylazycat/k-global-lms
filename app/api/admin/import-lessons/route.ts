@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { verifyAdmin } from '@/lib/auth-server'
 
 export async function POST(req: Request) {
+  const check = await verifyAdmin(req)
+  if (check.error) return check.error
+
   const { lessons } = await req.json()
 
   // Map branch_slug → branch_id
