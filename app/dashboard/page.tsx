@@ -24,7 +24,7 @@ type LessonListItem = {
 }
 
 const SUPABASE_URL = 'https://rptmjqmdlcfnldyffgmc.supabase.co'
-const badgeImg = (name: string) => `${SUPABASE_URL}/storage/v1/object/public/badge-icons/${name}.png?v=2`
+const badgeImg = (name: string) => `${SUPABASE_URL}/storage/v1/object/public/badge-icons/${name}.png`
 
 const badgeDefs = [
   { type: 'k-starter', label: 'K-Starter', imageUrl: badgeImg('k-starter'), bg: 'rgba(255,201,77,0.12)', color: '#FFC94D',
@@ -62,7 +62,8 @@ export default function DashboardPage() {
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [activeTrack, setActiveTrack] = useState<'main' | 'ai'>('main')
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
-const [submissionStatusMap, setSubmissionStatusMap] = useState<Record<number, { status: string; reason: string | null }>>({})
+const [submissionStatusMap, setSubmissionStatusMap] = useState<Record<number, { status: string; reason: string | null; attempt: number }>>({})
+const [attemptCountMap, setAttemptCountMap] = useState<Record<number, number>>({})
 const [rejectPopup, setRejectPopup] = useState<{
   lessonId: number; title: string; reason: string | null
 } | null>(null)
@@ -132,16 +133,19 @@ const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
 
         const { data: submissions } = await supabase
   .from('submissions')
-  .select('lesson_id, status, submitted_at, reject_reason')
+  .select('lesson_id, status, submitted_at, reject_reason, attempt_number')
   .eq('user_id', session.user.id)
   .order('submitted_at', { ascending: false })
-const latestStatusMap: Record<number, { status: string; reason: string | null }> = {}
+const latestStatusMap: Record<number, { status: string; reason: string | null; attempt: number }> = {}
+const attemptCountMap: Record<number, number> = {}
 ;(submissions || []).forEach((s: any) => {
+  attemptCountMap[s.lesson_id] = Math.max(attemptCountMap[s.lesson_id] ?? 0, s.attempt_number ?? 1)
   if (!(s.lesson_id in latestStatusMap)) {
-    latestStatusMap[s.lesson_id] = { status: s.status, reason: s.reject_reason ?? null }
+    latestStatusMap[s.lesson_id] = { status: s.status, reason: s.reject_reason ?? null, attempt: s.attempt_number ?? 1 }
   }
 })
 setSubmissionStatusMap(latestStatusMap)
+setAttemptCountMap(attemptCountMap)
       }
 
       setLoading(false)
@@ -685,6 +689,16 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
                                 {prog?.perfect_score && (
                                   <span className="text-xs font-medium" style={{ color: '#B8860B' }}>
                                     ⭐ Perfect
+                                  </span>
+                                )}
+                                {attemptCountMap[lesson.id] > 0 && (
+                                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                    style={{
+                                      backgroundColor: attemptCountMap[lesson.id] >= 3 ? ERR_BG : CHIP,
+                                      color: attemptCountMap[lesson.id] >= 3 ? ERR : MUTED,
+                                      border: `1px solid ${attemptCountMap[lesson.id] >= 3 ? ERR_BORDER : BORDER}`,
+                                    }}>
+                                    Lần {attemptCountMap[lesson.id]}/3
                                   </span>
                                 )}
                               </div>

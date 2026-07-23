@@ -33,26 +33,14 @@ export default function LessonPage() {
 
       // Kiểm tra thật sự đã mở khoá bài này chưa — không chỉ dựa vào UI dashboard
       if (lessonData) {
-        // Bài AI (module category='ai') dùng chung mọi nhánh, có chuỗi khoá RIÊNG
-        // — đồng bộ với logic isLessonUnlocked trên dashboard
-        const { data: lessonMod } = await supabase
-          .from('modules').select('id, category')
-          .eq('id', lessonData.module_id).single()
-        const isAi = lessonMod?.category === 'ai'
+        const { data: allModules } = await supabase
+          .from('modules').select('id, order_index')
+          .eq('branch_id', lessonData.branch_id)
+          .order('order_index', { ascending: true })
 
-        const { data: allModules } = isAi
-          ? await supabase.from('modules').select('id, order_index')
-              .eq('category', 'ai')
-              .order('order_index', { ascending: true })
-          : await supabase.from('modules').select('id, order_index')
-              .eq('branch_id', lessonData.branch_id)
-              .neq('category', 'ai')
-              .order('order_index', { ascending: true })
-
-        const moduleIds = (allModules ?? []).map((m: any) => m.id)
         const { data: allLessons } = await supabase
           .from('lessons').select('id, module_id, order_index')
-          .in('module_id', moduleIds)
+          .eq('branch_id', lessonData.branch_id)
           .eq('is_published', true)
 
         const { data: allProgress } = await supabase
@@ -90,6 +78,7 @@ export default function LessonPage() {
         const { data: nextLesson } = await supabase
           .from('lessons')
           .select('id')
+          .eq('branch_id', lessonData.branch_id)
           .eq('module_id', lessonData.module_id)
           .eq('is_published', true)
           .gt('order_index', lessonData.order_index)
@@ -805,32 +794,56 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
   const [loading, setLoading] = useState(false)
   const [showCongrats, setShowCongrats] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
-  const [submissionStatus, setSubmissionStatus] = useState<'pending' | 'rejected' | null>(null)
+  const [submissionStatus, setSubmissionStatus] = useState<'pending' | 'rejected' | 'approved' | null>(null)
   const [rejectReason, setRejectReason] = useState<string | null>(null)
+  const [attemptsUsed, setAttemptsUsed] = useState(0)
+  const [resubmitting, setResubmitting] = useState(false)
+  const MAX_ATTEMPTS = 3
+  const FINAL_ATTEMPT_MESSAGES = [
+    { title: 'Cơ hội cuối rồi!', body: 'Cố lên — đạt Perfect nào! 💪' },
+    { title: 'Vượt giới hạn bản thân!', body: 'Đây là lần cuối, dồn hết sức nhé! 🔥' },
+    { title: 'Đạt Perfect ngay!', body: 'Làm thật chính xác để nhận thưởng liền tay 🎁' },
+    { title: 'Chỉ còn 1 lần này thôi!', body: 'Đọc kỹ, làm chậm mà chắc — bạn làm được mà! ⭐' },
+  ]
+  const [finalMsgIndex, setFinalMsgIndex] = useState(() => Math.floor(Math.random() * FINAL_ATTEMPT_MESSAGES.length))
+  const finalMessage = FINAL_ATTEMPT_MESSAGES[finalMsgIndex]
+
+  // Xoay vòng câu cổ vũ mỗi 15s khi đang ở lượt nộp cuối cùng
+  useEffect(() => {
+    if (attemptsUsed + 1 !== MAX_ATTEMPTS) return
+    const timer = setInterval(() => {
+      setFinalMsgIndex(prev => (prev + 1) % FINAL_ATTEMPT_MESSAGES.length)
+    }, 15000)
+    return () => clearInterval(timer)
+  }, [attemptsUsed])
 
   // Load draft từ localStorage khi mở bài
-useEffect(() => {
-  if (!tick1Done || tick2Done || !userId) return
-  async function fetchSubmission() {
-    const { data } = await supabase
-      .from('submissions')
-      .select('status, reject_reason, submitted_at')
-      .eq('lesson_id', lessonId)
-      .eq('user_id', userId)
-      .order('submitted_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (data?.status === 'pending') {
-      setSubmitted(true)
-      setSubmissionStatus('pending')
-    } else if (data?.status === 'rejected') {
-      setSubmitted(false)
-      setSubmissionStatus('rejected')
-      setRejectReason(data.reject_reason ?? null)
+  useEffect(() => {
+    if (!tick1Done || !userId) return
+    async function fetchSubmission() {
+      const { data } = await supabase
+        .from('submissions')
+        .select('status, reject_reason, submitted_at, attempt_number')
+        .eq('lesson_id', lessonId)
+        .eq('user_id', userId)
+        .order('attempt_number', { ascending: false })
+      const rows = data ?? []
+      setAttemptsUsed(rows.length)
+      const latest = rows[0]
+      if (!latest) return
+      if (latest.status === 'pending') {
+        setSubmitted(true)
+        setSubmissionStatus('pending')
+      } else if (latest.status === 'rejected') {
+        setSubmitted(false)
+        setSubmissionStatus('rejected')
+        setRejectReason(latest.reject_reason ?? null)
+      } else if (latest.status === 'approved') {
+        setSubmissionStatus('approved')
+      }
     }
-  }
-  fetchSubmission()
-}, [tick1Done, tick2Done, lessonId, userId])
+    fetchSubmission()
+  }, [tick1Done, lessonId, userId])
 
 useEffect(() => {
   if (!tick1Done || tick2Done) return
@@ -882,10 +895,13 @@ useEffect(() => {
     if (res.ok) {
       // Xóa draft sau khi nộp thành công
       localStorage.removeItem(DRAFT_KEY(lessonId))
-      setSubmitted(true)
-      setSubmissionStatus('pending')
-      setRejectReason(null)
+      setResubmitting(false)
       setShowCongrats(true)
+      // Không cần reload thủ công: 2 nút trong modal chúc mừng đều điều hướng
+      // sang trang khác (bài tiếp theo / dashboard), tự làm mới dữ liệu khi đó.
+    } else {
+      const data = await res.json().catch(() => ({}))
+      alert(data.error || 'Có lỗi khi nộp bài, vui lòng thử lại.')
     }
     setLoading(false)
   }
@@ -1154,27 +1170,119 @@ useEffect(() => {
         )}
       </div>
 
-      {isLocked ? (
-        <p className="text-sm font-medium" style={{ color: MUTED }}>Hoàn thành bài kiểm tra để mở phần này.</p>
-      ) : tick2Done ? (
-        <div className="rounded-2xl p-4 flex items-center gap-2.5" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
-          <i className="ti ti-check" style={{ color: OK }} />
-          <p className="text-sm font-semibold" style={{ color: OK }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
-        </div>
-      ) : submitted ? (
-        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
-          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
-            style={{ backgroundColor: OK }}>
-            <i className="ti ti-trophy" style={{ color: DARK_ON_GOLD, fontSize: '24px' }} />
-          </div>
-          <p className="text-lg font-bold mb-1" style={{ color: OK }}>Chúc mừng!</p>
-          <p className="text-sm font-medium" style={{ color: OK }}>
-            Bài tập đã được nộp thành công — đang chờ admin duyệt.
-          </p>
-        </div>
-      ) : (
+      {(() => {
+        const nextAttemptNumber = attemptsUsed + 1
+        const attemptsExhausted = attemptsUsed >= MAX_ATTEMPTS
+        const isFinalAttempt = nextAttemptNumber === MAX_ATTEMPTS
+
+        function startResubmit() {
+          setResubmitting(true)
+          setText('')
+          setEssayAnswers({})
+          setFile(null)
+        }
+
+        if (isLocked) {
+          return <p className="text-sm font-medium" style={{ color: MUTED }}>Hoàn thành bài kiểm tra để mở phần này.</p>
+        }
+
+        // ── Đã dùng hết 3 lượt — khóa vĩnh viễn, chỉ hiện trạng thái cuối cùng ──
+        if (attemptsExhausted && !resubmitting) {
+          const isApproved = submissionStatus === 'approved' || tick2Done
+          const isRejectedFinal = submissionStatus === 'rejected' && !tick2Done
+          return (
+            <div className="rounded-2xl p-5 flex items-start gap-3"
+              style={{
+                backgroundColor: isApproved ? OK_BG : isRejectedFinal ? ERR_BG : WARN_BG,
+                border: `1px solid ${isApproved ? OK_BORDER : isRejectedFinal ? ERR_BORDER : WARN_BORDER}`,
+              }}>
+              <i className={`ti ${isApproved ? 'ti-check' : isRejectedFinal ? 'ti-alert-circle' : 'ti-clock'}`}
+                style={{ color: isApproved ? OK : isRejectedFinal ? ERR : WARN, fontSize: '20px', marginTop: '2px' }} />
+              <div>
+                <p className="text-sm font-bold" style={{ color: isApproved ? OK : isRejectedFinal ? ERR : WARN }}>
+                  {isApproved ? 'Đã hoàn thành bài tập' : isRejectedFinal ? 'Bài làm chưa đạt' : 'Đang chờ admin duyệt'}
+                </p>
+                <p className="text-xs mt-1" style={{ color: isApproved ? OK : isRejectedFinal ? ERR : WARN }}>
+                  Bạn đã dùng hết 3/3 lượt nộp bài cho phần này.
+                  {isRejectedFinal && ' Liên hệ admin nếu cần hỗ trợ thêm.'}
+                </p>
+              </div>
+            </div>
+          )
+        }
+
+        // ── Đã được duyệt, còn lượt → có thể nộp lại để lấy Perfect ──
+        if (tick2Done && !resubmitting) {
+          return (
+            <div className="rounded-2xl p-4" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
+              <div className="flex items-center gap-2.5 mb-3">
+                <i className="ti ti-check" style={{ color: OK }} />
+                <p className="text-sm font-semibold" style={{ color: OK }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
+              </div>
+              <button onClick={startResubmit}
+                className="text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
+                <i className="ti ti-refresh" style={{ fontSize: '12px', marginRight: '4px' }} />
+                Nộp lại để thử lấy Perfect (lần {nextAttemptNumber}/3)
+              </button>
+            </div>
+          )
+        }
+
+        // ── Đang chờ duyệt, còn lượt → vẫn có thể nộp lại để cải thiện trước khi admin xem ──
+        if (submitted && !resubmitting) {
+          return (
+            <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ backgroundColor: OK }}>
+                <i className="ti ti-trophy" style={{ color: DARK_ON_GOLD, fontSize: '24px' }} />
+              </div>
+              <p className="text-lg font-bold mb-1" style={{ color: OK }}>Chúc mừng!</p>
+              <p className="text-sm font-medium mb-4" style={{ color: OK }}>
+                Bài tập đã được nộp thành công — đang chờ admin duyệt.
+              </p>
+              <button onClick={startResubmit}
+                className="text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.5)', color: OK, border: `1px solid ${OK_BORDER}` }}>
+                <i className="ti ti-refresh" style={{ fontSize: '12px', marginRight: '4px' }} />
+                Chưa ưng ý? Nộp lại bản khác (lần {nextAttemptNumber}/3)
+              </button>
+            </div>
+          )
+        }
+
+        // ── Form nộp bài: lần đầu, đang nộp lại, hoặc vừa bị từ chối ──
+        return (
         <>
-          {submissionStatus === 'rejected' && (
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-semibold px-3 py-1 rounded-full"
+              style={{
+                backgroundColor: isFinalAttempt ? ERR_BG : CHIP,
+                color: isFinalAttempt ? ERR : MUTED,
+                border: `1px solid ${isFinalAttempt ? ERR_BORDER : BORDER}`,
+              }}>
+              Lần nộp {nextAttemptNumber}/3
+            </span>
+            {resubmitting && (
+              <button onClick={() => setResubmitting(false)}
+                className="text-xs font-medium" style={{ color: MUTED }}>
+                Huỷ, quay lại
+              </button>
+            )}
+          </div>
+
+          {isFinalAttempt && (
+            <div className="rounded-2xl p-4 mb-6 flex items-center gap-3"
+              style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.14) 0%, rgba(70,104,152,0.20) 100%)', border: `1px solid ${GOLD}` }}>
+              <img src="/mascot/panda-heart.png" alt="" className="w-12 h-12 flex-shrink-0 object-contain" />
+              <div>
+                <p className="text-sm font-bold" style={{ color: GOLD }}>{finalMessage.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: TEXT }}>{finalMessage.body}</p>
+              </div>
+            </div>
+          )}
+
+          {submissionStatus === 'rejected' && !resubmitting && (
             <div className="rounded-2xl p-4 mb-6 flex items-start gap-3"
               style={{ backgroundColor: ERR_BG, border: `1px solid ${ERR_BORDER}` }}>
               <i className="ti ti-alert-circle" style={{ color: ERR, fontSize: '20px', marginTop: '2px' }} />
@@ -1321,7 +1429,8 @@ Chọn ảnh hoặc PDF
             ) : 'Nộp bài tập'}
           </button>
         </>
-      )}
+        )
+      })()}
     </div>
   )
 }
