@@ -30,13 +30,21 @@ export async function GET(req: Request) {
     supabaseAdmin.from('lessons').select('id, title, branch_id, order_index, module_id').eq('is_published', true).order('order_index'),
     supabaseAdmin.from('progress').select('user_id, lesson_id, tick1, tick2, completed_at, perfect_score').in('user_id', learnerIds),
     supabaseAdmin.from('badges').select('user_id, badge_type').in('user_id', learnerIds),
-    supabaseAdmin.from('modules').select('id, name, order_index'),
+    supabaseAdmin.from('modules').select('id, name, order_index, category'),
     supabaseAdmin.from('lesson_timestamps').select('user_id, lesson_id, started_at, quiz_started_at, quiz_completed_at, practice_started_at, practice_submitted_at').in('user_id', learnerIds),
     supabaseAdmin.from('quiz_attempts').select('user_id, lesson_id, question_id, is_correct, is_first_attempt, selected_option, extra_data').in('user_id', learnerIds),
   ])
 
-  const moduleMap: Record<number, { name: string; order: number }> = {}
-  allModules?.forEach(m => { moduleMap[m.id] = { name: m.name, order: m.order_index } })
+  const moduleMap: Record<number, { name: string; order: number; category: string | null }> = {}
+  allModules?.forEach(m => { moduleMap[m.id] = { name: m.name, order: m.order_index, category: (m as any).category ?? null } })
+
+  // Bài thuộc khoá AI (Kiến thức chung) — dùng chung mọi nhánh, branch_id của bài
+  // không phản ánh nhánh nào truy cập được nó nên phải xác định riêng qua module.category
+  const aiLessonIds = new Set(
+    (allLessons || [])
+      .filter(l => l.module_id && moduleMap[l.module_id]?.category === 'ai')
+      .map(l => l.id)
+  )
 
   function minutesBetween(a: string | null, b: string | null): number | null {
     if (!a || !b) return null
@@ -45,10 +53,19 @@ export async function GET(req: Request) {
   }
 
   const result = learners.map(learner => {
-    const branchLessons = (allLessons || []).filter(l => l.branch_id === learner.branch_id)
+    // Bài của nhánh = bài thuộc branch_id của học viên + bài AI dùng chung (mọi nhánh đều học được).
+    // Nhánh chưa có nội dung riêng (TWC, Hành chính, AI Video...) vẫn tính % đúng nhờ phần AI này.
+    const branchLessons = (allLessons || []).filter(
+      l => l.branch_id === learner.branch_id || aiLessonIds.has(l.id)
+    )
     const total = branchLessons.length || 1
+    const branchLessonIds = new Set(branchLessons.map(l => l.id))
 
-    const progList = (allProgress || []).filter(p => p.user_id === learner.id)
+    // Chỉ tính tiến độ của bài THUỘC NHÁNH HIỆN TẠI — tránh dính tiến độ cũ
+    // để lại từ trước khi học viên đổi nhánh (hoặc dữ liệu test/nhánh đã xoá)
+    const progList = (allProgress || []).filter(
+      p => p.user_id === learner.id && branchLessonIds.has(p.lesson_id)
+    )
     const progMap: Record<number, { tick1: boolean; tick2: boolean; completed_at: string | null; perfect_score: boolean }> = {}
     progList.forEach(p => { progMap[p.lesson_id] = { tick1: p.tick1, tick2: p.tick2, completed_at: p.completed_at, perfect_score: p.perfect_score ?? false } })
 
@@ -59,7 +76,7 @@ export async function GET(req: Request) {
     // MCQ attempts map theo lesson (bỏ TF)
     const attMap: Record<number, { total: number; firstCorrect: number }> = {}
     ;(allAttempts || [])
-      .filter(a => a.user_id === learner.id && !String(a.question_id).startsWith('tf_group_'))
+      .filter(a => a.user_id === learner.id && branchLessonIds.has(a.lesson_id) && !String(a.question_id).startsWith('tf_group_'))
       .forEach(a => {
         if (!attMap[a.lesson_id]) attMap[a.lesson_id] = { total: 0, firstCorrect: 0 }
         if (a.is_first_attempt) {
@@ -71,7 +88,7 @@ export async function GET(req: Request) {
     // TF attempts map theo lesson
     const tfMap: Record<number, { correct: number; total: number }> = {}
     ;(allAttempts || [])
-      .filter(a => a.user_id === learner.id && String(a.question_id).startsWith('tf_group_'))
+      .filter(a => a.user_id === learner.id && branchLessonIds.has(a.lesson_id) && String(a.question_id).startsWith('tf_group_'))
       .forEach(a => {
         if (!tfMap[a.lesson_id]) tfMap[a.lesson_id] = { correct: 0, total: 0 }
         if (a.extra_data) {
