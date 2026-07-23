@@ -1,27 +1,11 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
-
-async function verifyAdmin(req: Request) {
-  const authHeader = req.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '')
-  if (!token) return { error: NextResponse.json({ error: 'Thiếu token xác thực' }, { status: 401 }) }
-
-  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
-  if (userError || !user) return { error: NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 }) }
-
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles').select('role').eq('id', user.id).single()
-  if (profileError || profile?.role !== 'admin') {
-    return { error: NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 }) }
-  }
-
-  return { user }
-}
+import { verifyAdmin } from '@/lib/auth-server'
 
 // Lấy toàn bộ câu hỏi (kể cả đã ẩn) theo module — dùng cho ModuleManager admin
 export async function GET(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { searchParams } = new URL(req.url)
   const moduleId = searchParams.get('module_id')
@@ -40,7 +24,7 @@ export async function GET(req: Request) {
 // Tạo câu hỏi mới
 export async function POST(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { module_id, question_text, question_type, order_index } = await req.json()
   if (!module_id || !question_text?.trim()) {
@@ -65,7 +49,7 @@ export async function POST(req: Request) {
 // Sửa câu hỏi — cũng dùng để soft-delete/khôi phục bằng is_active
 export async function PUT(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { id, question_text, question_type, order_index, is_active } = await req.json()
   if (!id) return NextResponse.json({ error: 'Thiếu id' }, { status: 400 })

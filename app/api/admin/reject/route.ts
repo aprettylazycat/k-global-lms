@@ -12,7 +12,7 @@ function extractStoragePath(fileUrl: string, bucket: string): string | null {
 
 export async function POST(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { submissionId, reason } = await req.json()
 

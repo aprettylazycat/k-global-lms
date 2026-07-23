@@ -5,7 +5,7 @@ import { verifyAdmin } from '@/lib/auth-server'
 
 export async function POST(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { lessons } = await req.json()
 

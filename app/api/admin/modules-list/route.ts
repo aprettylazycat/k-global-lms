@@ -5,7 +5,7 @@ import { verifyAdmin } from '@/lib/auth-server'
 
 export async function GET(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { searchParams } = new URL(req.url)
   const branchId = searchParams.get('branch_id')

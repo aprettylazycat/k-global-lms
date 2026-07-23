@@ -1,20 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
-
-async function verifyAdmin(req: Request) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token) return { error: NextResponse.json({ error: 'Thiếu token' }, { status: 401 }) }
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) return { error: NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 }) }
-  const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return { error: NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 }) }
-  return { user }
-}
+import { verifyAdmin } from '@/lib/auth-server'
 
 export async function GET(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const { data: learners } = await supabaseAdmin
     .from('profiles')

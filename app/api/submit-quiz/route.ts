@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const check = await verifyUser(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
   const userId = check.user.id   // ← lấy từ token, KHÔNG lấy từ body nữa
 
   const { lessonId, answers, attempts, tfAnswers, tfQuestions } = await req.json()

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const check = await verifyUser(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
   const userId = check.user.id   // ← lấy từ token
 
   const { lessonId, answer_text, file_url } = await req.json()  // ← bỏ userId

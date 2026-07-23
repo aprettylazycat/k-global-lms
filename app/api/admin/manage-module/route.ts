@@ -1,28 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { verifyAdmin } from '@/lib/auth-server'
 
-async function verifyAdmin(req: Request) {
-  const authHeader = req.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '')
-  if (!token) return { error: NextResponse.json({ error: 'Thiếu token xác thực' }, { status: 401 }) }
-
-  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
-  if (userError || !user) return { error: NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 }) }
-
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles').select('role').eq('id', user.id).single()
-  if (profileError || profile?.role !== 'admin') {
-    return { error: NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 }) }
-  }
-
-  return { user }
-}
 
 // Tạo module mới
 export async function POST(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const body = await req.json()
   const { branch_id, name, description, order_index } = body
@@ -52,7 +37,7 @@ export async function POST(req: Request) {
 // Sửa module
 export async function PUT(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const body = await req.json()
   const { id, name, description, order_index } = body
@@ -82,7 +67,7 @@ export async function PUT(req: Request) {
 // Xóa module — chỉ cho phép nếu không còn bài học nào thuộc module này
 export async function DELETE(req: Request) {
   const check = await verifyAdmin(req)
-  if (check.error) return check.error
+  if (!check.ok) return check.error
 
   const body = await req.json()
   const { id } = body
