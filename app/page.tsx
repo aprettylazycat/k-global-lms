@@ -50,6 +50,17 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [openTrack, setOpenTrack] = useState<TrackKey | null>('nghe')
   const [openNghe, setOpenNghe] = useState<string[]>(['toc'])
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session)
+    })
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session)
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -183,16 +194,27 @@ export default function Home() {
               <i className="ti ti-trophy" style={{ fontSize: '14px' }} />
               <span className="hidden sm:inline">Xếp hạng</span>
             </Link>
-            <Link href="/login"
-              className="text-sm hidden sm:block transition-opacity hover:opacity-70"
-              style={{ color: 'rgba(255,255,255,0.85)' }}>
-              Đăng nhập
-            </Link>
-            <Link href="/register"
-              className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90"
-              style={{ backgroundColor: GOLD, color: '#0A0E1A', boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
-              Bắt đầu học
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard"
+                className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 flex items-center gap-1.5"
+                style={{ backgroundColor: GOLD, color: '#0A0E1A', boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
+                <i className="ti ti-layout-dashboard" style={{ fontSize: '15px' }} />
+                Vào học
+              </Link>
+            ) : (
+              <>
+                <Link href="/login"
+                  className="text-sm hidden sm:block transition-opacity hover:opacity-70"
+                  style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  Đăng nhập
+                </Link>
+                <Link href="/register"
+                  className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: GOLD, color: '#0A0E1A', boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
+                  Bắt đầu học
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -216,16 +238,26 @@ export default function Home() {
             được đội ngũ sản xuất trực tiếp kiểm duyệt.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link href="/register"
-              className="text-sm font-bold px-8 py-3.5 rounded-lg transition-opacity hover:opacity-90"
-              style={{ backgroundColor: GOLD, color: '#0D0D0D' }}>
-              Bắt đầu học ngay
-            </Link>
-            <Link href="/login"
-              className="text-sm font-medium px-8 py-3.5 rounded-lg transition-colors hover:bg-white/10"
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.7)', color: 'white' }}>
-              Tôi đã có tài khoản
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard"
+                className="text-sm font-bold px-8 py-3.5 rounded-lg transition-opacity hover:opacity-90"
+                style={{ backgroundColor: GOLD, color: '#0D0D0D' }}>
+                Vào học ngay →
+              </Link>
+            ) : (
+              <>
+                <Link href="/register"
+                  className="text-sm font-bold px-8 py-3.5 rounded-lg transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: GOLD, color: '#0D0D0D' }}>
+                  Bắt đầu học ngay
+                </Link>
+                <Link href="/login"
+                  className="text-sm font-medium px-8 py-3.5 rounded-lg transition-colors hover:bg-white/10"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.7)', color: 'white' }}>
+                  Tôi đã có tài khoản
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
