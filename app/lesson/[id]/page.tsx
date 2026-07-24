@@ -326,20 +326,28 @@ export default function LessonPage() {
 
 function renderTextWithLinks(text: string) {
   if (!text) return null
-  const urlRegex = /(https?:\/\/[^\s]+)/g
-  const parts = text.split(urlRegex)
-  return parts.map((part, i) =>
-    urlRegex.test(part) ? (
-      <a key={i} href={part} target="_blank" rel="noreferrer"
-        className="underline break-all"
-        style={{ color: TEXT }}
-        onClick={e => e.stopPropagation()}>
-        {part}
-      </a>
-    ) : (
-      <span key={i}>{part}</span>
-    )
-  )
+  // Tách theo **bold** trước — split với regex có capturing group cho ra mảng xen kẽ [thường, đậm, thường, đậm, ...]
+  const boldChunks = text.split(/\*\*(.+?)\*\*/g)
+  let key = 0
+  return boldChunks.map((chunk, idx) => {
+    const isBold = idx % 2 === 1 // các phần tử ở vị trí lẻ là nội dung nằm giữa **...**
+    const urlParts = chunk.split(/(https?:\/\/[^\s]+)/g)
+    return urlParts.map(part => {
+      key++
+      const isUrl = /^https?:\/\//.test(part)
+      if (isUrl) {
+        return (
+          <a key={key} href={part} target="_blank" rel="noreferrer"
+            className="underline break-all"
+            style={{ color: NAVY, fontWeight: isBold ? 700 : undefined }}
+            onClick={e => e.stopPropagation()}>
+            {part}
+          </a>
+        )
+      }
+      return isBold ? <strong key={key}>{part}</strong> : <span key={key}>{part}</span>
+    })
+  })
 }
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
