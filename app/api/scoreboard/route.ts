@@ -25,7 +25,7 @@ export async function GET() {
 
   const { data: allProgress } = await supabaseAdmin
     .from('progress')
-    .select('user_id, lesson_id, tick1, tick2, perfect_score')
+    .select('user_id, lesson_id, tick1, tick2, perfect_score, completed_at')
 
   const { data: allBadges } = await supabaseAdmin
     .from('badges')
