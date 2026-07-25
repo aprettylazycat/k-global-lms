@@ -14,6 +14,7 @@ type LessonProgress = {
   moduleOrder: number
   tick1: boolean
   tick2: boolean
+  startedAt: string | null
   completedAt: string | null
   quizMinutes: number | null
   practiceMinutes: number | null
@@ -198,6 +199,36 @@ export default function ReportPanel() {
     const ws1 = XLSX.utils.aoa_to_sheet(info)
     ws1['!cols'] = [{ wch: 25 }, { wch: 60 }]
     XLSX.utils.book_append_sheet(wb, ws1, 'Thông tin')
+
+    // Sheet Module: gom lessonProgress theo moduleId, tính ngày bắt đầu/hoàn thành module
+    const moduleGroupsExport: Record<string, { moduleName: string; moduleOrder: number; lessons: LessonProgress[] }> = {}
+    learner.lessonProgress.forEach(l => {
+      const key = l.moduleId ? String(l.moduleId) : 'none'
+      if (!moduleGroupsExport[key]) moduleGroupsExport[key] = { moduleName: l.moduleName, moduleOrder: l.moduleOrder ?? 999, lessons: [] }
+      moduleGroupsExport[key].lessons.push(l)
+    })
+    const moduleHeader = ['Module', 'Số bài', 'Đã hoàn thành', 'Trạng thái', 'Ngày bắt đầu', 'Ngày hoàn thành']
+    const moduleRows = Object.values(moduleGroupsExport)
+      .sort((a, b) => a.moduleOrder - b.moduleOrder)
+      .map(group => {
+        const total = group.lessons.length
+        const done = group.lessons.filter(l => l.tick1 && l.tick2).length
+        const allDone = done === total
+        const starts = group.lessons.map(l => l.startedAt).filter(Boolean) as string[]
+        const ends = group.lessons.map(l => l.completedAt).filter(Boolean) as string[]
+        const startedAt = starts.length ? starts.reduce((a, b) => a < b ? a : b) : null
+        const completedAt = allDone && ends.length === total ? ends.reduce((a, b) => a > b ? a : b) : null
+        return [
+          group.moduleName, total, `${done}/${total}`,
+          allDone ? 'Hoàn thành' : (done > 0 ? 'Đang học' : 'Chưa bắt đầu'),
+          startedAt ? new Date(startedAt).toLocaleDateString('vi-VN') : '',
+          completedAt ? new Date(completedAt).toLocaleDateString('vi-VN') : '',
+        ]
+      })
+    const wsModule = XLSX.utils.aoa_to_sheet([moduleHeader, ...moduleRows])
+    wsModule['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 16 }]
+    XLSX.utils.book_append_sheet(wb, wsModule, 'Module')
+
     const progressHeader = ['Module', 'Bài học', 'Thứ tự', 'Quiz', 'Bài tập', 'Đúng lần đầu', 'T/g Quiz (phút)', 'T/g Bài tập (phút)', 'T/g Tổng (phút)', 'Ngày hoàn thành']
     const progressRows = learner.lessonProgress.map(l => [
       l.moduleName, l.title, l.orderIndex,
@@ -614,6 +645,18 @@ export default function ReportPanel() {
                                 </p>
                                 <p className="text-[10px] mt-0.5" style={{ color: '#60A5FA' }}>
                                   {done}/{total} hoàn thành
+                                  {(() => {
+                                    const starts = group.lessons.map(l => l.startedAt).filter(Boolean) as string[]
+                                    const ends = group.lessons.map(l => l.completedAt).filter(Boolean) as string[]
+                                    if (starts.length === 0) return null
+                                    const startedAt = starts.reduce((a, b) => a < b ? a : b)
+                                    const fmt = (d: string) => new Date(d).toLocaleDateString('vi-VN')
+                                    if (allDone && ends.length === total) {
+                                      const completedAt = ends.reduce((a, b) => a > b ? a : b)
+                                      return <> · {fmt(startedAt)} → {fmt(completedAt)}</>
+                                    }
+                                    return <> · Bắt đầu {fmt(startedAt)}</>
+                                  })()}
                                 </p>
                               </div>
                               <div className="w-16 h-1.5 rounded-full overflow-hidden flex-shrink-0"
