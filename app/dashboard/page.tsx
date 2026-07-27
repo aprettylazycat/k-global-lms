@@ -653,8 +653,8 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
 
                         return (
                           <div key={lesson.id}
-                            onClick={() => { if (!isLocked && !isDone) router.push(`/lesson/${lesson.id}`) }}
-                            className={`rounded-xl p-3.5 flex items-center gap-3 transition-all ${!isLocked && !isDone ? 'cursor-pointer' : ''}`}
+                            onClick={() => { if (!isLocked) router.push(`/lesson/${lesson.id}`) }}
+                            className={`rounded-xl p-3.5 flex items-center gap-3 transition-all ${!isLocked ? 'cursor-pointer' : ''}`}
                             style={{
                               backgroundColor: isDone ? OK_BG : isInProgress ? GOLD_SOFT : isLocked ? 'rgba(255,255,255,0.02)' : PANEL,
                               border: `1px solid ${isDone ? OK_BORDER : isInProgress ? WARN_BORDER : BORDER}`,

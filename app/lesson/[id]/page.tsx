@@ -1297,7 +1297,7 @@ useEffect(() => {
               <div>
                 <p className="text-sm font-bold" style={{ color: ERR }}>Bài làm trước đã bị từ chối</p>
                 {rejectReason && (
-                  <p className="text-xs mt-1" style={{ color: ERR }}>Lý do: {rejectReason}</p>
+                  <p className="text-xs mt-1 whitespace-pre-line" style={{ color: ERR }}>Lý do: {rejectReason}</p>
                 )}
                 <p className="text-xs mt-1" style={{ color: ERR }}>Hãy chỉnh sửa và nộp lại bên dưới.</p>
               </div>
