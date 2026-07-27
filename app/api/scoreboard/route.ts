@@ -13,10 +13,22 @@ export async function GET() {
     return NextResponse.json({ branches: [] })
   }
 
-  const { data: profiles } = await supabaseAdmin
+  const { data: profilesRaw } = await supabaseAdmin
     .from('profiles')
     .select('id, name, branch_id, role')
     .neq('role', 'admin')
+
+  // Chỉ tính học viên đã xác thực email — tránh tài khoản đăng ký dở lọt lên bảng xếp hạng
+  const confirmedIds = new Set<string>()
+  let page = 1
+  while (true) {
+    const { data: userPage } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+    if (!userPage || userPage.users.length === 0) break
+    userPage.users.forEach(u => { if (u.email_confirmed_at) confirmedIds.add(u.id) })
+    if (userPage.users.length < 1000) break
+    page++
+  }
+  const profiles = (profilesRaw || []).filter(p => confirmedIds.has(p.id))
 
   const { data: lessons } = await supabaseAdmin
     .from('lessons')
