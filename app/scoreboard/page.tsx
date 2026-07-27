@@ -13,6 +13,8 @@ type LeaderboardEntry = {
   badgeCount: number
   perfectCount: number
   score: number
+  daysToComplete: number | null
+  daysSinceActive: number | null
 }
 
 type BranchData = {
@@ -32,6 +34,8 @@ type AiEntry = {
   perfectCount: number
   aiBadgeCount: number
   score: number
+  daysToComplete: number | null
+  daysSinceActive: number | null
 }
 
 type AiData = {
@@ -41,6 +45,12 @@ type AiData = {
 }
 
 const AI_TAB = '__ai__'
+function formatDaysAgo(days: number | null): string | null {
+  if (days === null) return null
+  if (days === 0) return 'Hôm nay'
+  if (days === 1) return 'Hôm qua'
+  return `${days} ngày trước`
+}
 
 const RANK_STYLES = [
   { bg: WARN_BG, color: WARN, medal: '🥇' },
@@ -216,6 +226,16 @@ export default function ScoreboardPage() {
                               🏅 badge AI
                             </span>
                           )}
+                          {entry.daysToComplete !== null && (
+                            <span className="text-xs font-medium" style={{ color: OK }}>
+                              ⚡ Hoàn thành trong {entry.daysToComplete} ngày
+                            </span>
+                          )}
+                          {entry.daysSinceActive !== null && entry.progressPct < 100 && (
+                            <span className="text-xs font-medium" style={{ color: MUTED }}>
+                              🕒 Học lần cuối: {formatDaysAgo(entry.daysSinceActive)}
+                            </span>
+                          )}
                         </div>
                         <div className="h-1.5 rounded-full overflow-hidden mt-2" style={{ backgroundColor: CHIP }}>
                           <div className="h-full rounded-full transition-all"
@@ -276,6 +296,16 @@ export default function ScoreboardPage() {
                       <span className="text-xs font-medium" style={{ color: rankStyle ? rankStyle.color : MUTED }}>
                         ⭐ {entry.perfectCount} perfect
                       </span>
+                      {entry.daysToComplete !== null && (
+                        <span className="text-xs font-medium" style={{ color: OK }}>
+                          ⚡ Hoàn thành trong {entry.daysToComplete} ngày
+                        </span>
+                      )}
+                      {entry.daysSinceActive !== null && entry.progressPct < 100 && (
+                        <span className="text-xs font-medium" style={{ color: rankStyle ? rankStyle.color : MUTED, opacity: 0.75 }}>
+                          🕒 {formatDaysAgo(entry.daysSinceActive)}
+                        </span>
+                      )}
                     </div>
                   </div>
 

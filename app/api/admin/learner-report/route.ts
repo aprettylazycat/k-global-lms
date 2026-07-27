@@ -129,6 +129,7 @@ export async function GET(req: Request) {
         tick1: progMap[l.id]?.tick1 ?? false,
         tick2: progMap[l.id]?.tick2 ?? false,
         perfectScore: progMap[l.id]?.perfect_score ?? false,
+        startedAt: ts?.started_at ?? null,
         completedAt: progMap[l.id]?.completed_at ?? null,
         quizMinutes: quizMins,
         practiceMinutes: practiceMins,

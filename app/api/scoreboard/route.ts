@@ -25,11 +25,15 @@ export async function GET() {
 
   const { data: allProgress } = await supabaseAdmin
     .from('progress')
-    .select('user_id, lesson_id, tick1, tick2, perfect_score')
+    .select('user_id, lesson_id, tick1, tick2, perfect_score, completed_at')
 
   const { data: allBadges } = await supabaseAdmin
     .from('badges')
     .select('user_id, badge_type')
+
+  const { data: allTimestamps } = await supabaseAdmin
+    .from('lesson_timestamps')
+    .select('user_id, lesson_id, started_at, quiz_started_at, quiz_completed_at, practice_started_at, practice_submitted_at')
 
   // ── Xác định module AI trước, để loại badge AI khỏi điểm nhánh ──
   const { data: aiModules } = await supabaseAdmin
@@ -50,6 +54,30 @@ export async function GET() {
 
   const aiLessonIds = new Set((aiLessons || []).map(l => l.id))
   const aiTotalLessons = aiLessonIds.size
+
+  const TS_FIELDS = ['started_at', 'quiz_started_at', 'quiz_completed_at', 'practice_started_at', 'practice_submitted_at'] as const
+
+  // Trả về { startedAt, lastActivityAt } của 1 học viên, chỉ tính trong phạm vi lessonIds cho trước
+  function getTimeStats(userId: string, lessonIds: Set<number>) {
+    const rows = (allTimestamps || []).filter(t => t.user_id === userId && lessonIds.has(t.lesson_id))
+    let startedAt: string | null = null
+    let lastActivityAt: string | null = null
+    rows.forEach(r => {
+      TS_FIELDS.forEach(f => {
+        const v = (r as any)[f] as string | null
+        if (!v) return
+        if (f === 'started_at' && (!startedAt || v < startedAt)) startedAt = v
+        if (!lastActivityAt || v > lastActivityAt) lastActivityAt = v
+      })
+    })
+    return { startedAt, lastActivityAt }
+  }
+
+  function daysBetween(a: string | null, b: string | null): number | null {
+    if (!a || !b) return null
+    const diff = new Date(b).getTime() - new Date(a).getTime()
+    return diff >= 0 ? Math.round(diff / 86400000) : null
+  }
 
   const result = branches.map(branch => {
     // Chỉ tính bài của nhánh, KHÔNG tính bài thuộc khóa AI (khóa chung, có bảng riêng)
@@ -80,6 +108,14 @@ export async function GET() {
 
       const score = progressPct + badgeCount * 7 + perfectCount * 5
 
+      const { startedAt, lastActivityAt } = getTimeStats(profile.id, branchLessonIds)
+      const allDone = totalLessons > 0 && tick2Count === totalLessons
+      const completedAt = allDone
+        ? userProgress.filter(p => p.tick2 && p.completed_at).map(p => p.completed_at as string).sort().pop() ?? null
+        : null
+      const daysToComplete = daysBetween(startedAt, completedAt)
+      const daysSinceActive = lastActivityAt ? daysBetween(lastActivityAt, new Date().toISOString()) : null
+
       return {
         userId: profile.id,
         name: profile.name || 'Học viên',
@@ -87,6 +123,8 @@ export async function GET() {
         badgeCount,
         perfectCount,
         score,
+        daysToComplete,
+        daysSinceActive,
       }
     })
 
@@ -125,6 +163,14 @@ export async function GET() {
 
     const score = progressPct + perfectCount * 5 + aiBadgeCount * 7
 
+    const { startedAt, lastActivityAt } = getTimeStats(profile.id, aiLessonIds)
+    const allDone = aiTotalLessons > 0 && doneCount === aiTotalLessons
+    const completedAt = allDone
+      ? userProgress.filter(p => p.tick2 && p.completed_at).map(p => p.completed_at as string).sort().pop() ?? null
+      : null
+    const daysToComplete = daysBetween(startedAt, completedAt)
+    const daysSinceActive = lastActivityAt ? daysBetween(lastActivityAt, new Date().toISOString()) : null
+
     return {
       userId: profile.id,
       name: profile.name || 'Học viên',
@@ -135,6 +181,8 @@ export async function GET() {
       perfectCount,
       aiBadgeCount,
       score,
+      daysToComplete,
+      daysSinceActive,
     }
   })
   // Xếp theo điểm; ai chưa học bài AI nào thì xuống cuối
