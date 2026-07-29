@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
   const { data: submissions, error } = await supabaseAdmin
     .from('submissions')
-    .select('id, status, attempt_number, reviewed_at, reject_reason, user_id, lesson_id, reviewed_by')
+    .select('id, status, attempt_number, reviewed_at, reject_reason, user_id, lesson_id, reviewed_by, answer_text, file_url, submitted_at')
     .in('status', ['approved', 'rejected'])
     .order('reviewed_at', { ascending: false })
 
@@ -36,7 +36,10 @@ export async function GET(req: Request) {
     status: r.status,
     attemptNumber: r.attempt_number,
     reviewedAt: r.reviewed_at,
+    submittedAt: r.submitted_at,
     rejectReason: r.reject_reason,
+    answerText: r.answer_text,
+    fileUrl: r.file_url,
     learnerName: learnerMap[r.user_id]?.name ?? '—',
     learnerEmail: learnerMap[r.user_id]?.email ?? '—',
     lessonTitle: lessonMap[r.lesson_id]?.title ?? '—',

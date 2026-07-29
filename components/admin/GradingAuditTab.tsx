@@ -7,7 +7,10 @@ type Row = {
   status: string
   attemptNumber: number
   reviewedAt: string | null
+  submittedAt?: string | null
   rejectReason: string | null
+  answerText?: string | null
+  fileUrl?: string | null
   learnerName: string
   learnerEmail: string
   lessonTitle: string
@@ -20,6 +23,7 @@ export default function GradingAuditTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'approved' | 'rejected'>('all')
+  const [viewing, setViewing] = useState<Row | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -65,6 +69,7 @@ export default function GradingAuditTab() {
               <th className="p-3 font-medium">Trạng thái</th>
               <th className="p-3 font-medium">Người chấm</th>
               <th className="p-3 font-medium">Thời gian chấm</th>
+              <th className="p-3 font-medium">Bài làm</th>
             </tr>
           </thead>
           <tbody>
@@ -93,6 +98,16 @@ export default function GradingAuditTab() {
                 <td className="p-3 text-[#8FA9C6]">
                   {r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('vi-VN') : '—'}
                 </td>
+                <td className="p-3">
+                  {(r.answerText || r.fileUrl) ? (
+                    <button onClick={() => setViewing(r)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] hover:bg-[#233158] transition-colors">
+                      Xem bài
+                    </button>
+                  ) : (
+                    <span className="text-[#8FA9C6]">—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -101,6 +116,49 @@ export default function GradingAuditTab() {
           <p className="text-center text-[#8FA9C6] text-sm p-6">Không có dữ liệu.</p>
         )}
       </div>
+
+      {viewing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setViewing(null)}>
+          <div className="rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            style={{ backgroundColor: '#0D1424', border: '1px solid #1A2542' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold">{viewing.learnerName} — {viewing.lessonTitle}</p>
+                <p className="text-xs text-[#8FA9C6] mt-0.5">
+                  Lần nộp {viewing.attemptNumber}/3
+                  {viewing.submittedAt && ` · Nộp lúc ${new Date(viewing.submittedAt).toLocaleString('vi-VN')}`}
+                </p>
+              </div>
+              <button onClick={() => setViewing(null)} className="text-[#8FA9C6] hover:text-white text-xl leading-none">×</button>
+            </div>
+
+            {viewing.answerText && (
+              <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: '#1A2542' }}>
+                <p className="text-xs whitespace-pre-line">{viewing.answerText}</p>
+              </div>
+            )}
+            {viewing.fileUrl && (
+              <a href={viewing.fileUrl} target="_blank" rel="noreferrer"
+                className="text-xs font-medium underline inline-block mb-3" style={{ color: '#C9A84C' }}>
+                📎 Xem file đính kèm
+              </a>
+            )}
+
+            <div className="rounded-xl p-4" style={{ backgroundColor: viewing.status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' }}>
+              <p className="text-xs font-semibold" style={{ color: viewing.status === 'approved' ? '#34D399' : '#F87171' }}>
+                {viewing.status === 'approved' ? 'Đã duyệt' : 'Đã từ chối'} bởi {viewing.graderName} ({viewing.graderEmail})
+              </p>
+              {viewing.status === 'rejected' && (
+                <p className="text-xs text-[#8FA9C6] mt-1 whitespace-pre-line">
+                  Lý do: {viewing.rejectReason || '(Admin chưa ghi lý do)'}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

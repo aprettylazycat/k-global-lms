@@ -30,7 +30,7 @@ export default function LoginPage() {
       .eq('id', data.user!.id)
       .single()
 
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'super_admin') {
       window.location.href = '/admin'
     } else {
       window.location.href = '/dashboard'

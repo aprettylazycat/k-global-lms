@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   const { data: profile } = await supabaseAdmin
     .from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
 
   const { userId, newPassword } = await req.json()
   if (!userId || !newPassword) return NextResponse.json({ error: 'Thiếu thông tin' }, { status: 400 })

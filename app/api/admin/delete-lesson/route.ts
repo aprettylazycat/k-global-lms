@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .single()
 
-  if (profileError || profile?.role !== 'admin') {
+  if (profileError || profile?.role !== 'admin' && profile?.role !== 'super_admin') {
     return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
   }
 

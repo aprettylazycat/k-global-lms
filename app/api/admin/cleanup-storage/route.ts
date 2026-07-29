@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const { data: profile } = await supabaseAdmin
     .from('profiles').select('role').eq('id', user.id).single()
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
     return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
   }
 
