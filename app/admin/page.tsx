@@ -1,17 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import LessonForm from '@/components/admin/LessonForm'
 import ExcelImport from '@/components/admin/ExcelImport'
+import { supabase } from '@/lib/supabase'
 
 const ReviewPanel  = dynamic(() => import('@/components/admin/ReviewPanel'),  { ssr: false })
 const LessonList   = dynamic(() => import('@/components/admin/LessonList'),   { ssr: false })
 const ModuleManager = dynamic(() => import('@/components/admin/ModuleManager'), { ssr: false })
 const ReportPanel  = dynamic(() => import('@/components/admin/ReportPanel'),  { ssr: false })
+const GradingAuditTab = dynamic(() => import('@/components/admin/GradingAuditTab'), { ssr: false })
 
-type Tab = 'upload' | 'review' | 'manage' | 'modules' | 'report'
+type Tab = 'upload' | 'review' | 'manage' | 'modules' | 'report' | 'audit'
 
-const TABS: { key: Tab; label: string }[] = [
+const BASE_TABS: { key: Tab; label: string }[] = [
   { key: 'upload',  label: 'Upload bài học' },
   { key: 'review',  label: 'Duyệt bài' },
   { key: 'manage',  label: 'Bài học' },
@@ -23,6 +25,19 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('upload')
   const [uploadTab, setUploadTab] = useState<'form' | 'excel'>('form')
   const [mounted, setMounted] = useState<Set<Tab>>(new Set(['upload']))
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+
+  useEffect(() => {
+    async function checkRole() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+      setIsSuperAdmin(profile?.role === 'super_admin')
+    }
+    checkRole()
+  }, [])
+
+  const TABS = isSuperAdmin ? [...BASE_TABS, { key: 'audit' as Tab, label: 'Ai chấm bài' }] : BASE_TABS
 
   function handleTabChange(t: Tab) {
     setTab(t)
@@ -64,6 +79,7 @@ export default function AdminPage() {
       {mounted.has('manage')  && <div className={tab === 'manage'  ? '' : 'hidden'}><LessonList /></div>}
       {mounted.has('modules') && <div className={tab === 'modules' ? '' : 'hidden'}><ModuleManager /></div>}
       {mounted.has('report')  && <div className={tab === 'report'  ? '' : 'hidden'}><ReportPanel /></div>}
+      {mounted.has('audit')   && <div className={tab === 'audit'   ? '' : 'hidden'}><GradingAuditTab /></div>}
       </div>
     </div>
   )

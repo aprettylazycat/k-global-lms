@@ -28,8 +28,25 @@ export async function verifyAdmin(req: Request): Promise<AuthResult> {
   const { data: profile } = await supabaseAdmin
     .from('profiles').select('role').eq('id', check.user.id).single()
 
-  if (profile?.role !== 'admin') {
+  // super_admin có mọi quyền của admin thường (bao gồm chấm bài)
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
     return { ok: false, error: NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 }) }
+  }
+
+  return { ok: true, user: check.user }
+}
+
+// Chỉ dành riêng cho super_admin — dùng cho các chức năng nhạy cảm hơn admin thường,
+// ví dụ xem được ai (admin nào) đã chấm bài của học viên.
+export async function verifySuperAdmin(req: Request): Promise<AuthResult> {
+  const check = await verifyUser(req)
+  if (!check.ok) return check
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles').select('role').eq('id', check.user.id).single()
+
+  if (profile?.role !== 'super_admin') {
+    return { ok: false, error: NextResponse.json({ error: 'Chỉ super admin mới xem được mục này' }, { status: 403 }) }
   }
 
   return { ok: true, user: check.user }

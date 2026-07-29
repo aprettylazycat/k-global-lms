@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   await supabaseAdmin
     .from('submissions')
-    .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+    .update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: check.user.id })
     .eq('id', submissionId)
 
   // Xóa ảnh khỏi Storage để tiết kiệm dung lượng — bài đã duyệt không cần giữ file gốc

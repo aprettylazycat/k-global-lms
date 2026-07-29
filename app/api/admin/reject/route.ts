@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
   const { error } = await supabaseAdmin
     .from('submissions')
-    .update({ status: 'rejected', reviewed_at: new Date().toISOString(), reject_reason: reason || null })
+    .update({ status: 'rejected', reviewed_at: new Date().toISOString(), reject_reason: reason || null, reviewed_by: check.user.id })
     .eq('id', submissionId)
 
   if (submissionRow?.file_url) {
