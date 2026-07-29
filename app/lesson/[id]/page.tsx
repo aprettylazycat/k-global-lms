@@ -1254,7 +1254,7 @@ useEffect(() => {
               </div>
 
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+                <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: CHIP, border: `1px solid ${BORDER}` }}>
                   <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
                   {approvedAnswerText && (
                     <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
@@ -1294,7 +1294,7 @@ useEffect(() => {
               </p>
 
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-xl p-3.5 mb-4 text-left" style={{ backgroundColor: 'white', border: `1px solid ${OK_BORDER}` }}>
+                <div className="rounded-xl p-3.5 mb-4 text-left" style={{ backgroundColor: CHIP, border: `1px solid ${OK_BORDER}` }}>
                   <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
                   {approvedAnswerText && (
                     <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
