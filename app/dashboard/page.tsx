@@ -14,6 +14,7 @@ type ModuleItem = {
   description: string | null
   order_index: number
   category: string
+  unlock_mode: string
 }
 
 type LessonListItem = {
@@ -100,7 +101,7 @@ const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
           .eq('is_published', true)
           .order('order_index'),
         supabase.from('modules')
-          .select('id, name, description, order_index, category')
+          .select('id, name, description, order_index, category, unlock_mode')
           .or(`branch_id.eq.${prof.branch_id},category.eq.ai`)
           .order('order_index'),
         supabase.from('badges')
@@ -229,6 +230,15 @@ setAttemptCountMap(attemptCountMap)
   const lessonMeta = lessons.find(l => l.id === lessonId)
   const mod = modules.find(m => m.id === lessonMeta?.module_id)
   const isAi = mod?.category === 'ai'
+
+  // Module "mở full" (VD Khóa học Hair/Smock): chỉ cần Module 1 xong hết là mở TOÀN BỘ bài
+  // trong module này cùng lúc, không cần làm tuần tự từng bài như bình thường.
+  if (mod?.unlock_mode === 'full') {
+    const chainGroups = isAi ? aiLessonsByModule : mainLessonsByModule
+    const firstModule = chainGroups[0]
+    if (!firstModule) return false
+    return firstModule.lessons.every(l => isLessonPassed(l.id))
+  }
 
   // AI có chuỗi khoá tuần tự RIÊNG, độc lập với track chính (không auto mở nữa)
   const chain = isAi ? aiOrderedLessons : orderedLessons
