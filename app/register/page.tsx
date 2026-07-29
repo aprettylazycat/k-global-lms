@@ -73,7 +73,8 @@ export default function RegisterPage() {
 
   useEffect(() => {
     supabase.from('branches').select('*').then(({ data }) => {
-      if (data) setBranches(data)
+      // Loại nhánh 'chung' (dùng nội bộ cho các module dùng chung như AI Education) khỏi lựa chọn đăng ký
+      if (data) setBranches(data.filter((b: any) => b.slug !== 'chung'))
     })
   }, [])
 

@@ -95,8 +95,9 @@ export default function Home() {
 
       // ===== Build các khối Nghề từ config + tự phát hiện nhánh mới =====
       const coveredSlugs = new Set(NGHE_GROUPS.flatMap(g => g.slugs))
+      const HIDDEN_SLUGS = new Set(['chung']) // nhánh nội bộ dùng chung (VD AI Education) — không hiện như 1 "nghề"
       const autoGroups = branches
-        .filter(b => !coveredSlugs.has(b.slug))
+        .filter(b => !coveredSlugs.has(b.slug) && !HIDDEN_SLUGS.has(b.slug))
         .map(b => ({ key: b.slug, label: b.name, slugs: [b.slug], locked: false, icon: 'ti-book-2' }))
       const allGroupDefs = [...NGHE_GROUPS, ...autoGroups]
 
