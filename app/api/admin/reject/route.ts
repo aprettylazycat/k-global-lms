@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const { data: submissionRow } = await supabaseAdmin
     .from('submissions')
-    .select('file_url')
+    .select('file_url, user_id, lesson_id')
     .eq('id', submissionId)
     .single()
 
@@ -30,6 +30,16 @@ export async function POST(req: Request) {
     .from('submissions')
     .update({ status: 'rejected', reviewed_at: new Date().toISOString(), reject_reason: reason || null, reviewed_by: check.user.id })
     .eq('id', submissionId)
+
+  // Từ chối xong -> tự cấp lại 3 lượt nộp mới cho học viên (không xoá lịch sử cũ, chỉ đặt mốc "tính lại từ đây")
+  if (submissionRow?.user_id && submissionRow?.lesson_id) {
+    await supabaseAdmin
+      .from('progress')
+      .upsert(
+        { user_id: submissionRow.user_id, lesson_id: submissionRow.lesson_id, attempt_reset_at: new Date().toISOString() },
+        { onConflict: 'user_id,lesson_id' }
+      )
+  }
 
   if (submissionRow?.file_url) {
     const path = extractStoragePath(submissionRow.file_url, 'submissions')

@@ -832,6 +832,14 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
   useEffect(() => {
     if (!tick1Done || !userId) return
     async function fetchSubmission() {
+      const { data: progRow } = await supabase
+        .from('progress')
+        .select('attempt_reset_at')
+        .eq('user_id', userId)
+        .eq('lesson_id', lessonId)
+        .maybeSingle()
+      const resetAt = (progRow as any)?.attempt_reset_at ?? null
+
       const { data } = await supabase
         .from('submissions')
         .select('status, reject_reason, submitted_at, attempt_number, answer_text, file_url')
@@ -839,7 +847,9 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
         .eq('user_id', userId)
         .order('attempt_number', { ascending: false })
       const rows = data ?? []
-      setAttemptsUsed(rows.length)
+      // Chỉ đếm những lần nộp SAU mốc admin cấp lại lượt gần nhất (nếu có)
+      const countedRows = resetAt ? rows.filter(r => r.submitted_at && r.submitted_at > resetAt) : rows
+      setAttemptsUsed(countedRows.length)
       const latest = rows[0]
       if (!latest) return
       if (latest.status === 'pending') {
@@ -1211,7 +1221,7 @@ useEffect(() => {
               }}>
               <i className={`ti ${isApproved ? 'ti-check' : isRejectedFinal ? 'ti-alert-circle' : 'ti-clock'}`}
                 style={{ color: isApproved ? OK : isRejectedFinal ? ERR : WARN, fontSize: '20px', marginTop: '2px' }} />
-              <div className="flex-1">
+              <div>
                 <p className="text-sm font-bold" style={{ color: isApproved ? OK : isRejectedFinal ? ERR : WARN }}>
                   {isApproved ? 'Đã hoàn thành bài tập' : isRejectedFinal ? 'Bài làm chưa đạt' : 'Đang chờ admin duyệt'}
                 </p>
@@ -1219,21 +1229,6 @@ useEffect(() => {
                   Bạn đã dùng hết 3/3 lượt nộp bài cho phần này.
                   {isRejectedFinal && ' Liên hệ admin nếu cần hỗ trợ thêm.'}
                 </p>
-
-                {!isRejectedFinal && (approvedAnswerText || approvedFileUrl) && (
-                  <div className="rounded-xl p-3.5 mt-3" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
-                    <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm gần nhất bạn đã nộp:</p>
-                    {approvedAnswerText && (
-                      <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
-                    )}
-                    {approvedFileUrl && (
-                      <a href={approvedFileUrl} target="_blank" rel="noreferrer"
-                        className="text-xs font-medium underline mt-2 inline-block" style={{ color: GOLD }}>
-                        📎 Xem file đính kèm
-                      </a>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           )
@@ -1259,7 +1254,7 @@ useEffect(() => {
               </div>
 
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: CHIP, border: `1px solid ${BORDER}` }}>
+                <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
                   <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
                   {approvedAnswerText && (
                     <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
@@ -1299,7 +1294,7 @@ useEffect(() => {
               </p>
 
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-xl p-3.5 mb-4 text-left" style={{ backgroundColor: CHIP, border: `1px solid ${OK_BORDER}` }}>
+                <div className="rounded-xl p-3.5 mb-4 text-left" style={{ backgroundColor: 'white', border: `1px solid ${OK_BORDER}` }}>
                   <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
                   {approvedAnswerText && (
                     <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>

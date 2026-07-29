@@ -19,15 +19,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Bài học này không yêu cầu nộp bài' }, { status: 400 })
   }
 
+  // Nếu admin đã từng từ chối và cấp lại lượt (attempt_reset_at), chỉ tính các lần nộp SAU mốc đó
+  const { data: progressRow } = await supabaseAdmin
+    .from('progress')
+    .select('attempt_reset_at')
+    .eq('user_id', userId)
+    .eq('lesson_id', lessonId)
+    .maybeSingle()
+  const resetAt = progressRow?.attempt_reset_at ?? null
+
   // Lấy toàn bộ lịch sử nộp bài của user cho bài này — kể cả bản đã duyệt/từ chối/thay thế
-  const { data: previousSubmissions } = await supabaseAdmin
+  const { data: allSubmissions } = await supabaseAdmin
     .from('submissions')
-    .select('id, attempt_number, status, file_url')
+    .select('id, attempt_number, status, file_url, submitted_at')
     .eq('user_id', userId)
     .eq('lesson_id', lessonId)
     .order('attempt_number', { ascending: false })
 
-  const attemptsUsed = previousSubmissions?.length ?? 0
+  // previousSubmissions dùng để xoá file cũ (toàn bộ lịch sử) — attemptsUsed thì chỉ tính từ mốc reset
+  const previousSubmissions = allSubmissions
+  const countedSubmissions = resetAt
+    ? (allSubmissions || []).filter(s => s.submitted_at && s.submitted_at > resetAt)
+    : (allSubmissions || [])
+  const attemptsUsed = countedSubmissions.length
 
   if (attemptsUsed >= MAX_ATTEMPTS) {
     return NextResponse.json({ error: 'Ban da dung het 3 luot nop bai cho bai hoc nay' }, { status: 400 })
