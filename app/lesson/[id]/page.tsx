@@ -100,7 +100,7 @@ export default function LessonPage() {
 
       const { data: prog } = await supabase
         .from('progress')
-        .select('lesson_id, tick1, tick2, completed_at')
+        .select('lesson_id, tick1, tick2, completed_at, perfect_score')
         .eq('user_id', session.user.id)
         .eq('lesson_id', lessonId)
         .maybeSingle()
@@ -312,6 +312,7 @@ export default function LessonPage() {
               essays={lesson.questions.filter((q: any) => q.type === 'essay' && q.question?.trim())}
               tick1Done={tick1Done}
               tick2Done={tick2Done}
+              perfectScore={(progress as any)?.perfect_score}
               userId={userId}
               recapContent={(lesson as any).recap_content}
               noPractice={noPractice}
@@ -792,8 +793,8 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 const MIN_ESSAY_CHARS = 150
 const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
-function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent, noPractice }: {
-  lessonId: number; nextLessonId: number | null; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string; noPractice?: boolean
+function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent, noPractice, perfectScore }: {
+  lessonId: number; nextLessonId: number | null; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string; noPractice?: boolean; perfectScore?: boolean
 }) {
   const [text, setText] = useState('')
   const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({})
@@ -803,6 +804,8 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
   const [showCongrats, setShowCongrats] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
   const [submissionStatus, setSubmissionStatus] = useState<'pending' | 'rejected' | 'approved' | null>(null)
+  const [approvedAnswerText, setApprovedAnswerText] = useState<string | null>(null)
+  const [approvedFileUrl, setApprovedFileUrl] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState<string | null>(null)
   const [attemptsUsed, setAttemptsUsed] = useState(0)
   const [resubmitting, setResubmitting] = useState(false)
@@ -831,7 +834,7 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
     async function fetchSubmission() {
       const { data } = await supabase
         .from('submissions')
-        .select('status, reject_reason, submitted_at, attempt_number')
+        .select('status, reject_reason, submitted_at, attempt_number, answer_text, file_url')
         .eq('lesson_id', lessonId)
         .eq('user_id', userId)
         .order('attempt_number', { ascending: false })
@@ -849,6 +852,8 @@ function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, ti
       } else if (latest.status === 'approved') {
         setSubmissionStatus('approved')
       }
+      setApprovedAnswerText(latest.answer_text ?? null)
+      setApprovedFileUrl(latest.file_url ?? null)
     }
     fetchSubmission()
   }, [tick1Done, lessonId, userId])
@@ -1219,20 +1224,48 @@ useEffect(() => {
           )
         }
 
-        // ── Đã được duyệt, còn lượt → có thể nộp lại để lấy Perfect ──
+        // ── Đã được duyệt, còn lượt → xem lại bài đã nộp, có thể nộp lại để lấy Perfect ──
         if (tick2Done && !resubmitting) {
+          const isPerfect = perfectScore === true
           return (
             <div className="rounded-2xl p-4" style={{ backgroundColor: OK_BG, border: `1px solid ${OK_BORDER}` }}>
               <div className="flex items-center gap-2.5 mb-3">
-                <i className="ti ti-check" style={{ color: OK }} />
-                <p className="text-sm font-semibold" style={{ color: OK }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
+                {isPerfect ? (
+                  <>
+                    <i className="ti ti-star-filled" style={{ color: GOLD }} />
+                    <p className="text-sm font-bold" style={{ color: GOLD }}>🌟 Perfect Score! Admin đã duyệt.</p>
+                  </>
+                ) : (
+                  <>
+                    <i className="ti ti-check" style={{ color: OK }} />
+                    <p className="text-sm font-semibold" style={{ color: OK }}>Admin đã duyệt — bài kế tiếp đã mở.</p>
+                  </>
+                )}
               </div>
-              <button onClick={startResubmit}
-                className="text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
-                <i className="ti ti-refresh" style={{ fontSize: '12px', marginRight: '4px' }} />
-                Nộp lại để thử lấy Perfect (lần {nextAttemptNumber}/3)
-              </button>
+
+              {(approvedAnswerText || approvedFileUrl) && (
+                <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: 'white', border: `1px solid ${BORDER}` }}>
+                  <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
+                  {approvedAnswerText && (
+                    <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
+                  )}
+                  {approvedFileUrl && (
+                    <a href={approvedFileUrl} target="_blank" rel="noreferrer"
+                      className="text-xs font-medium underline mt-2 inline-block" style={{ color: NAVY }}>
+                      📎 Xem file đính kèm
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {!isPerfect && (
+                <button onClick={startResubmit}
+                  className="text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
+                  style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
+                  <i className="ti ti-refresh" style={{ fontSize: '12px', marginRight: '4px' }} />
+                  Nộp lại để thử lấy Perfect (lần {nextAttemptNumber}/3)
+                </button>
+              )}
             </div>
           )
         }
@@ -1249,6 +1282,22 @@ useEffect(() => {
               <p className="text-sm font-medium mb-4" style={{ color: OK }}>
                 Bài tập đã được nộp thành công — đang chờ admin duyệt.
               </p>
+
+              {(approvedAnswerText || approvedFileUrl) && (
+                <div className="rounded-xl p-3.5 mb-4 text-left" style={{ backgroundColor: 'white', border: `1px solid ${OK_BORDER}` }}>
+                  <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
+                  {approvedAnswerText && (
+                    <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
+                  )}
+                  {approvedFileUrl && (
+                    <a href={approvedFileUrl} target="_blank" rel="noreferrer"
+                      className="text-xs font-medium underline mt-2 inline-block" style={{ color: NAVY }}>
+                      📎 Xem file đính kèm
+                    </a>
+                  )}
+                </div>
+              )}
+
               <button onClick={startResubmit}
                 className="text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
                 style={{ backgroundColor: 'rgba(255,255,255,0.5)', color: OK, border: `1px solid ${OK_BORDER}` }}>
