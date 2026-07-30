@@ -73,9 +73,13 @@ export default function LessonPage() {
             const prevLesson = orderedLessons[idx - 1]
             let unlocked: boolean
             if (lessonData.module_id !== prevLesson.module_id) {
-              const firstModuleId = allModules[0]?.id
-              const firstModuleLessons = allLessons.filter(l => l.module_id === firstModuleId)
-              unlocked = firstModuleLessons.every(l => progressByLesson.get(l.id))
+              if (currentModule?.unlock_mode === 'open') {
+                unlocked = true
+              } else {
+                const firstModuleId = allModules[0]?.id
+                const firstModuleLessons = allLessons.filter(l => l.module_id === firstModuleId)
+                unlocked = firstModuleLessons.every(l => progressByLesson.get(l.id))
+              }
             } else {
               unlocked = !!progressByLesson.get(prevLesson.id)
             }
