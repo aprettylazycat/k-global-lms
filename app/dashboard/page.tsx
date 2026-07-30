@@ -237,6 +237,8 @@ setAttemptCountMap(attemptCountMap)
     const chainGroups = isAi ? aiLessonsByModule : mainLessonsByModule
     const firstModule = chainGroups[0]
     if (!firstModule) return false
+    // Nếu chính module này là module đầu tiên của track -> luôn mở sẵn từ đầu
+    if (firstModule.module.id === mod.id) return true
     return firstModule.lessons.every(l => isLessonPassed(l.id))
   }
 
