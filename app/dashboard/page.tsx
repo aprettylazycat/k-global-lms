@@ -256,6 +256,8 @@ setAttemptCountMap(attemptCountMap)
 
   // Nếu bài này là bài đầu tiên của module khác module 1 (trong cùng track)
   if (lesson.module_id !== prevLesson.module_id) {
+    // Module "open": mở song song ngay từ đầu, không cần chờ Module 1 xong
+    if (mod?.unlock_mode === 'open') return true
     // Kiểm tra module 1 của track này đã hoàn thành hết tick1 chưa
     const firstModule = chainGroups[0]
     if (!firstModule) return false
