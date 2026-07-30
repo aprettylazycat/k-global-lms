@@ -56,15 +56,18 @@ export default function LessonPage() {
           const currentModule = allModules.find(m => m.id === lessonData.module_id)
 
           if (currentModule?.unlock_mode === 'full') {
-            // Module "mở full": chỉ cần Module 1 xong hết là mọi bài trong module này mở luôn,
-            // không cần bài trước đó trong CÙNG module này phải xong.
             const firstModuleId = allModules[0]?.id
-            const firstModuleLessons = allLessons.filter(l => l.module_id === firstModuleId)
-            const unlocked = firstModuleLessons.every(l => progressByLesson.get(l.id))
-            if (!unlocked) {
-              setLocked(true)
-              setLoading(false)
-              return
+            if (lessonData.module_id === firstModuleId) {
+              // Chính module này là module đầu tiên -> luôn mở sẵn, không cần điều kiện gì
+            } else {
+              // Module "mở full" khác: chỉ cần Module 1 xong hết là mọi bài trong module này mở luôn
+              const firstModuleLessons = allLessons.filter(l => l.module_id === firstModuleId)
+              const unlocked = firstModuleLessons.every(l => progressByLesson.get(l.id))
+              if (!unlocked) {
+                setLocked(true)
+                setLoading(false)
+                return
+              }
             }
           } else if (idx > 0) {
             const prevLesson = orderedLessons[idx - 1]
