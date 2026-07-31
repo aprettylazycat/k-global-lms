@@ -389,8 +389,14 @@ export default function ReviewPanel() {
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: '#EEF3FB' }}>
+                          <p className="text-sm font-semibold truncate flex items-center gap-2" style={{ color: '#EEF3FB' }}>
                             {sub.lesson?.title}
+                            {sub.priorRejectReason && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: 'rgba(239,68,68,0.16)', color: '#F87171' }}>
+                                Nộp lại
+                              </span>
+                            )}
                           </p>
                           <p className="text-xs mt-0.5" style={{ color: '#60A5FA' }}>
                             Nộp ngày {new Date(sub.submitted_at).toLocaleDateString('vi-VN')}
@@ -403,6 +409,18 @@ export default function ReviewPanel() {
                       {/* Nội dung bài */}
                       {isSubOpen && (
                         <div className="px-5 pb-5 space-y-4">
+
+                          {sub.priorRejectReason && (
+                            <div className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                              <p className="text-xs font-bold mb-1 flex items-center gap-1.5" style={{ color: '#F87171' }}>
+                                <i className="ti ti-history" style={{ fontSize: '13px' }} />
+                                Bài này đã bị từ chối trước đó — lý do lần trước:
+                              </p>
+                              <p className="text-sm whitespace-pre-line" style={{ color: '#F87171' }}>
+                                {renderTextWithLinks(sub.priorRejectReason)}
+                              </p>
+                            </div>
+                          )}
 
                           {/* Bài làm — tách riêng từng câu hỏi/trả lời */}
                           {(() => {
