@@ -23,6 +23,8 @@ export default function GradingAuditTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'approved' | 'rejected'>('all')
+  const [graderFilter, setGraderFilter] = useState<string>('all')
+  const [learnerFilter, setLearnerFilter] = useState<string>('all')
   const [viewing, setViewing] = useState<Row | null>(null)
 
   useEffect(() => {
@@ -40,22 +42,48 @@ export default function GradingAuditTab() {
     load()
   }, [])
 
-  const visibleRows = filter === 'all' ? rows : rows.filter(r => r.status === filter)
+  const graderOptions = Array.from(new Set(rows.map(r => r.graderEmail))).filter(Boolean).sort()
+  const learnerOptions = Array.from(new Set(rows.map(r => r.learnerEmail))).filter(Boolean).sort()
+
+  const visibleRows = rows
+    .filter(r => filter === 'all' || r.status === filter)
+    .filter(r => graderFilter === 'all' || r.graderEmail === graderFilter)
+    .filter(r => learnerFilter === 'all' || r.learnerEmail === learnerFilter)
 
   if (loading) return <p className="text-sm text-[#8FA9C6] p-6">Đang tải…</p>
   if (error) return <p className="text-sm text-red-400 p-6">{error}</p>
 
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium">Ai đã chấm bài nào ({rows.length} bài đã chấm)</h2>
-        <div className="flex gap-1">
-          {(['all', 'approved', 'rejected'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`text-xs px-3 py-1.5 rounded-lg ${filter === f ? 'bg-[#1A2542] font-medium' : 'text-[#8FA9C6]'}`}>
-              {f === 'all' ? 'Tất cả' : f === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h2 className="text-sm font-medium">
+          Ai đã chấm bài nào ({visibleRows.length}/{rows.length} bài)
+        </h2>
+        <div className="flex gap-2 flex-wrap items-center">
+          <select value={graderFilter} onChange={e => setGraderFilter(e.target.value)}
+            className="text-xs px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] border border-[#233158] focus:outline-none">
+            <option value="all">-- Tất cả người chấm --</option>
+            {graderOptions.map(email => <option key={email} value={email}>{email}</option>)}
+          </select>
+          <select value={learnerFilter} onChange={e => setLearnerFilter(e.target.value)}
+            className="text-xs px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] border border-[#233158] focus:outline-none">
+            <option value="all">-- Tất cả học viên --</option>
+            {learnerOptions.map(email => <option key={email} value={email}>{email}</option>)}
+          </select>
+          <div className="flex gap-1">
+            {(['all', 'approved', 'rejected'] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`text-xs px-3 py-1.5 rounded-lg ${filter === f ? 'bg-[#1A2542] font-medium' : 'text-[#8FA9C6]'}`}>
+                {f === 'all' ? 'Tất cả' : f === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
+              </button>
+            ))}
+          </div>
+          {(graderFilter !== 'all' || learnerFilter !== 'all' || filter !== 'all') && (
+            <button onClick={() => { setGraderFilter('all'); setLearnerFilter('all'); setFilter('all') }}
+              className="text-xs px-3 py-1.5 rounded-lg text-[#F87171] hover:bg-[#1A2542] transition-colors">
+              Xoá lọc
             </button>
-          ))}
+          )}
         </div>
       </div>
 
