@@ -812,6 +812,65 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 const MIN_ESSAY_CHARS = 150
 const DRAFT_KEY = (lessonId: number) => `draft_lesson_${lessonId}`
 
+function parseOldAnswerText(text: string) {
+  const parts = (text || '').split('\n\n---\n\n')
+  const essayPart = parts[0]
+  const freeText = parts.slice(1).join('\n\n---\n\n')
+
+  const blocks = essayPart.split(/\n\n(?=Câu hỏi tự luận)/g).filter(Boolean)
+  const qas = blocks
+    .map(block => {
+      const match = block.match(/^Câu hỏi tự luận \d+:\s*([\s\S]*?)\nTrả lời:\s*([\s\S]*)$/)
+      return match ? { question: match[1].trim(), answer: match[2].trim() } : null
+    })
+    .filter(Boolean) as { question: string; answer: string }[]
+
+  return { qas, freeText: qas.length > 0 ? freeText : text }
+}
+
+function OldAnswerBlock({ text, prompt, label }: { text: string; prompt?: string; label: string }) {
+  const { qas, freeText } = parseOldAnswerText(text)
+  return (
+    <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: CHIP, border: `1px solid ${BORDER}` }}>
+      <p className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: MUTED }}>
+        <i className="ti ti-history" style={{ fontSize: '13px' }} />
+        {label}
+      </p>
+      {qas.length > 0 ? (
+        <div className="space-y-3">
+          {qas.map((qa, i) => (
+            <div key={i}>
+              <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: MUTED }}>
+                Câu hỏi {i + 1}
+              </p>
+              <p className="text-sm font-semibold mb-1.5 whitespace-pre-line" style={{ color: TEXT }}>{qa.question}</p>
+              <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: MUTED }}>Trả lời</p>
+              <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{qa.answer}</p>
+            </div>
+          ))}
+          {freeText.trim() && (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: MUTED }}>Bài thực hành</p>
+              <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{freeText}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {prompt && (
+            <>
+              <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: MUTED }}>Câu hỏi</p>
+              <p className="text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: TEXT }}>{prompt}</p>
+              <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: MUTED }}>Trả lời</p>
+            </>
+          )}
+          <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{text}</p>
+        </>
+      )}
+    </div>
+  )
+}
+
 function PracticeSection({ lessonId, nextLessonId, prompt, essays, tick1Done, tick2Done, userId, recapContent, noPractice, perfectScore }: {
   lessonId: number; nextLessonId: number | null; prompt: string; essays: any[]; tick1Done: boolean; tick2Done: boolean; userId: string; recapContent?: string; noPractice?: boolean; perfectScore?: boolean
 }) {
@@ -1273,14 +1332,13 @@ useEffect(() => {
               </div>
 
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-xl p-3.5 mb-3" style={{ backgroundColor: CHIP, border: `1px solid ${BORDER}` }}>
-                  <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
+                <div className="mb-3">
                   {approvedAnswerText && (
-                    <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
+                    <OldAnswerBlock text={approvedAnswerText} prompt={prompt} label="Bài làm bạn đã nộp:" />
                   )}
                   {approvedFileUrl && (
                     <a href={approvedFileUrl} target="_blank" rel="noreferrer"
-                      className="text-xs font-medium underline mt-2 inline-block" style={{ color: NAVY }}>
+                      className="text-xs font-medium underline inline-block" style={{ color: NAVY }}>
                       📎 Xem file đính kèm
                     </a>
                   )}
@@ -1313,14 +1371,13 @@ useEffect(() => {
               </p>
 
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-xl p-3.5 mb-4 text-left" style={{ backgroundColor: CHIP, border: `1px solid ${OK_BORDER}` }}>
-                  <p className="text-xs font-semibold mb-1.5" style={{ color: MUTED }}>Bài làm bạn đã nộp:</p>
+                <div className="mb-4 text-left">
                   {approvedAnswerText && (
-                    <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
+                    <OldAnswerBlock text={approvedAnswerText} prompt={prompt} label="Bài làm bạn đã nộp:" />
                   )}
                   {approvedFileUrl && (
                     <a href={approvedFileUrl} target="_blank" rel="noreferrer"
-                      className="text-xs font-medium underline mt-2 inline-block" style={{ color: NAVY }}>
+                      className="text-xs font-medium underline inline-block" style={{ color: NAVY }}>
                       📎 Xem file đính kèm
                     </a>
                   )}
@@ -1371,17 +1428,13 @@ useEffect(() => {
           {submissionStatus === 'rejected' && !resubmitting && (
             <>
               {(approvedAnswerText || approvedFileUrl) && (
-                <div className="rounded-2xl p-4 mb-3" style={{ backgroundColor: CHIP, border: `1px solid ${BORDER}` }}>
-                  <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: MUTED }}>
-                    <i className="ti ti-history" style={{ fontSize: '13px' }} />
-                    Bài cũ bạn đã nộp (chưa đạt):
-                  </p>
+                <div className="mb-3">
                   {approvedAnswerText && (
-                    <p className="text-sm whitespace-pre-line" style={{ color: TEXT }}>{approvedAnswerText}</p>
+                    <OldAnswerBlock text={approvedAnswerText} prompt={prompt} label="Bài cũ bạn đã nộp (chưa đạt):" />
                   )}
                   {approvedFileUrl && (
                     <a href={approvedFileUrl} target="_blank" rel="noreferrer"
-                      className="text-xs font-medium underline mt-2 inline-block" style={{ color: NAVY }}>
+                      className="text-xs font-medium underline inline-block" style={{ color: NAVY }}>
                       📎 Xem file đính kèm
                     </a>
                   )}
