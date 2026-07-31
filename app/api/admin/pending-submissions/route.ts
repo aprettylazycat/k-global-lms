@@ -29,7 +29,7 @@ const { data, error } = await supabaseAdmin
     .from('submissions')
     .select(`
       id, user_id, lesson_id, answer_text, file_url, submitted_at, status,
-      user:profiles(name, email, branch:branches(name, slug)),
+      user:profiles(name, email, branch_id),
       lesson:lessons(title, no_quiz, practice_prompt)
     `)
     .eq('status', 'pending')
@@ -42,5 +42,13 @@ if (error) {
 // Lọc bỏ submissions của bài no_quiz (rác lịch sử, không cần duyệt)
 const filtered = (data || []).filter((s: any) => !s.lesson?.no_quiz)
 
-return NextResponse.json({ submissions: filtered })
+// Tra tên nhánh riêng (không dùng nested embed vì cần FK constraint mà DB có thể chưa khai báo chính thức)
+const { data: branches } = await supabaseAdmin.from('branches').select('id, name, slug')
+const branchById = Object.fromEntries((branches || []).map(b => [b.id, b]))
+const withBranch = filtered.map((s: any) => ({
+  ...s,
+  user: s.user ? { ...s.user, branch: branchById[s.user.branch_id] ?? null } : null,
+}))
+
+return NextResponse.json({ submissions: withBranch })
 }
