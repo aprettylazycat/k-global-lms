@@ -19,6 +19,24 @@ function parseAnswerText(text: string) {
   return { qas, freeText: qas.length > 0 ? freeText : text }
 }
 
+
+function renderTextWithLinks(text: string) {
+  if (!text) return null
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noreferrer"
+        className="underline break-all" style={{ color: '#60A5FA' }}
+        onClick={e => e.stopPropagation()}>
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  )
+}
+
 export default function ReviewPanel() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +47,52 @@ export default function ReviewPanel() {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const hasFetched = useRef(false)
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
+  const [grantEmail, setGrantEmail] = useState('')
+  const [grantLessonTitle, setGrantLessonTitle] = useState('')
+  const [grantLoading, setGrantLoading] = useState(false)
+  const [grantMessage, setGrantMessage] = useState<string | null>(null)
+
+  async function handleGrantAttempts() {
+    if (!grantEmail.trim() || !grantLessonTitle.trim()) return
+    setGrantLoading(true)
+    setGrantMessage(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setGrantLoading(false); return }
+
+    // Tìm user_id theo email, lesson_id theo tên bài (khớp gần đúng)
+    const { data: userRow } = await supabase.from('profiles').select('id, name').eq('email', grantEmail.trim()).maybeSingle()
+    if (!userRow) {
+      setGrantMessage('Không tìm thấy học viên với email này.')
+      setGrantLoading(false)
+      return
+    }
+    const { data: lessonRows } = await supabase.from('lessons').select('id, title').ilike('title', `%${grantLessonTitle.trim()}%`)
+    if (!lessonRows || lessonRows.length === 0) {
+      setGrantMessage('Không tìm thấy bài học khớp tên này.')
+      setGrantLoading(false)
+      return
+    }
+    if (lessonRows.length > 1) {
+      setGrantMessage(`Có ${lessonRows.length} bài khớp tên, gõ tên đầy đủ/chính xác hơn: ${lessonRows.map((l: any) => l.title).join(' | ')}`)
+      setGrantLoading(false)
+      return
+    }
+
+    const res = await fetch('/api/admin/grant-attempt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ userId: userRow.id, lessonId: lessonRows[0].id }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setGrantMessage(json.error || 'Có lỗi xảy ra.')
+    } else {
+      setGrantMessage(`Đã gỡ ${json.deletedCount} lượt nộp cũ cho ${userRow.name} — bài "${lessonRows[0].title}". Học viên vào lại là nộp được từ lần 1/3.`)
+      setGrantEmail('')
+      setGrantLessonTitle('')
+    }
+    setGrantLoading(false)
+  }
 
   useEffect(() => {
     if (hasFetched.current) return
@@ -147,6 +211,35 @@ export default function ReviewPanel() {
         </div>
       </div>
 
+      {/* Gỡ bí học viên bị hết 3/3 lượt nộp bài mà vẫn bị từ chối */}
+      <div className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
+        <p className="text-sm font-semibold mb-1" style={{ color: '#F87171' }}>
+          <i className="ti ti-lock-open" style={{ fontSize: '14px', marginRight: '4px' }} />
+          Cấp lại lượt nộp bài (dùng khi học viên hết 3/3 lượt mà vẫn bị từ chối)
+        </p>
+        <p className="text-xs mb-3" style={{ color: '#8FA9C6' }}>
+          Xoá sạch lịch sử nộp cũ của đúng học viên + bài học này — họ vào lại sẽ nộp được từ lần 1/3.
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <input type="text" placeholder="Email học viên..." value={grantEmail}
+            onChange={e => setGrantEmail(e.target.value)}
+            className="flex-1 min-w-[180px] rounded-xl px-3 py-2 text-sm bg-[#0E1526] focus:outline-none"
+            style={{ border: '1px solid rgba(239,68,68,0.3)', color: '#EEF3FB' }} />
+          <input type="text" placeholder="Tên bài học (VD: Bài 1.1)..." value={grantLessonTitle}
+            onChange={e => setGrantLessonTitle(e.target.value)}
+            className="flex-1 min-w-[220px] rounded-xl px-3 py-2 text-sm bg-[#0E1526] focus:outline-none"
+            style={{ border: '1px solid rgba(239,68,68,0.3)', color: '#EEF3FB' }} />
+          <button onClick={handleGrantAttempts} disabled={grantLoading || !grantEmail.trim() || !grantLessonTitle.trim()}
+            className="text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-50"
+            style={{ backgroundColor: '#F87171', color: '#0E1526' }}>
+            {grantLoading ? 'Đang xử lý...' : 'Cấp lại lượt'}
+          </button>
+        </div>
+        {grantMessage && (
+          <p className="text-xs mt-2 whitespace-pre-line" style={{ color: '#8FA9C6' }}>{grantMessage}</p>
+        )}
+      </div>
+
       {/* Thanh tìm kiếm */}
       <div className="relative">
         <i className="ti ti-search absolute left-4 top-1/2 -translate-y-1/2" style={{ fontSize: '15px', color: '#3B82F6' }} />
@@ -260,7 +353,7 @@ export default function ReviewPanel() {
                                       Trả lời
                                     </p>
                                     <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#EEF3FB' }}>
-                                      {qa.answer}
+                                      {renderTextWithLinks(qa.answer)}
                                     </p>
                                   </div>
                                 ))}
@@ -278,7 +371,7 @@ export default function ReviewPanel() {
                                       Trả lời
                                     </p>
                                     <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: '#EEF3FB' }}>
-                                      {freeText}
+                                      {renderTextWithLinks(freeText)}
                                     </p>
                                   </div>
                                 )}
