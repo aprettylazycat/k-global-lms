@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     .eq('id', user.id)
     .single()
 
-  if (profileError || profile?.role !== 'admin' && profile?.role !== 'super_admin') {
+  if (profileError || profile?.role !== 'admin') {
     return NextResponse.json({ error: 'Không có quyền admin' }, { status: 403 })
   }
 
@@ -29,7 +29,7 @@ const { data, error } = await supabaseAdmin
     .from('submissions')
     .select(`
       id, user_id, lesson_id, answer_text, file_url, submitted_at, status,
-      user:profiles(name, email),
+      user:profiles(name, email, branch:branches(name, slug)),
       lesson:lessons(title, no_quiz, practice_prompt)
     `)
     .eq('status', 'pending')
