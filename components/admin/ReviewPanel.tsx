@@ -349,9 +349,13 @@ export default function ReviewPanel() {
               className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors"
               style={{ backgroundColor: isUserOpen ? 'rgba(96,165,250,0.12)' : '#0E1526' }}
             >
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+              <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
-                {user?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'}
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={user?.name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold" style={{ color: '#EEF3FB' }}>{user?.name ?? 'Không rõ'}</p>

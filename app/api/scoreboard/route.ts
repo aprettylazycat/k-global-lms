@@ -18,8 +18,8 @@ export async function GET() {
 
   const { data: profilesRaw } = await supabaseAdmin
     .from('profiles')
-    .select('id, name, branch_id, role')
-    .neq('role', 'admin')
+    .select('id, name, branch_id, role, avatar_url')
+    .not('role', 'in', '(admin,super_admin)')
 
   // Chỉ tính học viên đã xác thực email — tránh tài khoản đăng ký dở lọt lên bảng xếp hạng
   const confirmedIds = new Set<string>()
@@ -134,10 +134,12 @@ export async function GET() {
       return {
         userId: profile.id,
         name: profile.name || 'Học viên',
+        avatarUrl: profile.avatar_url || null,
         progressPct,
         badgeCount,
         perfectCount,
         score,
+        completedAt,
         daysToComplete,
         daysSinceActive,
       }
@@ -189,6 +191,7 @@ export async function GET() {
     return {
       userId: profile.id,
       name: profile.name || 'Học viên',
+      avatarUrl: profile.avatar_url || null,
       branchName: branchNameById[profile.branch_id] || '—',
       lessonsDone: doneCount,
       totalLessons: aiTotalLessons,
@@ -196,6 +199,7 @@ export async function GET() {
       perfectCount,
       aiBadgeCount,
       score,
+      completedAt,
       daysToComplete,
       daysSinceActive,
     }

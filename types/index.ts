@@ -65,4 +65,5 @@ export type Profile = {
   onboarding_date: string | null
   goal_after_onboarding: string | null
   expectation: string | null
+  avatar_url?: string | null
 }

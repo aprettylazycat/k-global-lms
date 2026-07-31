@@ -9,10 +9,12 @@ const DARK_ON_GOLD = '#0A0E1A'
 type LeaderboardEntry = {
   userId: string
   name: string
+  avatarUrl: string | null
   progressPct: number
   badgeCount: number
   perfectCount: number
   score: number
+  completedAt: string | null
   daysToComplete: number | null
   daysSinceActive: number | null
 }
@@ -27,6 +29,7 @@ type BranchData = {
 type AiEntry = {
   userId: string
   name: string
+  avatarUrl: string | null
   branchName: string
   lessonsDone: number
   totalLessons: number
@@ -34,6 +37,7 @@ type AiEntry = {
   perfectCount: number
   aiBadgeCount: number
   score: number
+  completedAt: string | null
   daysToComplete: number | null
   daysSinceActive: number | null
 }
@@ -61,6 +65,7 @@ const RANK_STYLES = [
 export default function ScoreboardPage() {
   const router = useRouter()
   const [branches, setBranches] = useState<BranchData[]>([])
+  const [zoomedAvatar, setZoomedAvatar] = useState<{ url: string; name: string } | null>(null)
   const [ai, setAi] = useState<AiData | null>(null)
   const [activeBranch, setActiveBranch] = useState<string>('')
   const [loading, setLoading] = useState(true)
@@ -206,6 +211,17 @@ export default function ScoreboardPage() {
                         {rankStyle ? rankStyle.medal : idx + 1}
                       </div>
 
+                      <div
+                        onClick={e => { if (entry.avatarUrl) { e.stopPropagation(); setZoomedAvatar({ url: entry.avatarUrl!, name: entry.name }) } }}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden ${entry.avatarUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                        style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}>
+                        {entry.avatarUrl ? (
+                          <img src={entry.avatarUrl} alt={entry.name} className="w-full h-full object-cover" />
+                        ) : (
+                          entry.name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase()
+                        )}
+                      </div>
+
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold truncate" style={{ color: TEXT }}>{entry.name}</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -229,6 +245,7 @@ export default function ScoreboardPage() {
                           {entry.daysToComplete !== null && (
                             <span className="text-xs font-medium" style={{ color: OK }}>
                               ⚡ Hoàn thành trong {entry.daysToComplete} ngày
+                              {entry.completedAt && ` (${new Date(entry.completedAt).toLocaleDateString('vi-VN')})`}
                             </span>
                           )}
                           {entry.daysSinceActive !== null && entry.progressPct < 100 && (
@@ -281,6 +298,17 @@ export default function ScoreboardPage() {
                     {rankStyle ? rankStyle.medal : idx + 1}
                   </div>
 
+                  <div
+                    onClick={e => { if (entry.avatarUrl) { e.stopPropagation(); setZoomedAvatar({ url: entry.avatarUrl!, name: entry.name }) } }}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden ${entry.avatarUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                    style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}>
+                    {entry.avatarUrl ? (
+                      <img src={entry.avatarUrl} alt={entry.name} className="w-full h-full object-cover" />
+                    ) : (
+                      entry.name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase()
+                    )}
+                  </div>
+
                   {/* Name + stats */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate" style={{ color: TEXT }}>
@@ -299,6 +327,7 @@ export default function ScoreboardPage() {
                       {entry.daysToComplete !== null && (
                         <span className="text-xs font-medium" style={{ color: OK }}>
                           ⚡ Hoàn thành trong {entry.daysToComplete} ngày
+                          {entry.completedAt && ` (${new Date(entry.completedAt).toLocaleDateString('vi-VN')})`}
                         </span>
                       )}
                       {entry.daysSinceActive !== null && entry.progressPct < 100 && (
@@ -324,6 +353,30 @@ export default function ScoreboardPage() {
           </div>
         )}
       </div>
+
+      {/* Lightbox xem avatar phóng to, kiểu Facebook */}
+      {zoomedAvatar && (
+        <div
+          onClick={() => setZoomedAvatar(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}>
+          <button
+            onClick={() => setZoomedAvatar(null)}
+            className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+            style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: 'white' }}>
+            <i className="ti ti-x" style={{ fontSize: '20px' }} />
+          </button>
+          <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+            <img
+              src={zoomedAvatar.url}
+              alt={zoomedAvatar.name}
+              className="rounded-2xl object-cover"
+              style={{ maxWidth: 'min(90vw, 480px)', maxHeight: '70vh', border: `2px solid ${GOLD}` }}
+            />
+            <p className="text-base font-bold" style={{ color: 'white' }}>{zoomedAvatar.name}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

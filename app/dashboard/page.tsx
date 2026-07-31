@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [openModules, setOpenModules] = useState<Set<number>>(new Set())
   const [activeTrack, setActiveTrack] = useState<'main' | 'ai'>('main')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [badgePopup, setBadgePopup] = useState<typeof badgeDefs[0] | null>(null)
 const [submissionStatusMap, setSubmissionStatusMap] = useState<Record<number, { status: string; reason: string | null; attempt: number }>>({})
 const [attemptCountMap, setAttemptCountMap] = useState<Record<number, number>>({})
@@ -225,6 +226,28 @@ setAttemptCountMap(attemptCountMap)
   const mascotDaily = dayNumber
     ? `Hôm nay là ngày thứ ${dayNumber} của bạn tại K-Global! ${nextLessonTitle ? `Bạn đang ở bài "${nextLessonTitle}"` : 'Bạn đã hoàn thành hết bài rồi'} — tiến độ ${paceLabel} nhịp trung bình đó, tiếp tục cố gắng nhé! 💪`
     : undefined
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !profile?.id) return
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Ảnh tối đa 3MB, chọn ảnh nhỏ hơn nhé.')
+      return
+    }
+    setUploadingAvatar(true)
+    const ext = file.name.split('.').pop()
+    const path = `${profile.id}/avatar_${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (uploadError) {
+      alert(`Lỗi upload: ${uploadError.message}`)
+      setUploadingAvatar(false)
+      return
+    }
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+    await supabase.from('profiles').update({ avatar_url: urlData.publicUrl }).eq('id', profile.id)
+    setProfile((prev: any) => prev ? { ...prev, avatar_url: urlData.publicUrl } : prev)
+    setUploadingAvatar(false)
+  }
 
   function isLessonUnlocked(lessonId: number) {
   const lessonMeta = lessons.find(l => l.id === lessonId)
@@ -410,10 +433,24 @@ setAttemptCountMap(attemptCountMap)
               <i className="ti ti-home" style={{ fontSize: '16px' }} />
             </button>
             <div className="w-px h-5 flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
-              style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}>
-              {profile?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase()}
-            </div>
+            <label className="relative w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 cursor-pointer group overflow-hidden"
+              style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}
+              title="Bấm để đổi ảnh đại diện">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                profile?.name?.split(' ').slice(-2).map((w: string) => w[0]).join('').toUpperCase()
+              )}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
+                {uploadingAvatar ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <i className="ti ti-camera" style={{ fontSize: '14px', color: 'white' }} />
+                )}
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+            </label>
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-tight truncate" style={{ color: TEXT }}>{profile?.name}</p>
               <p className="text-xs" style={{ color: MUTED }}>{profile?.branch?.name}</p>
