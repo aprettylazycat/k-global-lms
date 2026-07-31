@@ -42,6 +42,9 @@ export default function ReviewPanel() {
   const [loading, setLoading] = useState(true)
   const [perfectScores, setPerfectScores] = useState<Record<string, boolean>>({})
   const [searchText, setSearchText] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+  const [sortOldestFirst, setSortOldestFirst] = useState(true)
+  const [branchFilter, setBranchFilter] = useState('all')
   const [openUsers, setOpenUsers] = useState<Set<string>>(new Set())
   const [openSubs, setOpenSubs] = useState<Set<string>>(new Set())
   const [processingId, setProcessingId] = useState<string | null>(null)
@@ -172,16 +175,41 @@ export default function ReviewPanel() {
     </div>
   )
 
+  const dateFilteredSubmissions = (dateFilter
+    ? submissions.filter(sub => {
+        if (!sub.submitted_at) return false
+        const d = new Date(sub.submitted_at)
+        const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+        return localDate === dateFilter
+      })
+    : submissions
+  ).filter(sub => branchFilter === 'all' || sub.user?.branch?.slug === branchFilter)
+
+  const branchOptions = Array.from(
+    new Map(
+      submissions
+        .map(sub => sub.user?.branch)
+        .filter(Boolean)
+        .map((b: any) => [b.slug, b.name])
+    ).entries()
+  ).sort((a, b) => a[1].localeCompare(b[1]))
+
   const grouped: Record<string, { user: any; subs: any[] }> = {}
-  submissions.forEach(sub => {
+  dateFilteredSubmissions.forEach(sub => {
     if (!grouped[sub.user_id]) grouped[sub.user_id] = { user: sub.user, subs: [] }
     grouped[sub.user_id].subs.push(sub)
   })
 
   const q = searchText.toLowerCase().trim()
-  const filteredGroups = Object.entries(grouped).filter(([, g]) =>
-    !q || g.user?.name?.toLowerCase().includes(q) || g.user?.email?.toLowerCase().includes(q)
-  )
+  const filteredGroups = Object.entries(grouped)
+    .filter(([, g]) =>
+      !q || g.user?.name?.toLowerCase().includes(q) || g.user?.email?.toLowerCase().includes(q)
+    )
+    .sort(([, a], [, b]) => {
+      const earliestA = Math.min(...a.subs.map(s => new Date(s.submitted_at).getTime()))
+      const earliestB = Math.min(...b.subs.map(s => new Date(s.submitted_at).getTime()))
+      return sortOldestFirst ? earliestA - earliestB : earliestB - earliestA
+    })
 
   return (
     <div className="space-y-5">
@@ -190,7 +218,10 @@ export default function ReviewPanel() {
       <div className="rounded-2xl p-5 flex items-center justify-between"
         style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
         <div>
-          <p className="text-2xl font-bold text-white">{submissions.length} bài chờ duyệt</p>
+          <p className="text-2xl font-bold text-white">
+            {dateFilteredSubmissions.length} bài chờ duyệt
+            {dateFilter && <span className="text-sm font-normal ml-1">/ {submissions.length} tổng</span>}
+          </p>
           <p className="text-sm mt-0.5" style={{ color: 'rgba(96,165,250,0.3)' }}>
             {Object.keys(grouped).length} học viên · Cập nhật mới nhất
           </p>
@@ -240,26 +271,59 @@ export default function ReviewPanel() {
         )}
       </div>
 
-      {/* Thanh tìm kiếm */}
-      <div className="relative">
-        <i className="ti ti-search absolute left-4 top-1/2 -translate-y-1/2" style={{ fontSize: '15px', color: '#3B82F6' }} />
+      {/* Thanh tìm kiếm + lọc ngày nộp + sắp xếp */}
+      <div className="flex gap-2 flex-wrap items-stretch">
+        <div className="relative flex-1 min-w-[220px]">
+          <i className="ti ti-search absolute left-4 top-1/2 -translate-y-1/2" style={{ fontSize: '15px', color: '#3B82F6' }} />
+          <input
+            type="text"
+            placeholder="Tìm tên hoặc email học viên..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="w-full h-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-colors bg-[#0E1526]"
+            style={{ border: '1px solid rgba(96,165,250,0.3)' }}
+            onFocus={e => e.target.style.borderColor = '#3B82F6'}
+            onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
+          />
+          {searchText && (
+            <button onClick={() => setSearchText('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2"
+              style={{ color: '#60A5FA' }}>
+              <i className="ti ti-x" style={{ fontSize: '14px' }} />
+            </button>
+          )}
+        </div>
+
         <input
-          type="text"
-          placeholder="Tìm tên hoặc email học viên..."
-          value={searchText}
-          onChange={e => setSearchText(e.target.value)}
-          className="w-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-colors bg-[#0E1526]"
-          style={{ border: '1px solid rgba(96,165,250,0.3)' }}
-          onFocus={e => e.target.style.borderColor = '#3B82F6'}
-          onBlur={e => e.target.style.borderColor = 'rgba(96,165,250,0.3)'}
+          type="date"
+          value={dateFilter}
+          onChange={e => setDateFilter(e.target.value)}
+          className="rounded-2xl px-4 py-3 text-sm focus:outline-none bg-[#0E1526]"
+          style={{ border: '1px solid rgba(96,165,250,0.3)', color: dateFilter ? '#EEF3FB' : '#8FA9C6' }}
         />
-        {searchText && (
-          <button onClick={() => setSearchText('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2"
-            style={{ color: '#60A5FA' }}>
-            <i className="ti ti-x" style={{ fontSize: '14px' }} />
+        {dateFilter && (
+          <button onClick={() => setDateFilter('')}
+            className="text-xs px-3 rounded-2xl transition-colors"
+            style={{ border: '1px solid rgba(239,68,68,0.3)', color: '#F87171' }}>
+            Xoá ngày
           </button>
         )}
+
+        <select value={branchFilter} onChange={e => setBranchFilter(e.target.value)}
+          className="rounded-2xl px-4 py-3 text-sm focus:outline-none bg-[#0E1526]"
+          style={{ border: '1px solid rgba(96,165,250,0.3)', color: branchFilter === 'all' ? '#8FA9C6' : '#EEF3FB' }}>
+          <option value="all">-- Tất cả nhánh --</option>
+          {branchOptions.map(([slug, name]) => (
+            <option key={slug} value={slug}>{name}</option>
+          ))}
+        </select>
+
+        <button onClick={() => setSortOldestFirst(v => !v)}
+          className="flex items-center gap-1.5 text-sm font-medium px-4 py-3 rounded-2xl transition-colors bg-[#0E1526]"
+          style={{ border: '1px solid rgba(96,165,250,0.3)', color: '#EEF3FB' }}>
+          <i className={`ti ${sortOldestFirst ? 'ti-sort-ascending' : 'ti-sort-descending'}`} style={{ fontSize: '15px' }} />
+          {sortOldestFirst ? 'Chờ lâu nhất trước' : 'Mới nộp trước'}
+        </button>
       </div>
 
       {filteredGroups.length === 0 && (
