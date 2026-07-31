@@ -4,10 +4,13 @@ import { NextResponse } from 'next/server'
 
 // Endpoint công khai — KHÔNG yêu cầu đăng nhập, không trả về email/thông tin nhạy cảm
 export async function GET() {
-  const { data: branches } = await supabaseAdmin
+  const { data: branchesRaw } = await supabaseAdmin
     .from('branches')
     .select('id, name, slug')
     .order('name')
+
+  // Bỏ nhánh nội bộ 'chung' (dùng riêng cho module AI dùng chung mọi nhánh) khỏi bảng xếp hạng theo nhánh
+  const branches = (branchesRaw || []).filter(b => b.slug !== 'chung')
 
   if (!branches || branches.length === 0) {
     return NextResponse.json({ branches: [] })
@@ -16,7 +19,7 @@ export async function GET() {
   const { data: profilesRaw } = await supabaseAdmin
     .from('profiles')
     .select('id, name, branch_id, role')
-    .not('role', 'in', '(admin,super_admin)')
+    .neq('role', 'admin')
 
   // Chỉ tính học viên đã xác thực email — tránh tài khoản đăng ký dở lọt lên bảng xếp hạng
   const confirmedIds = new Set<string>()
