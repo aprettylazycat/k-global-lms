@@ -54,7 +54,7 @@ if (pairKeys.length > 0) {
   const { data: rejectedSubs } = await supabaseAdmin
     .from('submissions')
     .select('user_id, lesson_id, reject_reason, reviewed_at, attempt_number')
-    .eq('status', 'rejected')
+    .not('reject_reason', 'is', null)
     .order('attempt_number', { ascending: false })
   priorRejections = rejectedSubs || []
 }
