@@ -39,6 +39,7 @@ export async function POST(req: Request) {
     order_index: l.order_index,
     youtube_id: l.youtube_id || null,
     youtube_id_2: l.youtube_id_2 || null,
+    attachment_url: l.attachment_url || null,
     intro_text: l.intro_text || null,
     practice_prompt: l.practice_prompt || null,
     recap_content: l.recap_content || null,
