@@ -33,6 +33,7 @@ type ParsedLesson = {
   module_name: string
   order_index: number
   youtube_id: string
+  attachment_url: string | null
   intro_text: string
   practice_prompt: string
   recap_content: string
@@ -196,6 +197,7 @@ export default function ExcelImport() {
             order_index,
             youtube_id: String(row.youtube_id ?? '').trim(),
             youtube_id_2: String(row.youtube_id_2 ?? '').trim() || null,
+            attachment_url: String(row.attachment_url ?? '').trim() || null,
             intro_text: String(row.intro_text ?? '').trim(),
             practice_prompt: String(row.practice_prompt ?? '').trim(),
             recap_content: String(row.recap_content ?? '').trim(),
@@ -272,7 +274,7 @@ export default function ExcelImport() {
           File cần có 4 sheet: <code>lessons</code>, <code>mcq</code>, <code>essay</code>, <code>true_false</code>
         </p>
         <p className="text-xs text-[#8FA9C6] mb-1">
-          Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>, <code>no_quiz</code> (TRUE/FALSE)
+          Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>youtube_id_2</code> (tùy chọn), <code>attachment_url</code> (tùy chọn), <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>, <code>no_quiz</code> (TRUE/FALSE)
         </p>
         <p className="text-xs text-[#8FA9C6] mb-1">
           Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code> đến <code>option_f</code> (tối thiểu a-b, tối đa a-f), <code>correct</code> (A/B/C/D/E/F)
