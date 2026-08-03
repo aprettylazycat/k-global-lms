@@ -19,7 +19,7 @@ export async function GET() {
   const { data: profilesRaw } = await supabaseAdmin
     .from('profiles')
     .select('id, name, branch_id, role, avatar_url')
-    .not('role', 'in', '(admin,super_admin)')
+    .neq('role', 'super_admin')
 
   // Chỉ tính học viên đã xác thực email — tránh tài khoản đăng ký dở lọt lên bảng xếp hạng
   const confirmedIds = new Set<string>()
