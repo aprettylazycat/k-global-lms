@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import LessonForm from '@/components/admin/LessonForm'
 import ExcelImport from '@/components/admin/ExcelImport'
@@ -22,6 +23,7 @@ const BASE_TABS: { key: Tab; label: string }[] = [
 ]
 
 export default function AdminPage() {
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>('upload')
   const [uploadTab, setUploadTab] = useState<'form' | 'excel'>('form')
   const [mounted, setMounted] = useState<Set<Tab>>(new Set(['upload']))
@@ -47,7 +49,15 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#070B15', color: '#EEF3FB' }}>
       <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-lg font-medium mb-6">Admin Panel</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-lg font-medium">Admin Panel</h1>
+        <button
+          onClick={() => router.push('/')}
+          className="text-sm px-3 py-1.5 rounded-lg border border-[#2A3654] text-[#8FA9C6] hover:bg-[#1A2542] transition-colors"
+        >
+          ← Về trang chủ
+        </button>
+      </div>
 
       {/* Tab chính */}
       <div className="flex gap-0 mb-6 border rounded-lg overflow-hidden">
