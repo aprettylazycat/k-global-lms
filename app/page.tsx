@@ -51,13 +51,24 @@ export default function Home() {
   const [openTrack, setOpenTrack] = useState<TrackKey | null>('nghe')
   const [openNghe, setOpenNghe] = useState<string[]>(['toc'])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function checkAuth(session: { user: { id: string } } | null) {
       setIsLoggedIn(!!session)
+      if (!session) { setIsAdmin(false); return }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+      setIsAdmin(profile?.role === 'admin' || profile?.role === 'super_admin')
+    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      checkAuth(session)
     })
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session)
+      checkAuth(session)
     })
     return () => listener.subscription.unsubscribe()
   }, [])
@@ -196,12 +207,29 @@ export default function Home() {
               <span className="hidden sm:inline">Xếp hạng</span>
             </Link>
             {isLoggedIn ? (
-              <Link href="/dashboard"
-                className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 flex items-center gap-1.5"
-                style={{ backgroundColor: GOLD, color: '#0A0E1A', boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
-                <i className="ti ti-layout-dashboard" style={{ fontSize: '15px' }} />
-                Vào học
-              </Link>
+              isAdmin ? (
+                <>
+                  <Link href="/dashboard"
+                    className="text-sm font-medium px-4 py-2.5 rounded-lg transition-opacity hover:opacity-80 flex items-center gap-1.5"
+                    style={{ border: `1px solid ${BORDER}`, color: TEXT }}>
+                    <i className="ti ti-layout-dashboard" style={{ fontSize: '15px' }} />
+                    <span className="hidden sm:inline">Dashboard của tôi</span>
+                  </Link>
+                  <Link href="/admin"
+                    className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 flex items-center gap-1.5"
+                    style={{ backgroundColor: GOLD, color: '#0A0E1A', boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
+                    <i className="ti ti-settings" style={{ fontSize: '15px' }} />
+                    Trang Admin
+                  </Link>
+                </>
+              ) : (
+                <Link href="/dashboard"
+                  className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 flex items-center gap-1.5"
+                  style={{ backgroundColor: GOLD, color: '#0A0E1A', boxShadow: `0 0 24px ${GOLD_GLOW}` }}>
+                  <i className="ti ti-layout-dashboard" style={{ fontSize: '15px' }} />
+                  Vào học
+                </Link>
+              )
             ) : (
               <>
                 <Link href="/login"
