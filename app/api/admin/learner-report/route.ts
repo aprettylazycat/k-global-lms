@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const { data: learners } = await supabaseAdmin
     .from('profiles')
     .select('id, name, email, branch_id, position, onboarding_date, goal_after_onboarding, expectation, branch:branches(name, slug, color_bg, color_text)')
-    .eq('role', 'learner')
+    .neq('role', 'super_admin')
     .order('created_at', { ascending: false })
 
   if (!learners || learners.length === 0) {
