@@ -8,7 +8,7 @@ export async function GET() {
   const { data: learnerProfiles, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('id')
-    .eq('role', 'learner')
+    .neq('role', 'super_admin')
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 
