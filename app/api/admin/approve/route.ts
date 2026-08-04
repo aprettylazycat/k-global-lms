@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
-import { verifyAdmin } from '@/lib/auth-server'
+import { verifyAdmin, canReviewSubmission } from '@/lib/auth-server'
 import { checkBadges } from '@/lib/badges'
 
 function extractStoragePath(fileUrl: string, bucket: string): string | null {
@@ -16,6 +16,11 @@ export async function POST(req: Request) {
   if (!check.ok) return check.error
 
   const { submissionId, userId, lessonId, perfectScore } = await req.json()
+
+  const allowed = await canReviewSubmission(check.user.id, lessonId)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Bài học nhánh Leader chỉ super admin mới được chấm' }, { status: 403 })
+  }
 
   const { data: submissionRow } = await supabaseAdmin
     .from('submissions')
