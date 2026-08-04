@@ -54,6 +54,15 @@ export default function ReviewPanel() {
   const [grantLessonTitle, setGrantLessonTitle] = useState('')
   const [grantLoading, setGrantLoading] = useState(false)
   const [grantMessage, setGrantMessage] = useState<string | null>(null)
+  const [myRole, setMyRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+      setMyRole(profile?.role ?? null)
+    })
+  }, [])
 
   async function handleGrantAttempts() {
     if (!grantEmail.trim() || !grantLessonTitle.trim()) return
@@ -499,7 +508,13 @@ export default function ReviewPanel() {
   style={{ border: '1.5px solid #FECACA' }}
 />
 
-{/* Nút */}
+{/* Nút — bài nhánh Leader chỉ super_admin mới được chấm */}
+{sub.user?.branch?.slug === 'leader' && myRole !== 'super_admin' ? (
+  <div className="text-sm text-center rounded-xl py-3 px-4"
+    style={{ border: '1.5px dashed rgba(255,201,77,0.4)', color: '#FFC94D' }}>
+    <i className="ti ti-lock" style={{ fontSize: '14px' }} /> Bài nhánh Leader chỉ Super Admin mới được chấm
+  </div>
+) : (
 <div className="flex gap-3">
   <button
     onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
@@ -524,6 +539,7 @@ export default function ReviewPanel() {
     )}
   </button>
 </div>
+)}
                         </div>
                       )}
                     </div>
