@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
-import { verifyAdmin } from '@/lib/auth-server'
+import { verifyAdmin, canReviewSubmission } from '@/lib/auth-server'
 
 function extractStoragePath(fileUrl: string, bucket: string): string | null {
   const marker = `/storage/v1/object/public/${bucket}/`
@@ -25,6 +25,13 @@ export async function POST(req: Request) {
     .select('file_url, user_id, lesson_id')
     .eq('id', submissionId)
     .single()
+
+  if (submissionRow?.lesson_id) {
+    const allowed = await canReviewSubmission(check.user.id, submissionRow.lesson_id)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Bài học nhánh Leader chỉ super admin mới được chấm' }, { status: 403 })
+    }
+  }
 
   const { error } = await supabaseAdmin
     .from('submissions')
