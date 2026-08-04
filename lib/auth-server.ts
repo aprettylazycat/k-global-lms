@@ -51,3 +51,20 @@ export async function verifySuperAdmin(req: Request): Promise<AuthResult> {
 
   return { ok: true, user: check.user }
 }
+
+// Bài học thuộc nhánh Leader chỉ super_admin mới được chấm (approve/reject) —
+// vì học viên nhánh Leader chính là các admin thường, nên admin thường không được tự chấm bài lẫn nhau.
+export async function canReviewSubmission(userId: string, lessonId: string): Promise<boolean> {
+  const { data: profile } = await supabaseAdmin
+    .from('profiles').select('role').eq('id', userId).single()
+  if (profile?.role === 'super_admin') return true
+
+  const { data: lesson } = await supabaseAdmin
+    .from('lessons').select('branch_id').eq('id', lessonId).single()
+  if (!lesson) return true // không xác định được nhánh -> không chặn, tránh lỗi vô lý
+
+  const { data: branch } = await supabaseAdmin
+    .from('branches').select('slug').eq('id', lesson.branch_id).single()
+
+  return branch?.slug !== 'leader'
+}
