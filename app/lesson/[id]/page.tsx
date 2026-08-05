@@ -547,7 +547,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
 
           {/* Slide */}
           <div className="px-6 py-5">
-            <p className="text-base font-semibold mb-4 leading-snug" style={{ color: TEXT }}>{q.question}</p>
+            <p className="text-base font-semibold mb-4 leading-snug whitespace-pre-line" style={{ color: TEXT }}>{renderTextWithLinks(q.question)}</p>
             <div className="space-y-2.5 mb-5">
               {q.options.map((opt: string, i: number) => {
                 const isSelected = selectedAnswer === i
