@@ -45,6 +45,7 @@ export default function Home() {
   const [aiModules, setAiModules] = useState<ModuleItem[]>([])
   const [aiLessons, setAiLessons] = useState<{ id: number; title: string; order_index: number }[]>([])
   const [ngheGroups, setNgheGroups] = useState<{ key: string; label: string; locked: boolean; icon: string; modules: ModuleItem[] }[]>([])
+  const [leaderModules, setLeaderModules] = useState<ModuleItem[]>([])
   const [learnerCount, setLearnerCount] = useState(0)
   const [totalLessons, setTotalLessons] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -104,6 +105,14 @@ export default function Home() {
       // Kiến thức chung = module category 'ai' (dùng chung mọi nhánh)
       const ai = modules.filter((m: any) => m.category === 'ai')
 
+      // Leader = module riêng của nhánh 'leader' (hiện ở khối riêng cuối trang, không nằm trong "Nghề")
+      const leaderBranch = branches.find((b: any) => b.slug === 'leader')
+      const leaderRaw = leaderBranch
+        ? modules.filter((m: any) => m.branch_id === leaderBranch.id && m.category !== 'ai')
+        : []
+      const leaderC = await withCount(leaderRaw)
+      setLeaderModules(leaderC.sort((a, b) => a.order_index - b.order_index))
+
       // ===== Build các khối Nghề từ config + tự phát hiện nhánh mới =====
       const coveredSlugs = new Set(NGHE_GROUPS.flatMap(g => g.slugs))
       const HIDDEN_SLUGS = new Set(['chung', 'leader']) // nhánh nội bộ dùng chung / nhánh Leader (hiện riêng ở mục Leader phía dưới) — không hiện như 1 "nghề"
@@ -162,10 +171,15 @@ export default function Home() {
     { value: learnerCount, label: 'học viên' },
   ]
 
+  const leaderLessonCount = leaderModules.reduce((s, m) => s + m.lessonCount, 0)
   const tracks: { key: TrackKey; icon: string; title: string; sub: string; ready: boolean }[] = [
     { key: 'chung', icon: 'ti-sparkles', title: 'Kiến thức chung', sub: loading ? '—' : `AI Education · ${aiModules.length} module`, ready: aiModules.length > 0 },
     { key: 'nghe', icon: 'ti-briefcase', title: 'Nghề', sub: loading ? '—' : ngheSub, ready: true },
-    { key: 'leader', icon: 'ti-crown', title: 'Leader', sub: 'Sắp ra mắt · Đang phát triển', ready: false },
+    {
+      key: 'leader', icon: 'ti-crown', title: 'Leader',
+      sub: loading ? '—' : leaderModules.length > 0 ? `${leaderModules.length} module · ${leaderLessonCount} bài` : 'Sắp ra mắt · Đang phát triển',
+      ready: leaderModules.length > 0,
+    },
   ]
 
   return (
@@ -321,7 +335,7 @@ export default function Home() {
         <div className="flex flex-col">
           {tracks.map((t, ti) => {
             const isOpen = openTrack === t.key
-            const isLeader = t.key === 'leader'
+            const isLocked = !t.ready
             const isLast = ti === tracks.length - 1
             return (
               <div key={t.key} className="flex items-stretch gap-4 sm:gap-6">
@@ -334,7 +348,7 @@ export default function Home() {
                       border: `1px solid ${isOpen ? GOLD : BORDER}`,
                       boxShadow: isOpen ? `0 0 28px ${GOLD_GLOW}` : 'none',
                     }}>
-                    <i className={`ti ${t.icon}`} style={{ fontSize: '22px', color: isOpen ? '#0A0E1A' : isLeader ? 'rgba(143,169,198,0.4)' : GOLD }} />
+                    <i className={`ti ${t.icon}`} style={{ fontSize: '22px', color: isOpen ? '#0A0E1A' : isLocked ? 'rgba(143,169,198,0.4)' : GOLD }} />
                   </div>
                   {!isLast && (
                     <div className="w-0.5 flex-1 my-2 rounded-full" style={{ backgroundColor: BORDER, minHeight: '24px' }} />
@@ -346,9 +360,9 @@ export default function Home() {
                   <div className="rounded-3xl overflow-hidden transition-shadow duration-300"
                     style={{
                       backgroundColor: PANEL,
-                      border: isOpen ? `1px solid rgba(255,201,77,0.55)` : isLeader ? `1px dashed ${BORDER}` : `1px solid ${BORDER}`,
+                      border: isOpen ? `1px solid rgba(255,201,77,0.55)` : isLocked ? `1px dashed ${BORDER}` : `1px solid ${BORDER}`,
                       boxShadow: isOpen ? `0 0 40px rgba(255,201,77,0.12), 0 16px 48px rgba(0,0,0,0.5)` : 'none',
-                      opacity: isLeader ? 0.75 : 1,
+                      opacity: isLocked ? 0.75 : 1,
                     }}>
 
                     {/* Header */}
@@ -359,12 +373,12 @@ export default function Home() {
                       className={`accordion-head w-full text-left px-6 sm:px-7 py-5 flex items-center justify-between gap-4 transition-colors ${t.ready ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                       style={{ background: isOpen ? 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.18) 100%)' : undefined }}>
                       <div className="min-w-0">
-                        <p className="text-lg font-bold" style={{ color: isOpen ? GOLD : isLeader ? 'rgba(143,169,198,0.5)' : TEXT }}>{t.title}</p>
+                        <p className="text-lg font-bold" style={{ color: isOpen ? GOLD : isLocked ? 'rgba(143,169,198,0.5)' : TEXT }}>{t.title}</p>
                         <p className="text-xs mt-1 font-medium" style={{ color: isOpen ? 'rgba(238,243,251,0.75)' : MUTED }}>
                           {t.sub}
                         </p>
                       </div>
-                      {isLeader ? (
+                      {isLocked ? (
                         <span className="flex items-center gap-2 flex-shrink-0 text-xs font-semibold uppercase tracking-wide" style={{ color: 'rgba(143,169,198,0.45)' }}>
                           <i className="ti ti-lock" style={{ fontSize: '16px' }} />
                           <span className="hidden sm:inline">Đang phát triển</span>
@@ -414,6 +428,42 @@ export default function Home() {
                               <p className="text-xs font-medium mt-6 text-center" style={{ color: MUTED }}>
                                 {aiLessons.length} bài học · Dành cho mọi nhân sự thuộc mọi nhánh
                               </p>
+                            </div>
+
+                          ) : t.key === 'leader' ? (
+                            /* ── Panel Leader: cùng style cây lộ trình như Nghề, nhưng chỉ 1 nhánh duy nhất ── */
+                            <div>
+                              {leaderModules.length === 0 ? (
+                                <p className="text-sm font-medium py-4 text-center" style={{ color: MUTED }}>Chưa có module nào.</p>
+                              ) : (
+                                <div className="space-y-0">
+                                  {leaderModules.map((m, idx, arr) => (
+                                    <div key={m.id} className="flex items-start gap-5">
+                                      <div className="flex flex-col items-center flex-shrink-0">
+                                        <div className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold"
+                                          style={{ borderColor: 'rgba(255,201,77,0.5)', color: GOLD, backgroundColor: CHIP }}>
+                                          {idx + 1}
+                                        </div>
+                                        {idx < arr.length - 1 && (
+                                          <div className="w-0.5 flex-1 my-2" style={{ backgroundColor: BORDER, minHeight: '32px' }} />
+                                        )}
+                                      </div>
+                                      <div className="pt-1.5 pb-6 min-w-0 flex-1">
+                                        <div className="flex items-start justify-between gap-4 mb-1">
+                                          <p className="text-base font-semibold" style={{ color: TEXT }}>{m.name}</p>
+                                          <span className="text-xs px-3 py-1 rounded-full flex-shrink-0 font-semibold"
+                                            style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
+                                            {m.lessonCount} bài
+                                          </span>
+                                        </div>
+                                        {m.description && (
+                                          <p className="text-sm font-medium" style={{ color: MUTED }}>{m.description}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
 
                           ) : (
