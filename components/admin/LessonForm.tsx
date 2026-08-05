@@ -278,8 +278,8 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
                   )}
                 </div>
               </div>
-              <input className="w-full border border-[#22304C] rounded-lg px-3 py-2 text-sm mb-2 bg-[#0E1526]"
-                placeholder="Nhập câu hỏi..." value={mcq.question}
+              <textarea rows={2} className="w-full border border-[#22304C] rounded-lg px-3 py-2 text-sm mb-2 bg-[#0E1526] resize-y"
+                placeholder="Nhập câu hỏi... (Enter để xuống dòng)" value={mcq.question}
                 onChange={e => { const u = [...mcqs]; u[qi].question = e.target.value; setMcqs(u) }} />
               <div className="grid grid-cols-2 gap-2">
   {mcq.options.map((opt: string, oi: number) => {
