@@ -36,9 +36,9 @@ type TrackKey = 'chung' | 'nghe' | 'leader'
 const NGHE_GROUPS: { key: string; label: string; slugs: string[]; locked?: boolean; icon?: string }[] = [
   { key: 'toc', label: 'Tóc', slugs: ['hair'], icon: 'ti-cut' },
   { key: 'theu', label: 'Thêu', slugs: ['k-embroidery', 'lotus-smock'], icon: 'ti-shirt' },
-  { key: 'twc', label: 'TWC', slugs: ['twc'], locked: true, icon: 'ti-coin' },
-  { key: 'hanhchinh', label: 'Hành chính', slugs: ['hanh-chinh'], locked: true, icon: 'ti-clipboard-text' },
-  { key: 'aivideo', label: 'AI Video', slugs: ['ai-video'],locked: true, icon: 'ti-video' },
+  { key: 'twc', label: 'TWC', slugs: ['twc'], icon: 'ti-coin' },
+  { key: 'hanhchinh', label: 'Hành chính', slugs: ['hanh-chinh'], icon: 'ti-clipboard-text' },
+  { key: 'aivideo', label: 'AI Video', slugs: ['ai-video'], locked: true, icon: 'ti-video' },
 ]
 
 export default function Home() {
@@ -106,7 +106,7 @@ export default function Home() {
 
       // ===== Build các khối Nghề từ config + tự phát hiện nhánh mới =====
       const coveredSlugs = new Set(NGHE_GROUPS.flatMap(g => g.slugs))
-      const HIDDEN_SLUGS = new Set(['chung']) // nhánh nội bộ dùng chung (VD AI Education) — không hiện như 1 "nghề"
+      const HIDDEN_SLUGS = new Set(['chung', 'leader']) // nhánh nội bộ dùng chung / nhánh Leader (hiện riêng ở mục Leader phía dưới) — không hiện như 1 "nghề"
       const autoGroups = branches
         .filter(b => !coveredSlugs.has(b.slug) && !HIDDEN_SLUGS.has(b.slug))
         .map(b => ({ key: b.slug, label: b.name, slugs: [b.slug], locked: false, icon: 'ti-book-2' }))
