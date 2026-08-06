@@ -271,11 +271,9 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
                 <span className="text-xs font-medium text-[#8FA9C6]">Câu {qi + 1}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[#8FA9C6]">Tick vào đáp án đúng</span>
-                  {mcqs.length > 1 && (
-                    <button onClick={() => setMcqs(mcqs.filter((_, i) => i !== qi))} className="text-[#5F7796] hover:text-[#F87171]">
-                      <i className="ti ti-x" style={{fontSize:'14px'}} />
-                    </button>
-                  )}
+                  <button onClick={() => setMcqs(mcqs.filter((_, i) => i !== qi))} className="text-[#5F7796] hover:text-[#F87171]">
+                    <i className="ti ti-x" style={{fontSize:'14px'}} />
+                  </button>
                 </div>
               </div>
               <textarea rows={2} className="w-full border border-[#22304C] rounded-lg px-3 py-2 text-sm mb-2 bg-[#0E1526] resize-y"
