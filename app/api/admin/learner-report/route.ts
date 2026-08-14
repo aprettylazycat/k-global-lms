@@ -126,6 +126,7 @@ export async function GET(req: Request) {
         moduleId: l.module_id ?? null,
         moduleName: l.module_id ? (moduleMap[l.module_id]?.name || 'Không có module') : 'Không có module',
         moduleOrder: l.module_id ? (moduleMap[l.module_id]?.order ?? 999) : 999,
+        isAi: aiLessonIds.has(l.id), // true = thuộc khoá chung (AI Education, dùng chung mọi nhánh), false = khoá nghề riêng của nhánh
         tick1: progMap[l.id]?.tick1 ?? false,
         tick2: progMap[l.id]?.tick2 ?? false,
         perfectScore: progMap[l.id]?.perfect_score ?? false,
