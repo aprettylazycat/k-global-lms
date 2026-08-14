@@ -12,6 +12,7 @@ type LessonProgress = {
   moduleId: number | null
   moduleName: string
   moduleOrder: number
+  isAi: boolean  // true = khoá chung (AI Education), false = khoá nghề riêng nhánh
   tick1: boolean
   tick2: boolean
   startedAt: string | null
@@ -184,6 +185,10 @@ export default function ReportPanel() {
 
   function exportExcel(learner: Learner) {
     const wb = XLSX.utils.book_new()
+    const chungLessons = learner.lessonProgress.filter(p => p.isAi)
+    const ngheLessons = learner.lessonProgress.filter(p => !p.isAi)
+    const chungDone = chungLessons.filter(p => p.tick1 && p.tick2).length
+    const ngheDone = ngheLessons.filter(p => p.tick1 && p.tick2).length
     const info = [
       ['Họ tên', learner.name],
       ['Email', learner.email],
@@ -193,6 +198,8 @@ export default function ReportPanel() {
       ['Mục tiêu', learner.goal || ''],
       ['Kỳ vọng', learner.expectation || ''],
       ['Tiến độ', `${learner.pct}%`],
+      ['Khóa chung - Hoàn thành', `${chungDone}/${chungLessons.length} bài`],
+      ['Khóa nghề - Hoàn thành', `${ngheDone}/${ngheLessons.length} bài`],
       ['Tỷ lệ đúng lần đầu', learner.firstAttemptRate != null ? `${learner.firstAttemptRate}%` : 'Chưa có data'],
       ['Huy hiệu', learner.badges.map(b => BADGE_LABELS[b] || b).join(', ') || 'Chưa có'],
     ]
@@ -245,20 +252,26 @@ export default function ReportPanel() {
 
   function exportAllExcel() {
     const wb = XLSX.utils.book_new()
-    const header = ['Họ tên', 'Email', 'Nhánh', 'Vị trí', 'Ngày OB', 'Tiến độ %','Đúng lần đầu', 'Huy hiệu cao nhất', 'Bài đã xong Quiz', 'Bài đã xong Bài tập']
+    const header = ['Họ tên', 'Email', 'Nhánh', 'Vị trí', 'Ngày OB', 'Tiến độ %','Đúng lần đầu', 'Huy hiệu cao nhất', 'Khóa chung - Hoàn thành', 'Khóa nghề - Hoàn thành', 'Bài đã xong Quiz', 'Bài đã xong Bài tập']
     const rows = filtered.map(l => {
       const highestBadge = ['diamond', 'gold', 'silver', 'bronze'].find(b => l.badges.includes(b))
+      const chungLessons = l.lessonProgress.filter(p => p.isAi)
+      const ngheLessons = l.lessonProgress.filter(p => !p.isAi)
+      const chungDone = chungLessons.filter(p => p.tick1 && p.tick2).length
+      const ngheDone = ngheLessons.filter(p => p.tick1 && p.tick2).length
       return [
         l.name, l.email, l.branch?.name || '', l.position || '',
         l.onboardingDate || '', `${l.pct}%`,
         l.firstAttemptRate != null ? `${l.firstAttemptRate}%` : '—',
         highestBadge ? (BADGE_LABELS[highestBadge] || highestBadge) : 'Chưa có',
+        `${chungDone}/${chungLessons.length}`,
+        `${ngheDone}/${ngheLessons.length}`,
         l.lessonProgress.filter(p => p.tick1).length,
         l.lessonProgress.filter(p => p.tick2).length,
       ]
     })
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows])
-    ws['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 18 }, { wch: 20 }, { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 18 }]
+    ws['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 18 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 20 }]
     XLSX.utils.book_append_sheet(wb, ws, 'Danh sách học viên')
     XLSX.writeFile(wb, `bao-cao-toan-bo-hoc-vien.xlsx`)
   }
