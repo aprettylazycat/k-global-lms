@@ -39,6 +39,7 @@ const NGHE_GROUPS: { key: string; label: string; slugs: string[]; locked?: boole
   { key: 'twc', label: 'TWC', slugs: ['twc'], icon: 'ti-coin' },
   { key: 'hanhchinh', label: 'Hành chính', slugs: ['hanh-chinh'], icon: 'ti-clipboard-text' },
   { key: 'aivideo', label: 'AI Video', slugs: ['ai-video'], locked: true, icon: 'ti-video' },
+  { key: 'ads', label: 'Ads', slugs: ['ads'], icon: 'ti-ad-2' },
 ]
 
 export default function Home() {
