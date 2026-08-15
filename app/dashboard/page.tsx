@@ -254,6 +254,10 @@ setAttemptCountMap(attemptCountMap)
   const mod = modules.find(m => m.id === lessonMeta?.module_id)
   const isAi = mod?.category === 'ai'
 
+  // Module "mở tự do" (VD khóa dành riêng cho Ads): mở TOÀN BỘ bài ngay từ đầu,
+  // không phụ thuộc module nào khác, không cần làm tuần tự.
+  if (mod?.unlock_mode === 'free') return true
+
   // Module "mở full" (VD Khóa học Hair/Smock): chỉ cần Module 1 xong hết là mở TOÀN BỘ bài
   // trong module này cùng lúc, không cần làm tuần tự từng bài như bình thường.
   if (mod?.unlock_mode === 'full') {
