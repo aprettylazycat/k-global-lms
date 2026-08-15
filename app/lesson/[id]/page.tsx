@@ -55,7 +55,9 @@ export default function LessonPage() {
           const idx = orderedLessons.findIndex(l => l.id === lessonId)
           const currentModule = allModules.find(m => m.id === lessonData.module_id)
 
-          if (currentModule?.unlock_mode === 'full') {
+          if (currentModule?.unlock_mode === 'free') {
+            // Mở tự do hoàn toàn — không cần điều kiện gì
+          } else if (currentModule?.unlock_mode === 'full') {
             const firstModuleId = allModules[0]?.id
             if (lessonData.module_id === firstModuleId) {
               // Chính module này là module đầu tiên -> luôn mở sẵn, không cần điều kiện gì
