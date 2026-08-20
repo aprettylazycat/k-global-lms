@@ -2,22 +2,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-
-function parseAnswerText(text: string) {
-  const parts = (text || '').split('\n\n---\n\n')
-  const essayPart = parts[0]
-  const freeText = parts.slice(1).join('\n\n---\n\n')
-
-  const blocks = essayPart.split(/\n\n(?=Câu hỏi tự luận)/g).filter(Boolean)
-  const qas = blocks
-    .map(block => {
-      const match = block.match(/^Câu hỏi tự luận \d+:\s*([\s\S]*?)\nTrả lời:\s*([\s\S]*)$/)
-      return match ? { question: match[1].trim(), answer: match[2].trim() } : null
-    })
-    .filter(Boolean) as { question: string; answer: string }[]
-
-  return { qas, freeText: qas.length > 0 ? freeText : text }
-}
+import { parseAnswerText } from '@/lib/parse-answer-text'
 
 
 function renderTextWithLinks(text: string) {
@@ -389,9 +374,12 @@ export default function ReviewPanel() {
                     <div key={sub.id} style={{ borderTop: idx > 0 ? '1px solid #EFF6FF' : 'none' }}>
 
                       {/* Header bài */}
-                      <button
+                      <div
                         onClick={() => toggleSub(sub.id)}
-                        className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-[rgba(96,165,250,0.14)]"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') toggleSub(sub.id) }}
+                        className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-[rgba(96,165,250,0.14)] cursor-pointer"
                       >
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ backgroundColor: 'rgba(96,165,250,0.16)', color: '#3B82F6' }}>
@@ -411,9 +399,17 @@ export default function ReviewPanel() {
                             Nộp ngày {new Date(sub.submitted_at).toLocaleDateString('vi-VN')}
                           </p>
                         </div>
+                        <button
+                          onClick={e => { e.stopPropagation(); window.open(`/admin/print-submission/${sub.id}`, '_blank') }}
+                          title="Xuất PDF"
+                          className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors hover:bg-[rgba(96,165,250,0.16)]"
+                          style={{ border: '1px solid rgba(96,165,250,0.3)', color: '#60A5FA' }}>
+                          <i className="ti ti-file-type-pdf" style={{ fontSize: '14px' }} />
+                          Xuất PDF
+                        </button>
                         <i className={`ti ti-chevron-down flex-shrink-0 transition-transform duration-200 ${isSubOpen ? 'rotate-180' : ''}`}
                           style={{ fontSize: '16px', color: '#60A5FA' }} />
-                      </button>
+                      </div>
 
                       {/* Nội dung bài */}
                       {isSubOpen && (
