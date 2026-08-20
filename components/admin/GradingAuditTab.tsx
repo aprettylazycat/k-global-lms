@@ -127,14 +127,19 @@ export default function GradingAuditTab() {
                   {r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('vi-VN') : '—'}
                 </td>
                 <td className="p-3">
-                  {(r.answerText || r.fileUrl) ? (
-                    <button onClick={() => setViewing(r)}
+                  <div className="flex gap-1.5">
+                    {(r.answerText || r.fileUrl) && (
+                      <button onClick={() => setViewing(r)}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] hover:bg-[#233158] transition-colors">
+                        Xem bài
+                      </button>
+                    )}
+                    <button onClick={() => window.open(`/admin/print-submission/${r.submissionId}`, '_blank')}
+                      title="Xuất PDF"
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] hover:bg-[#233158] transition-colors">
-                      Xem bài
+                      Xuất PDF
                     </button>
-                  ) : (
-                    <span className="text-[#8FA9C6]">—</span>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -159,7 +164,13 @@ export default function GradingAuditTab() {
                   {viewing.submittedAt && ` · Nộp lúc ${new Date(viewing.submittedAt).toLocaleString('vi-VN')}`}
                 </p>
               </div>
-              <button onClick={() => setViewing(null)} className="text-[#8FA9C6] hover:text-white text-xl leading-none">×</button>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button onClick={() => window.open(`/admin/print-submission/${viewing.submissionId}`, '_blank')}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] hover:bg-[#233158] transition-colors">
+                  Xuất PDF
+                </button>
+                <button onClick={() => setViewing(null)} className="text-[#8FA9C6] hover:text-white text-xl leading-none">×</button>
+              </div>
             </div>
 
             {viewing.answerText && (
