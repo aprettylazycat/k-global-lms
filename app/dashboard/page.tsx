@@ -74,6 +74,9 @@ const [fireworksModuleId, setFireworksModuleId] = useState<number | null>(null)
 const [pendingFeedback, setPendingFeedback] = useState<{ moduleId: number; moduleName: string } | null>(null)
 const [feedbackQuestions, setFeedbackQuestions] = useState<FeedbackQuestion[]>([])
 const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+const [pinging, setPinging] = useState(false)
+const [pingModal, setPingModal] = useState<{ emails: string[]; subject: string; body: string } | null>(null)
+const [pingCopied, setPingCopied] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -247,6 +250,39 @@ setAttemptCountMap(attemptCountMap)
     await supabase.from('profiles').update({ avatar_url: urlData.publicUrl }).eq('id', profile.id)
     setProfile((prev: any) => prev ? { ...prev, avatar_url: urlData.publicUrl } : prev)
     setUploadingAvatar(false)
+  }
+
+  // "Ping" người chấm — thay vì nhảy thẳng vào app mail máy (dễ bị "chết" nếu học viên
+  // không có app mail nào cấu hình sẵn), mở 1 popup cho học viên chọn cách gửi:
+  // Gmail web, Outlook web, copy nội dung, hoặc app mail máy (mailto) cho ai có sẵn.
+  async function handlePing() {
+    if (pinging) return
+    setPinging(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setPinging(false); return }
+      const res = await fetch('/api/ping-recipients', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        alert(json.error || 'Có lỗi xảy ra, thử lại sau.')
+        setPinging(false)
+        return
+      }
+      const emails: string[] = json.emails || []
+      if (emails.length === 0) {
+        alert('Chưa có email người chấm được cấu hình cho nhánh của bạn. Liên hệ admin để bổ sung nhé.')
+        setPinging(false)
+        return
+      }
+      const learnerName = json.learnerName || profile?.name || 'học viên'
+      const subject = `[K-Global LMS] Nhắc chấm bài cho ${learnerName}`
+      const body = `Học viên ${learnerName} đã hoàn thiện ${done}/${lessons.length} bài và chưa được chấm — hãy chấm cho bạn học viên nhé.`
+      setPingModal({ emails, subject, body })
+    } finally {
+      setPinging(false)
+    }
   }
 
   function isLessonUnlocked(lessonId: number) {
@@ -563,6 +599,29 @@ setAttemptCountMap(attemptCountMap)
             ))}
           </div>
 
+          {/* Ping người chấm — chỉ hiện khi có bài đang chờ duyệt */}
+          {pending > 0 && (
+            <div className="rounded-3xl p-4 flex items-center justify-between gap-3"
+              style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: TEXT }}>
+                  Bạn có {pending} bài đang chờ chấm
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: MUTED }}>
+                  Ping để nhắc người chấm xem bài giúp bạn nhé.
+                </p>
+              </div>
+              <button
+                onClick={handlePing}
+                disabled={pinging}
+                className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}>
+                <i className="ti ti-bell-ringing" style={{ fontSize: '15px' }} />
+                {pinging ? 'Đang tải...' : 'Ping người chấm'}
+              </button>
+            </div>
+          )}
+
           {/* Badges */}
           <div className="rounded-3xl p-5" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
             <p className="text-base font-semibold mb-4" style={{ color: TEXT }}>Achievement</p>
@@ -864,6 +923,81 @@ const isInProgress = !!(prog?.tick1 && !prog?.tick2 && !submissionStatusMap[less
           </div>
         </div>
       )}
+
+      {/* Ping modal — chọn cách gửi mail nhắc người chấm */}
+      {pingModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={() => { setPingModal(null); setPingCopied(false) }}>
+          <div className="rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+            style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}
+            onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(255,201,77,0.14)', border: `1px solid ${BORDER}` }}>
+              <i className="ti ti-bell-ringing" style={{ fontSize: '24px', color: GOLD }} />
+            </div>
+            <p className="text-base font-bold text-center mb-1" style={{ color: TEXT }}>Ping người chấm</p>
+            <p className="text-xs text-center mb-4" style={{ color: MUTED }}>
+              Gửi tới: {pingModal.emails.join(', ')}
+            </p>
+
+            <div className="rounded-2xl p-3 mb-4 text-left" style={{ backgroundColor: CHIP }}>
+              <p className="text-xs font-bold mb-1" style={{ color: MUTED }}>{pingModal.subject}</p>
+              <p className="text-xs" style={{ color: TEXT }}>{pingModal.body}</p>
+            </div>
+
+            <p className="text-xs font-semibold mb-2" style={{ color: MUTED }}>Chọn cách gửi:</p>
+            <div className="space-y-2">
+              <a
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(pingModal.emails.join(','))}&su=${encodeURIComponent(pingModal.subject)}&body=${encodeURIComponent(pingModal.body)}`}
+                target="_blank" rel="noreferrer"
+                onClick={() => setPingModal(null)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{ backgroundColor: GOLD, color: DARK_ON_GOLD }}>
+                <i className="ti ti-brand-gmail" style={{ fontSize: '15px' }} /> Mở Gmail (web)
+              </a>
+              <a
+                href={`https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(pingModal.emails.join(','))}&subject=${encodeURIComponent(pingModal.subject)}&body=${encodeURIComponent(pingModal.body)}`}
+                target="_blank" rel="noreferrer"
+                onClick={() => setPingModal(null)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                style={{ border: `1px solid ${BORDER}`, color: TEXT }}>
+                <i className="ti ti-brand-office" style={{ fontSize: '15px' }} /> Mở Outlook (web)
+              </a>
+              <a
+                href={`mailto:${pingModal.emails.join(',')}?subject=${encodeURIComponent(pingModal.subject)}&body=${encodeURIComponent(pingModal.body)}`}
+                onClick={() => setPingModal(null)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                style={{ border: `1px solid ${BORDER}`, color: TEXT }}>
+                <i className="ti ti-mail" style={{ fontSize: '15px' }} /> Mở app mail trên máy
+              </a>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      `Tới: ${pingModal.emails.join(', ')}\nTiêu đề: ${pingModal.subject}\n\n${pingModal.body}`
+                    )
+                    setPingCopied(true)
+                  } catch {
+                    alert('Không copy được, thử chọn cách khác nhé.')
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                style={{ border: `1px solid ${BORDER}`, color: MUTED }}>
+                <i className={`ti ${pingCopied ? 'ti-check' : 'ti-copy'}`} style={{ fontSize: '15px' }} />
+                {pingCopied ? 'Đã copy!' : 'Copy nội dung để tự dán'}
+              </button>
+            </div>
+
+            <button
+              onClick={() => { setPingModal(null); setPingCopied(false) }}
+              className="w-full mt-3 py-2.5 rounded-xl text-xs font-medium transition-colors"
+              style={{ color: MUTED }}>
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
 {/* Fireworks khi hoàn thành module */}
       {fireworksModuleId && <FireworksCanvas onDone={handleFireworksDone} />}
 

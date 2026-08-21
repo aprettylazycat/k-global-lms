@@ -6,6 +6,7 @@ export type Branch = {
   slug: string
   color_bg: string
   color_text: string
+  leader_email?: string | null
 }
 
 export type MCQQuestion = {
