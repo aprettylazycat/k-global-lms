@@ -1,8 +1,9 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
 
 // Trả về email(s) người chấm cho 1 học viên (theo userId), cùng tên học viên.
-// Nhánh Leader: học viên chính là admin, nên ping thẳng tới toàn bộ super_admin.
-// Nhánh khác: dùng leader_email đã gán riêng cho nhánh đó (bảng branches).
+// Ưu tiên leader_email của nhánh (hỗ trợ nhiều email, cách nhau bằng dấu phẩy).
+// Riêng nhánh Leader: nếu CHƯA gán leader_email thì tự fallback sang toàn bộ
+// super_admin trong hệ thống (vì học viên nhánh Leader chính là các admin).
 export async function resolvePingRecipients(userId: string) {
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
@@ -21,14 +22,14 @@ export async function resolvePingRecipients(userId: string) {
     .single()
 
   let emails: string[] = []
-  if (branch?.slug === 'leader') {
+  if (branch?.leader_email) {
+    emails = branch.leader_email.split(',').map((e: string) => e.trim()).filter(Boolean)
+  } else if (branch?.slug === 'leader') {
     const { data: superAdmins } = await supabaseAdmin
       .from('profiles')
       .select('email')
       .eq('role', 'super_admin')
     emails = (superAdmins || []).map((r: any) => r.email).filter(Boolean)
-  } else if (branch?.leader_email) {
-    emails = [branch.leader_email]
   }
 
   return { emails, learnerName: profile.name as string | null, error: null as string | null }
