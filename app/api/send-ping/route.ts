@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const check = await verifyUser(req)
   if (!check.ok) return check.error
 
-  const { emails, learnerName, error } = await resolvePingRecipients(check.user.id)
+  const { emails, learnerName, learnerPosition, error } = await resolvePingRecipients(check.user.id)
   if (error) return NextResponse.json({ error }, { status: 404 })
   if (emails.length === 0) {
     return NextResponse.json({ error: 'Chưa có email người chấm được cấu hình cho nhánh của bạn. Liên hệ admin để bổ sung nhé.' }, { status: 404 })
@@ -22,9 +22,12 @@ export async function POST(req: Request) {
   const done = Number.isFinite(body?.done) ? body.done : 0
   const total = Number.isFinite(body?.total) ? body.total : 0
   const name = learnerName || 'học viên'
+  const position = (learnerPosition || '').trim()
 
-  const subject = `[K-Global LMS] Nhắc chấm bài cho ${name}`
-  const text = `Học viên ${name} đã hoàn thiện ${done}/${total} bài và chưa được chấm — hãy chấm cho bạn học viên nhé.`
+  const subject = position
+    ? `[K-Global LMS] Nhắc chấm bài cho học viên ${name} ở vị trí ${position}`
+    : `[K-Global LMS] Nhắc chấm bài cho học viên ${name}`
+  const text = `Học viên ${name}${position ? ` (vị trí: ${position})` : ''} đã hoàn thiện ${done}/${total} bài và chưa được chấm — hãy chấm cho bạn học viên nhé.`
 
   try {
     const { error: sendError } = await resend.emails.send({
