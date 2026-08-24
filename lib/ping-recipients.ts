@@ -7,12 +7,12 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 export async function resolvePingRecipients(userId: string) {
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
-    .select('name, branch_id')
+    .select('name, branch_id, position')
     .eq('id', userId)
     .single()
 
   if (profileError || !profile?.branch_id) {
-    return { emails: [] as string[], learnerName: null as string | null, error: 'Không tìm thấy nhánh của bạn' }
+    return { emails: [] as string[], learnerName: null as string | null, learnerPosition: null as string | null, error: 'Không tìm thấy nhánh của bạn' }
   }
 
   const { data: branch } = await supabaseAdmin
@@ -32,5 +32,10 @@ export async function resolvePingRecipients(userId: string) {
     emails = (superAdmins || []).map((r: any) => r.email).filter(Boolean)
   }
 
-  return { emails, learnerName: profile.name as string | null, error: null as string | null }
+  return {
+    emails,
+    learnerName: profile.name as string | null,
+    learnerPosition: (profile as any).position as string | null,
+    error: null as string | null,
+  }
 }
