@@ -250,9 +250,8 @@ setAttemptCountMap(attemptCountMap)
     setUploadingAvatar(false)
   }
 
-  // "Ping" người chấm — thay vì nhảy thẳng vào app mail máy (dễ bị "chết" nếu học viên
-  // "Ping" người chấm — gửi thẳng email qua Resend (server-side), không cần
-  // học viên mở app mail hay thao tác gì thêm.
+  // "Ping" người chấm — gửi thẳng email qua Resend (server-side, kèm PDF các bài
+  // đang chờ duyệt), không cần học viên mở app mail hay thao tác gì thêm.
   async function handlePing() {
     if (pinging) return
     setPinging(true)
@@ -269,7 +268,10 @@ setAttemptCountMap(attemptCountMap)
         alert(json.error || 'Gửi mail thất bại, thử lại sau.')
         return
       }
-      alert('Đã gửi thông báo tới người chấm!')
+      const attached = json.attachedCount || 0
+      alert(attached > 0
+        ? `Đã gửi thông báo tới người chấm kèm ${attached} bài làm dạng PDF!`
+        : 'Đã gửi thông báo tới người chấm!')
     } finally {
       setPinging(false)
     }
