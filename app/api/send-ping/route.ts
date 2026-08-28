@@ -5,7 +5,15 @@ import { resolvePingRecipients } from '@/lib/ping-recipients'
 import { generateSubmissionPdf, slugifyFilename } from '@/lib/generate-submission-pdf'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Không khởi tạo Resend ngay ở top-level — nếu làm vậy, bước `next build`
+// (build-time page data collection) sẽ chạy dòng này và fail nếu máy build
+// chưa có RESEND_API_KEY trong .env.local (Vercel có nhưng máy local có thể chưa).
+// Khởi tạo lười (chỉ khi có request thật) để tránh lỗi build.
+function getResend() {
+  const key = process.env.RESEND_API_KEY
+  if (!key) throw new Error('Thiếu biến môi trường RESEND_API_KEY')
+  return new Resend(key)
+}
 
 // Địa chỉ gửi đi — phải thuộc domain đã verify trong Resend (k-global.org).
 const FROM = 'K-Global LMS <noreply@k-global.org>'
@@ -74,6 +82,7 @@ export async function POST(req: Request) {
   const text = `Học viên ${name}${position ? ` (vị trí: ${position})` : ''} đã hoàn thiện ${done}/${total} bài và chưa được chấm — hãy chấm cho bạn học viên nhé. ${attachNote}`
 
   try {
+    const resend = getResend()
     const { error: sendError } = await resend.emails.send({
       from: FROM,
       to: emails,
