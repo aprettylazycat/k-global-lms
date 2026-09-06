@@ -52,10 +52,10 @@ export async function getMcqResults(userId: string, lessonId: number): Promise<Q
 
   const { data: attempts } = await supabaseAdmin
     .from('quiz_attempts')
-    .select('question_id, selected_option, is_correct, extra_data, created_at')
+    .select('question_id, selected_option, is_correct, extra_data, attempted_at')
     .eq('user_id', userId)
     .eq('lesson_id', lessonId)
-    .order('created_at', { ascending: true })
+    .order('attempted_at', { ascending: true })
 
   const byQuestion = new Map<string, any[]>()
   ;(attempts || []).forEach((a: any) => {
