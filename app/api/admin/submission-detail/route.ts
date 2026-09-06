@@ -2,6 +2,7 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { verifyAdmin, canReviewSubmission } from '@/lib/auth-server'
+import { getMcqResults } from '@/lib/get-mcq-results'
 
 // Trả về đầy đủ thông tin 1 bài nộp (kèm học viên, bài học, người chấm, nhánh)
 // để trang /admin/print-submission/[id] render ra bản in / xuất PDF.
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
   const userRow: any = Array.isArray(sub.user) ? sub.user[0] : sub.user
   const lessonRow: any = Array.isArray(sub.lesson) ? sub.lesson[0] : sub.lesson
 
-  const [{ data: branch }, { data: reviewer }, { data: progress }, { data: moduleRow }] = await Promise.all([
+  const [{ data: branch }, { data: reviewer }, { data: progress }, { data: moduleRow }, mcqResults] = await Promise.all([
     userRow?.branch_id
       ? supabaseAdmin.from('branches').select('name, slug').eq('id', userRow.branch_id).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -51,6 +52,7 @@ export async function GET(req: Request) {
     lessonRow?.module_id
       ? supabaseAdmin.from('modules').select('name').eq('id', lessonRow.module_id).maybeSingle()
       : Promise.resolve({ data: null }),
+    getMcqResults(sub.user_id, sub.lesson_id),
   ])
 
   return NextResponse.json({
@@ -76,6 +78,7 @@ export async function GET(req: Request) {
         moduleName: moduleRow?.name ?? null,
       },
       reviewer: reviewer ? { name: reviewer.name, email: reviewer.email } : null,
+      mcqResults,
     },
   })
 }

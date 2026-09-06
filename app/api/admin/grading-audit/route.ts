@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { verifySuperAdmin } from '@/lib/auth-server'
+import { getMcqResults } from '@/lib/get-mcq-results'
 
 // Chỉ super_admin mới gọi được — trả về danh sách toàn bộ bài đã chấm kèm đúng
 // admin nào đã duyệt/từ chối (dựa vào cột submissions.reviewed_by).
@@ -31,6 +32,14 @@ export async function GET(req: Request) {
   const graderMap = Object.fromEntries((graders || []).map(g => [g.id, g]))
   const lessonMap = Object.fromEntries((lessons || []).map(l => [l.id, l]))
 
+  // Dedupe theo (user_id, lesson_id) — nhiều dòng submissions có thể trùng cặp này
+  // (VD bị từ chối rồi nộp lại được duyệt), MCQ kết quả là như nhau nên chỉ cần lấy 1 lần.
+  const uniquePairs = [...new Map(rows.map(r => [`${r.user_id}::${r.lesson_id}`, { userId: r.user_id, lessonId: r.lesson_id }])).values()]
+  const mcqEntries = await Promise.all(
+    uniquePairs.map(async p => [`${p.userId}::${p.lessonId}`, await getMcqResults(p.userId, p.lessonId)] as const)
+  )
+  const mcqMap = Object.fromEntries(mcqEntries)
+
   const result = rows.map(r => ({
     submissionId: r.id,
     status: r.status,
@@ -45,6 +54,7 @@ export async function GET(req: Request) {
     lessonTitle: lessonMap[r.lesson_id]?.title ?? '—',
     graderName: r.reviewed_by ? (graderMap[r.reviewed_by]?.name ?? '(admin đã xoá tài khoản)') : 'Chưa rõ (chấm trước khi có tính năng này)',
     graderEmail: r.reviewed_by ? (graderMap[r.reviewed_by]?.email ?? '—') : '—',
+    mcqResults: mcqMap[`${r.user_id}::${r.lesson_id}`] ?? [],
   }))
 
   return NextResponse.json({ submissions: result })

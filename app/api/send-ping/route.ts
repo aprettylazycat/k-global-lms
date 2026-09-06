@@ -3,6 +3,7 @@ import { verifyUser } from '@/lib/auth-server'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { resolvePingRecipients } from '@/lib/ping-recipients'
 import { generateSubmissionPdf, slugifyFilename } from '@/lib/generate-submission-pdf'
+import { getMcqResults } from '@/lib/get-mcq-results'
 import { Resend } from 'resend'
 
 // Không khởi tạo Resend ngay ở top-level — nếu làm vậy, bước `next build`
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
     attachments = await Promise.all(
       submissionsToAttach.map(async (s: any) => {
         const lessonRow = Array.isArray(s.lesson) ? s.lesson[0] : s.lesson
+        const mcqResults = await getMcqResults(check.user.id, s.lesson_id)
         const pdfBuffer = await generateSubmissionPdf({
           learnerName: name,
           learnerPosition: position || null,
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
           status: s.status,
           submittedAt: s.submitted_at,
           attemptNumber: s.attempt_number,
+          mcqResults,
         }, origin)
         return { filename: `${slugifyFilename(lessonRow?.title || 'bai-lam')}.pdf`, content: pdfBuffer.toString('base64') }
       })

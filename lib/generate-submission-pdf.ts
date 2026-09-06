@@ -39,6 +39,7 @@ export type SubmissionPdfData = {
   status: string
   submittedAt?: string | null
   attemptNumber?: number | null
+  mcqResults?: import('./get-mcq-results').QuizResult[]
 }
 
 // Render 1 bài làm ra PDF (buffer), dùng font DejaVu Sans để hiển thị đúng tiếng Việt có dấu.
@@ -82,6 +83,54 @@ export async function generateSubmissionPdf(data: SubmissionPdfData, origin: str
     doc.font('Heading').fontSize(11).fillColor(STATUS_COLOR[data.status] ?? '#111')
       .text(STATUS_LABEL[data.status] ?? data.status)
     doc.moveDown(1)
+
+    // Trắc nghiệm + Đúng/Sai — đáp án đúng vs lựa chọn LẦN ĐẦU của học viên
+    if (data.mcqResults && data.mcqResults.length > 0) {
+      doc.font('Heading').fontSize(11).fillColor('#1E293B').text('CÂU HỎI TRẮC NGHIỆM & ĐÚNG/SAI')
+      doc.moveDown(0.4)
+
+      data.mcqResults.forEach(item => {
+        if (item.kind === 'mcq') {
+          doc.font('Heading').fontSize(10).fillColor('#111').text(`Câu ${item.order}: ${item.question}`)
+          doc.font('Body').fontSize(9).fillColor('#059669').text(`Đáp án đúng: ${item.correctText ?? '—'}`)
+          if (item.selectedIndex == null) {
+            doc.font('Body').fontSize(9).fillColor('#94A3B8').text('Lựa chọn lần đầu: học viên chưa làm câu này')
+          } else {
+            doc.font('Body').fontSize(9).fillColor(item.isCorrect ? '#059669' : '#DC2626')
+              .text(`Lựa chọn lần đầu: ${item.selectedText ?? '—'} ${item.isCorrect ? '(Đúng)' : '(Sai)'}`)
+            doc.font('Body').fontSize(9).fillColor('#475569').text(
+              item.attemptsUntilCorrect == null
+                ? `Chưa làm đúng (đã thử ${item.totalAttempts} lần)`
+                : item.attemptsUntilCorrect === 1
+                  ? 'Làm đúng ngay lần đầu'
+                  : `Làm đúng ở lần thử thứ ${item.attemptsUntilCorrect} (tổng ${item.totalAttempts} lần thử)`
+            )
+          }
+        } else {
+          doc.font('Heading').fontSize(10).fillColor('#111').text(`Câu ${item.order} (Đúng/Sai): ${item.groupQuestion}`)
+          item.items.forEach(it => {
+            const answered = it.selected != null
+            const isRight = answered && it.selected === it.correct
+            doc.font('Body').fontSize(9).fillColor(!answered ? '#94A3B8' : isRight ? '#059669' : '#DC2626')
+              .text(`- ${it.statement} — Đáp án đúng: ${it.correct ? 'Đúng' : 'Sai'} · Học viên chọn: ${!answered ? 'chưa làm' : it.selected ? 'Đúng' : 'Sai'}`)
+          })
+          if (item.totalAttempts === 0) {
+            doc.font('Body').fontSize(9).fillColor('#94A3B8').text('Học viên chưa làm nhóm câu này')
+          } else {
+            doc.font('Body').fontSize(9).fillColor('#475569').text(
+              `Lần đầu đúng ${item.firstCorrectCount}/${item.firstTotalCount} câu con · ` +
+              (item.attemptsUntilAllCorrect == null
+                ? `chưa lần nào đúng hết cả nhóm (đã thử ${item.totalAttempts} lần)`
+                : item.attemptsUntilAllCorrect === 1
+                  ? 'đúng hết cả nhóm ngay lần đầu'
+                  : `đúng hết cả nhóm ở lần thử thứ ${item.attemptsUntilAllCorrect} (tổng ${item.totalAttempts} lần thử)`)
+            )
+          }
+        }
+        doc.moveDown(0.5)
+      })
+      doc.moveDown(0.5)
+    }
 
     // Nội dung bài làm
     doc.font('Heading').fontSize(11).fillColor('#1E293B').text('NỘI DUNG BÀI LÀM')

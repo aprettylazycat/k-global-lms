@@ -2,6 +2,35 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
+type McqQuestionResult = {
+  kind: 'mcq'
+  order: number
+  question: string
+  options: string[]
+  correctIndex: number
+  correctText: string | null
+  selectedIndex: number | null
+  selectedText: string | null
+  isCorrect: boolean | null
+  totalAttempts: number
+  attemptsUntilCorrect: number | null
+}
+
+type TfItemResult = { statement: string; correct: boolean; selected: boolean | null }
+
+type TfGroupResult = {
+  kind: 'true_false'
+  order: number
+  groupQuestion: string
+  items: TfItemResult[]
+  firstCorrectCount: number
+  firstTotalCount: number
+  totalAttempts: number
+  attemptsUntilAllCorrect: number | null
+}
+
+type QuizResult = McqQuestionResult | TfGroupResult
+
 type Row = {
   submissionId: number
   status: string
@@ -16,6 +45,7 @@ type Row = {
   lessonTitle: string
   graderName: string
   graderEmail: string
+  mcqResults?: QuizResult[]
 }
 
 export default function GradingAuditTab() {
@@ -128,7 +158,7 @@ export default function GradingAuditTab() {
                 </td>
                 <td className="p-3">
                   <div className="flex gap-1.5">
-                    {(r.answerText || r.fileUrl) && (
+                    {(r.answerText || r.fileUrl || (r.mcqResults && r.mcqResults.length > 0)) && (
                       <button onClick={() => setViewing(r)}
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#1A2542] text-[#EEF3FB] hover:bg-[#233158] transition-colors">
                         Xem bài
@@ -172,6 +202,63 @@ export default function GradingAuditTab() {
                 <button onClick={() => setViewing(null)} className="text-[#8FA9C6] hover:text-white text-xl leading-none">×</button>
               </div>
             </div>
+
+            {viewing.mcqResults && viewing.mcqResults.length > 0 && (
+              <div className="mb-3 space-y-2">
+                <p className="text-xs font-semibold text-[#8FA9C6] uppercase tracking-wide">Câu hỏi trắc nghiệm &amp; Đúng/Sai</p>
+                {viewing.mcqResults.map(item => (
+                  <div key={item.order} className="rounded-xl p-3" style={{ backgroundColor: '#1A2542' }}>
+                    {item.kind === 'mcq' ? (
+                      <>
+                        <p className="text-xs font-medium mb-1.5">Câu {item.order}: {item.question}</p>
+                        <p className="text-xs text-emerald-400">Đáp án đúng: {item.correctText ?? '—'}</p>
+                        {item.selectedIndex == null ? (
+                          <p className="text-xs text-[#8FA9C6] italic">Lựa chọn lần đầu: học viên chưa làm câu này</p>
+                        ) : (
+                          <>
+                            <p className={`text-xs ${item.isCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
+                              Lựa chọn lần đầu: {item.selectedText ?? '—'} {item.isCorrect ? '(Đúng)' : '(Sai)'}
+                            </p>
+                            <p className="text-xs text-[#8FA9C6] mt-0.5">
+                              {item.attemptsUntilCorrect == null
+                                ? `Chưa làm đúng (đã thử ${item.totalAttempts} lần)`
+                                : item.attemptsUntilCorrect === 1
+                                  ? 'Làm đúng ngay lần đầu'
+                                  : `Làm đúng ở lần thử thứ ${item.attemptsUntilCorrect} (tổng ${item.totalAttempts} lần thử)`}
+                            </p>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-medium mb-1.5">Câu {item.order} (Đúng/Sai): {item.groupQuestion}</p>
+                        {item.items.map((it, idx) => {
+                          const answered = it.selected != null
+                          const isRight = answered && it.selected === it.correct
+                          return (
+                            <p key={idx} className={`text-xs mb-0.5 ${!answered ? 'text-[#8FA9C6]' : isRight ? 'text-emerald-400' : 'text-red-400'}`}>
+                              - {it.statement} — Đáp án đúng: {it.correct ? 'Đúng' : 'Sai'} · Học viên chọn: {!answered ? 'chưa làm' : it.selected ? 'Đúng' : 'Sai'}
+                            </p>
+                          )
+                        })}
+                        {item.totalAttempts === 0 ? (
+                          <p className="text-xs text-[#8FA9C6] italic mt-1">Học viên chưa làm nhóm câu này</p>
+                        ) : (
+                          <p className="text-xs text-[#8FA9C6] mt-1">
+                            Lần đầu đúng {item.firstCorrectCount}/{item.firstTotalCount} câu con ·{' '}
+                            {item.attemptsUntilAllCorrect == null
+                              ? `chưa lần nào đúng hết cả nhóm (đã thử ${item.totalAttempts} lần)`
+                              : item.attemptsUntilAllCorrect === 1
+                                ? 'đúng hết cả nhóm ngay lần đầu'
+                                : `đúng hết cả nhóm ở lần thử thứ ${item.attemptsUntilAllCorrect} (tổng ${item.totalAttempts} lần thử)`}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {viewing.answerText && (
               <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: '#1A2542' }}>

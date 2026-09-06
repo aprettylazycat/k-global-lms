@@ -134,6 +134,74 @@ export default function PrintSubmissionPage() {
             </div>
           )}
 
+          {/* MCQ + Đúng/Sai — đáp án đúng vs lựa chọn lần đầu của học viên */}
+          {data.mcqResults && data.mcqResults.length > 0 && (
+            <>
+              <p style={{ fontSize: 13, fontWeight: 800, color: '#1E293B', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Câu hỏi trắc nghiệm &amp; Đúng/Sai
+              </p>
+              {data.mcqResults.map((item: any) => (
+                <div key={item.order} style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: '14px 16px', marginBottom: 10, breakInside: 'avoid' }}>
+                  {item.kind === 'mcq' ? (
+                    <>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                        Câu {item.order}: {item.question}
+                      </p>
+                      <p style={{ fontSize: 12, color: '#059669', margin: '0 0 4px' }}>
+                        Đáp án đúng: <strong>{item.correctText ?? '—'}</strong>
+                      </p>
+                      {item.selectedIndex == null ? (
+                        <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, fontStyle: 'italic' }}>Lựa chọn lần đầu: học viên chưa làm câu này</p>
+                      ) : (
+                        <>
+                          <p style={{ fontSize: 12, color: item.isCorrect ? '#059669' : '#DC2626', margin: '0 0 4px' }}>
+                            Lựa chọn lần đầu: <strong>{item.selectedText ?? '—'}</strong> {item.isCorrect ? '(Đúng)' : '(Sai)'}
+                          </p>
+                          <p style={{ fontSize: 12, color: '#475569', margin: 0 }}>
+                            {item.attemptsUntilCorrect == null
+                              ? `Chưa làm đúng (đã thử ${item.totalAttempts} lần)`
+                              : item.attemptsUntilCorrect === 1
+                                ? 'Làm đúng ngay lần đầu'
+                                : `Làm đúng ở lần thử thứ ${item.attemptsUntilCorrect} (tổng ${item.totalAttempts} lần thử)`}
+                          </p>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                        Câu {item.order} (Đúng/Sai): {item.groupQuestion}
+                      </p>
+                      {item.items.map((it: any, idx: number) => {
+                        const answered = it.selected != null
+                        const isRight = answered && it.selected === it.correct
+                        return (
+                          <p key={idx} style={{ fontSize: 12, margin: '0 0 3px', color: !answered ? '#94A3B8' : isRight ? '#059669' : '#DC2626' }}>
+                            - {it.statement} — Đáp án đúng: <strong>{it.correct ? 'Đúng' : 'Sai'}</strong> · Học viên chọn: {!answered ? 'chưa làm' : it.selected ? 'Đúng' : 'Sai'}
+                          </p>
+                        )
+                      })}
+                      {item.totalAttempts === 0 ? (
+                        <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', fontStyle: 'italic' }}>Học viên chưa làm nhóm câu này</p>
+                      ) : (
+                        <p style={{ fontSize: 12, color: '#475569', margin: '4px 0 0' }}>
+                          Lần đầu đúng {item.firstCorrectCount}/{item.firstTotalCount} câu con ·{' '}
+                          {item.attemptsUntilAllCorrect == null
+                            ? `chưa lần nào đúng hết cả nhóm (đã thử ${item.totalAttempts} lần)`
+                            : item.attemptsUntilAllCorrect === 1
+                              ? 'đúng hết cả nhóm ngay lần đầu'
+                              : `đúng hết cả nhóm ở lần thử thứ ${item.attemptsUntilAllCorrect} (tổng ${item.totalAttempts} lần thử)`}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+              <div style={{ height: 12 }} />
+            </>
+          )}
+
+
           {/* Q&A content */}
           <p style={{ fontSize: 13, fontWeight: 800, color: '#1E293B', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Nội dung bài làm
