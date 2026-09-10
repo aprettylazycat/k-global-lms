@@ -41,6 +41,8 @@ function branchDesc(slug: string) {
   if (slug === 'hanh-chinh' || slug === 'office') return 'Hành chính, vận hành'
   if (slug === 'hair') return 'Tóc, xuất khẩu, B2B'
   if (slug === 'ai-video') return 'Video AI, sáng tạo nội dung'
+  if (slug === 'qc') return 'Kiểm soát chất lượng'
+  if (slug === 'ads') return 'Quảng cáo, chạy ads'
   return 'Nhánh đào tạo'
 }
 
@@ -73,8 +75,9 @@ export default function RegisterPage() {
 
   useEffect(() => {
     supabase.from('branches').select('*').then(({ data }) => {
-      // Loại nhánh 'chung' (dùng nội bộ cho các module dùng chung như AI Education) khỏi lựa chọn đăng ký
-      if (data) setBranches(data.filter((b: any) => b.slug !== 'chung'))
+      // Loại nhánh 'chung' (dùng chung nội bộ cho module AI) và 'leader' (chỉ admin
+      // được gán tay qua Supabase, không cho tự đăng ký) khỏi lựa chọn đăng ký
+      if (data) setBranches(data.filter((b: any) => b.slug !== 'chung' && b.slug !== 'leader'))
     })
   }, [])
 
