@@ -74,6 +74,7 @@ const [fireworksModuleId, setFireworksModuleId] = useState<number | null>(null)
 const [pendingFeedback, setPendingFeedback] = useState<{ moduleId: number; moduleName: string } | null>(null)
 const [feedbackQuestions, setFeedbackQuestions] = useState<FeedbackQuestion[]>([])
 const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+const [userUnlockedModules, setUserUnlockedModules] = useState<number[]>([])
 const [pinging, setPinging] = useState(false)
 
   useEffect(() => {
@@ -96,7 +97,7 @@ const [pinging, setPinging] = useState(false)
       const aiModuleIds = (aiModulesData ?? []).map((m: any) => m.id)
       const aiLessonFilter = aiModuleIds.length > 0 ? `,module_id.in.(${aiModuleIds.join(',')})` : ''
 
-      const [lessonsRes, modulesRes, badgesRes, feedbackSeenRes] = await Promise.all([
+      const [lessonsRes, modulesRes, badgesRes, feedbackSeenRes, unlocksRes] = await Promise.all([
         supabase.from('lessons')
           .select('id, title, order_index, module_id, practice_prompt, questions')
           .or(`branch_id.eq.${prof.branch_id}${aiLessonFilter}`)
@@ -112,6 +113,10 @@ const [pinging, setPinging] = useState(false)
         supabase.from('module_feedback_seen')
           .select('module_id')
           .eq('user_id', session.user.id),
+        // Module được admin mở riêng cho đúng học viên này (bỏ qua mọi điều kiện khoá)
+        supabase.from('user_module_unlocks')
+          .select('module_id')
+          .eq('user_id', session.user.id),
       ])
 
       const lessonList = lessonsRes.data ?? []
@@ -119,6 +124,7 @@ const [pinging, setPinging] = useState(false)
       setModules((modulesRes.data ?? []) as ModuleItem[])
       setBadges(badgesRes.data?.map((b: any) => b.badge_type) ?? [])
       setFeedbackSeenModules((feedbackSeenRes.data ?? []).map((r: any) => r.module_id))
+      setUserUnlockedModules((unlocksRes.data ?? []).map((r: any) => r.module_id))
 
       const ids = lessonList.map((l: { id: number }) => l.id)
       if (ids.length > 0) {
@@ -281,6 +287,10 @@ setAttemptCountMap(attemptCountMap)
   const lessonMeta = lessons.find(l => l.id === lessonId)
   const mod = modules.find(m => m.id === lessonMeta?.module_id)
   const isAi = mod?.category === 'ai'
+
+  // Module được admin mở riêng cho đúng học viên này (bảng user_module_unlocks):
+  // mở TOÀN BỘ bài, bỏ qua mọi điều kiện khoá, không ảnh hưởng học viên khác.
+  if (mod && userUnlockedModules.includes(mod.id)) return true
 
   // Module "mở tự do" (VD khóa dành riêng cho Ads): mở TOÀN BỘ bài ngay từ đầu,
   // không phụ thuộc module nào khác, không cần làm tuần tự.
