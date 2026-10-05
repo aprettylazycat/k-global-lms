@@ -40,6 +40,11 @@ export default function ReviewPanel() {
   const [grantLoading, setGrantLoading] = useState(false)
   const [grantMessage, setGrantMessage] = useState<string | null>(null)
   const [myRole, setMyRole] = useState<string | null>(null)
+  // Duyệt nhanh nhiều bài
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set())
+  const [bulkProcessing, setBulkProcessing] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 })
+  const [bulkMessage, setBulkMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -205,6 +210,104 @@ export default function ReviewPanel() {
       return sortOldestFirst ? earliestA - earliestB : earliestB - earliestA
     })
 
+  // ── Duyệt nhanh nhiều bài ──
+  // Bài nhánh Leader chỉ super_admin mới được duyệt (đồng bộ với API approve).
+  const canReview = (sub: any) => !(sub.user?.branch?.slug === 'leader' && myRole !== 'super_admin')
+
+  // Chỉ tính các bài ĐANG HIỂN THỊ (sau khi lọc) — tránh duyệt nhầm bài đang bị ẩn bởi bộ lọc
+  const reviewableVisible = filteredGroups.flatMap(([, g]) => g.subs).filter(canReview)
+  const selectedSubs = reviewableVisible.filter(s => selectedIds.has(s.id))
+  const allVisibleSelected = reviewableVisible.length > 0 && selectedSubs.length === reviewableVisible.length
+
+  function toggleSelect(subId: string | number) {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(subId) ? n.delete(subId) : n.add(subId); return n })
+  }
+  function toggleUserSelect(userSubs: any[], allSelected: boolean) {
+    setSelectedIds(prev => {
+      const n = new Set(prev)
+      userSubs.forEach(s => { allSelected ? n.delete(s.id) : n.add(s.id) })
+      return n
+    })
+  }
+  function selectAllVisible() {
+    setSelectedIds(prev => { const n = new Set(prev); reviewableVisible.forEach(s => n.add(s.id)); return n })
+  }
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function handleBulkApprove() {
+    const items = selectedSubs
+    if (items.length === 0 || bulkProcessing) return
+
+    const hasFile = items.some(s => s.file_url)
+    const perfectCount = items.filter(s => perfectScores[s.id]).length
+    const ok = confirm(
+      `Duyệt ${items.length} bài đã chọn?` +
+      (perfectCount > 0 ? `\n${perfectCount} bài đã tick Perfect Score sẽ được ghi nhận Perfect.` : '\nTất cả được duyệt với điểm thường (không Perfect).') +
+      (hasFile ? '\nẢnh đính kèm của các bài này sẽ bị xoá khỏi hệ thống sau khi duyệt, không hoàn tác được.' : '')
+    )
+    if (!ok) return
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+
+    setBulkProcessing(true)
+    setBulkMessage(null)
+    setBulkProgress({ done: 0, total: items.length })
+
+    // Gom theo học viên: bài của CÙNG 1 học viên duyệt tuần tự (mỗi bài đều chạy cấp huy hiệu),
+    // các học viên khác nhau chạy song song tối đa 3 luồng cho nhanh.
+    const byUser = new Map<string, any[]>()
+    items.forEach(s => {
+      if (!byUser.has(s.user_id)) byUser.set(s.user_id, [])
+      byUser.get(s.user_id)!.push(s)
+    })
+    const queue = Array.from(byUser.values())
+    const succeeded = new Set<string | number>()
+    const failed: string[] = []
+
+    async function worker() {
+      while (queue.length > 0) {
+        const group = queue.shift()!
+        for (const sub of group) {
+          try {
+            const res = await fetch('/api/admin/approve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session!.access_token}` },
+              body: JSON.stringify({
+                submissionId: sub.id,
+                userId: sub.user_id,
+                lessonId: sub.lesson_id,
+                perfectScore: perfectScores[sub.id] ?? false,
+              }),
+            })
+            if (res.ok) {
+              succeeded.add(sub.id)
+            } else {
+              const d = await res.json().catch(() => ({}))
+              failed.push(`${sub.user?.name ?? 'Học viên'} — ${sub.lesson?.title ?? 'Bài học'}: ${d.error || 'không rõ'}`)
+            }
+          } catch (e: any) {
+            failed.push(`${sub.user?.name ?? 'Học viên'} — ${sub.lesson?.title ?? 'Bài học'}: ${e?.message || 'lỗi mạng'}`)
+          }
+          setBulkProgress(p => ({ ...p, done: p.done + 1 }))
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(3, queue.length) }, () => worker()))
+
+    // Bài duyệt thành công biến mất khỏi danh sách; bài lỗi vẫn giữ nguyên + vẫn được tick để thử lại
+    setSubmissions(prev => prev.filter(s => !succeeded.has(s.id)))
+    setSelectedIds(prev => { const n = new Set(prev); succeeded.forEach(id => n.delete(id)); return n })
+    setBulkProcessing(false)
+    setBulkMessage(
+      failed.length === 0
+        ? { ok: true, text: `Đã duyệt ${succeeded.size} bài.` }
+        : { ok: false, text: `Đã duyệt ${succeeded.size}/${items.length} bài. ${failed.length} bài lỗi (vẫn đang được tick, bấm duyệt lại để thử):\n` + failed.join('\n') }
+    )
+  }
+
   return (
     <div className="space-y-5">
 
@@ -320,6 +423,50 @@ export default function ReviewPanel() {
         </button>
       </div>
 
+      {/* Thanh duyệt nhanh nhiều bài */}
+      {(reviewableVisible.length > 0 || bulkMessage) && (
+        <div className="sticky top-2 z-20 rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap"
+          style={{ backgroundColor: 'rgba(14,21,38,0.96)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,201,77,0.35)' }}>
+          <p className="text-sm font-semibold" style={{ color: '#EEF3FB' }}>
+            <i className="ti ti-checks" style={{ fontSize: '15px', marginRight: '6px', color: '#FFC94D' }} />
+            {bulkProcessing
+              ? `Đang duyệt ${bulkProgress.done}/${bulkProgress.total} bài...`
+              : selectedSubs.length > 0
+                ? `Đã chọn ${selectedSubs.length}/${reviewableVisible.length} bài`
+                : `Tick chọn bài để duyệt nhanh (${reviewableVisible.length} bài có thể duyệt)`}
+          </p>
+          <div className="flex gap-2 ml-auto flex-wrap">
+            <button onClick={selectAllVisible} disabled={bulkProcessing || allVisibleSelected || reviewableVisible.length === 0}
+              className="text-xs font-semibold px-3 py-2 rounded-xl disabled:opacity-40 transition-colors hover:bg-[rgba(96,165,250,0.16)]"
+              style={{ border: '1px solid rgba(96,165,250,0.3)', color: '#60A5FA' }}>
+              Chọn tất cả ({reviewableVisible.length})
+            </button>
+            {selectedSubs.length > 0 && (
+              <button onClick={clearSelection} disabled={bulkProcessing}
+                className="text-xs font-semibold px-3 py-2 rounded-xl disabled:opacity-40 transition-colors hover:bg-[rgba(248,113,113,0.14)]"
+                style={{ border: '1px solid rgba(248,113,113,0.3)', color: '#F87171' }}>
+                Bỏ chọn
+              </button>
+            )}
+            <button onClick={handleBulkApprove} disabled={bulkProcessing || selectedSubs.length === 0}
+              className="text-xs font-bold px-4 py-2 rounded-xl disabled:opacity-40 flex items-center gap-1.5 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#FFC94D', color: '#0E1526' }}>
+              {bulkProcessing ? (
+                <div className="w-3.5 h-3.5 border-2 border-[#0E1526]/30 border-t-[#0E1526] rounded-full animate-spin" />
+              ) : (
+                <i className="ti ti-check" style={{ fontSize: '14px' }} />
+              )}
+              Duyệt {selectedSubs.length > 0 ? `${selectedSubs.length} bài đã chọn` : 'nhanh'}
+            </button>
+          </div>
+          {bulkMessage && (
+            <p className="w-full text-xs whitespace-pre-line" style={{ color: bulkMessage.ok ? '#4ADE80' : '#F87171' }}>
+              {bulkMessage.text}
+            </p>
+          )}
+        </div>
+      )}
+
       {filteredGroups.length === 0 && (
         <div className="bg-[#0E1526] rounded-2xl p-12 text-center"
           style={{ border: '2px solid #EFF6FF' }}>
@@ -333,16 +480,35 @@ export default function ReviewPanel() {
       {/* Accordion theo user */}
       {filteredGroups.map(([userId, { user, subs }]) => {
         const isUserOpen = openUsers.has(userId)
+        const reviewableSubs = subs.filter(canReview)
+        const userSelectedCount = reviewableSubs.filter(s => selectedIds.has(s.id)).length
+        const userAllSelected = reviewableSubs.length > 0 && userSelectedCount === reviewableSubs.length
+        const userSomeSelected = userSelectedCount > 0 && !userAllSelected
         return (
           <div key={userId} className="bg-[#0E1526] rounded-2xl overflow-hidden shadow-sm"
             style={{ border: '1px solid rgba(96,165,250,0.3)' }}>
 
             {/* Header user */}
-            <button
+            <div
               onClick={() => toggleUser(userId)}
-              className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors"
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') toggleUser(userId) }}
+              className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors cursor-pointer"
               style={{ backgroundColor: isUserOpen ? 'rgba(96,165,250,0.12)' : '#0E1526' }}
             >
+              {reviewableSubs.length > 0 && (
+                <input
+                  type="checkbox"
+                  checked={userAllSelected}
+                  ref={el => { if (el) el.indeterminate = userSomeSelected }}
+                  disabled={bulkProcessing}
+                  onClick={e => e.stopPropagation()}
+                  onChange={() => toggleUserSelect(reviewableSubs, userAllSelected)}
+                  title="Chọn tất cả bài của học viên này"
+                  className="w-4 h-4 rounded flex-shrink-0 cursor-pointer"
+                />
+              )}
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
                 {user?.avatar_url ? (
@@ -363,13 +529,14 @@ export default function ReviewPanel() {
                 <i className={`ti ti-chevron-down transition-transform duration-200 ${isUserOpen ? 'rotate-180' : ''}`}
                   style={{ fontSize: '18px', color: '#3B82F6' }} />
               </div>
-            </button>
+            </div>
 
             {/* Danh sách bài */}
             {isUserOpen && (
               <div style={{ borderTop: '2px solid #EFF6FF' }}>
                 {subs.map((sub, idx) => {
                   const isSubOpen = openSubs.has(sub.id)
+                  const subCanReview = canReview(sub)
                   return (
                     <div key={sub.id} style={{ borderTop: idx > 0 ? '1px solid #EFF6FF' : 'none' }}>
 
@@ -378,9 +545,20 @@ export default function ReviewPanel() {
                         onClick={() => toggleSub(sub.id)}
                         role="button"
                         tabIndex={0}
-                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') toggleSub(sub.id) }}
+                        onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') toggleSub(sub.id) }}
                         className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-[rgba(96,165,250,0.14)] cursor-pointer"
                       >
+                        {subCanReview && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(sub.id)}
+                            disabled={bulkProcessing}
+                            onClick={e => e.stopPropagation()}
+                            onChange={() => toggleSelect(sub.id)}
+                            title="Chọn để duyệt nhanh"
+                            className="w-4 h-4 rounded flex-shrink-0 cursor-pointer"
+                          />
+                        )}
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ backgroundColor: 'rgba(96,165,250,0.16)', color: '#3B82F6' }}>
                           {idx + 1}
@@ -514,7 +692,7 @@ export default function ReviewPanel() {
 <div className="flex gap-3">
   <button
     onClick={() => handleApprove(sub, perfectScores[sub.id] ?? false)}
-    disabled={processingId === sub.id}
+    disabled={processingId === sub.id || bulkProcessing}
     className="flex-1 text-white rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
     style={{ background: 'linear-gradient(135deg, rgba(255,201,77,0.10) 0%, rgba(70,104,152,0.22) 100%)', border: '1px solid rgba(155,196,232,0.28)' }}>
     {processingId === sub.id ? (
@@ -525,7 +703,7 @@ export default function ReviewPanel() {
   </button>
   <button
     onClick={() => handleReject(sub)}
-    disabled={processingId === sub.id}
+    disabled={processingId === sub.id || bulkProcessing}
     className="flex-1 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-[rgba(248,113,113,0.14)] disabled:opacity-50 flex items-center justify-center gap-2"
     style={{ border: '2px solid #FECACA', color: '#F87171' }}>
     {processingId === sub.id ? (
