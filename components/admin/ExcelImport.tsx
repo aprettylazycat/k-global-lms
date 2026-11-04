@@ -8,7 +8,7 @@ type MCQRow = {
   lesson_title: string
   question: string
   options: string[]
-  correct: number
+  correct: number | undefined // undefined khi cột correct sai (dòng đó có rowError và bị loại)
   rowError?: string
 }
 
