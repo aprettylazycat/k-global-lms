@@ -2,6 +2,7 @@
 'use client'
 import { useState } from 'react'
 import * as XLSX from 'xlsx'
+import { extractOptions, labelToIndex } from '@/lib/option-label'
 
 type MCQRow = {
   lesson_title: string
@@ -46,8 +47,6 @@ type ParsedLesson = {
   error?: string
 }
 
-const LETTER_TO_INDEX: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, a: 0, b: 1, c: 2, d: 3, e: 4, f: 5 }
-
 export default function ExcelImport() {
   const [preview, setPreview] = useState<ParsedLesson[]>([])
   const [parseErrors, setParseErrors] = useState<string[]>([])
@@ -89,22 +88,17 @@ export default function ExcelImport() {
         const parsedMcqs: MCQRow[] = mcqRows.map((row, i) => {
           const lesson_title = String(row.lesson_title ?? '').trim()
           const question = String(row.question ?? '').trim()
-          const options = [
-            String(row.option_a ?? '').trim(),
-            String(row.option_b ?? '').trim(),
-            String(row.option_c ?? '').trim(),
-            String(row.option_d ?? '').trim(),
-            String(row.option_e ?? '').trim(),
-            String(row.option_f ?? '').trim(),
-          ].filter(o => o !== '')
+          // Không giới hạn số đáp án: đọc mọi cột option_a, option_b, option_c, ... option_g, ...
+          const options = extractOptions(row)
           const correctLetter = String(row.correct ?? '').trim()
-          const correct = LETTER_TO_INDEX[correctLetter]
+          const correct = labelToIndex(correctLetter)
 
           let rowError = ''
           if (!lesson_title) rowError = 'Thiếu lesson_title'
           else if (!question) rowError = 'Thiếu question'
           else if (options.length < 2) rowError = 'Cần ít nhất 2 đáp án (option_a trở lên)'
-          else if (correct === undefined) rowError = `Cột correct phải là A/B/C/D, đang là "${correctLetter}"`
+          else if (correct === undefined) rowError = `Cột correct phải là chữ cái của đáp án đúng (A, B, C, ...), đang là "${correctLetter}"`
+          else if (correct >= options.length) rowError = `Cột correct là "${correctLetter}" nhưng câu hỏi chỉ có ${options.length} đáp án`
 
           if (rowError) errors.push(`Sheet mcq, dòng ${i + 2}: ${rowError}`)
 
@@ -277,7 +271,7 @@ export default function ExcelImport() {
           Sheet <code>lessons</code>: <code>title</code>, <code>branch_slug</code>, <code>module_name</code> (tùy chọn), <code>order_index</code>, <code>youtube_id</code>, <code>youtube_id_2</code> (tùy chọn), <code>attachment_url</code> (tùy chọn), <code>intro_text</code>, <code>practice_prompt</code>, <code>recap_content</code>, <code>no_quiz</code> (TRUE/FALSE)
         </p>
         <p className="text-xs text-[#8FA9C6] mb-1">
-          Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code> đến <code>option_f</code> (tối thiểu a-b, tối đa a-f), <code>correct</code> (A/B/C/D/E/F)
+          Sheet <code>mcq</code>: <code>lesson_title</code>, <code>question</code>, <code>option_a</code>, <code>option_b</code>, <code>option_c</code>... (tối thiểu a-b, không giới hạn: cần thêm đáp án thì thêm cột <code>option_g</code>, <code>option_h</code>...), <code>correct</code> (chữ cái của đáp án đúng: A, B, C, ...)
         </p>
         <p className="text-xs text-[#8FA9C6] mb-1">
           Sheet <code>essay</code>: <code>lesson_title</code>, <code>question</code>
