@@ -42,9 +42,11 @@ type AiEntry = {
   daysSinceActive: number | null
 }
 
-type AiData = {
+type CourseData = {
+  moduleId: number
   moduleName: string
   totalLessons: number
+  completedCount: number
   leaderboard: AiEntry[]
 }
 
@@ -66,7 +68,8 @@ export default function ScoreboardPage() {
   const router = useRouter()
   const [branches, setBranches] = useState<BranchData[]>([])
   const [zoomedAvatar, setZoomedAvatar] = useState<{ url: string; name: string } | null>(null)
-  const [ai, setAi] = useState<AiData | null>(null)
+  const [courses, setCourses] = useState<CourseData[]>([])
+  const [activeCourse, setActiveCourse] = useState<number | null>(null)
   const [activeBranch, setActiveBranch] = useState<string>('')
   const [loading, setLoading] = useState(true)
 
@@ -76,9 +79,11 @@ export default function ScoreboardPage() {
       const data = await res.json()
       const list: BranchData[] = data.branches || []
       setBranches(list)
-      setAi(data.ai ?? null)
-      // Mặc định mở tab AI vì đây là khóa chung mọi nhân sự
-      if (data.ai && data.ai.leaderboard?.length > 0) setActiveBranch(AI_TAB)
+      const courseList: CourseData[] = data.courses || []
+      setCourses(courseList)
+      if (courseList.length > 0) setActiveCourse(courseList[0].moduleId)
+      // Mặc định mở tab Kiến thức chung vì đây là khóa chung mọi nhân sự
+      if (courseList.length > 0) setActiveBranch(AI_TAB)
       else if (list.length > 0) setActiveBranch(list[0].branchId)
       setLoading(false)
     }
@@ -87,6 +92,7 @@ export default function ScoreboardPage() {
 
   const current = branches.find(b => b.branchId === activeBranch)
   const showAi = activeBranch === AI_TAB
+  const currentCourse = courses.find(c => c.moduleId === activeCourse) ?? courses[0]
 
   if (loading) {
     return (
@@ -128,7 +134,7 @@ export default function ScoreboardPage() {
 
         {/* Tabs: AI (chung) + từng nhánh */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-          {ai && (
+          {courses.length > 0 && (
             <button
               onClick={() => setActiveBranch(AI_TAB)}
               className="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 flex items-center gap-1.5"
@@ -158,11 +164,32 @@ export default function ScoreboardPage() {
           ))}
         </div>
 
-        {/* ══ Bảng xếp hạng MODULE AI ══ */}
+        {/* Chọn khóa chung — mỗi khóa có bảng xếp hạng riêng */}
+        {showAi && courses.length > 1 && (
+          <div className="flex gap-2 mb-5 overflow-x-auto pb-1 items-center">
+            <span className="text-xs font-semibold flex-shrink-0 mr-1" style={{ color: MUTED }}>Chọn khóa:</span>
+            {courses.map(c => (
+              <button
+                key={c.moduleId}
+                onClick={() => setActiveCourse(c.moduleId)}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0"
+                style={
+                  currentCourse?.moduleId === c.moduleId
+                    ? { backgroundColor: GOLD_SOFT, color: GOLD, border: `1px solid ${GOLD}` }
+                    : { backgroundColor: PANEL, color: MUTED, border: `1px solid ${BORDER}` }
+                }
+              >
+                {c.moduleName}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ══ Bảng xếp hạng từng KHÓA CHUNG ══ */}
         {showAi ? (
-          !ai || ai.leaderboard.length === 0 ? (
+          !currentCourse || currentCourse.leaderboard.length === 0 ? (
             <div className="rounded-3xl p-10 text-center" style={{ backgroundColor: PANEL, border: `1px solid ${BORDER}` }}>
-              <p className="text-sm" style={{ color: MUTED }}>Chưa có dữ liệu xếp hạng cho khóa Kiến thức chung.</p>
+              <p className="text-sm" style={{ color: MUTED }}>Chưa có dữ liệu xếp hạng cho khóa này.</p>
             </div>
           ) : (
             <>
@@ -175,16 +202,16 @@ export default function ScoreboardPage() {
                   <p className="text-xs tracking-[0.15em] uppercase font-semibold mb-0.5" style={{ color: GOLD }}>
                     Khóa chung cho mọi nhân sự
                   </p>
-                  <p className="text-lg font-bold" style={{ color: TEXT }}>{ai.moduleName}</p>
+                  <p className="text-lg font-bold" style={{ color: TEXT }}>{currentCourse.moduleName}</p>
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-center">
-                    <p className="text-xl font-bold" style={{ color: TEXT }}>{ai.totalLessons}</p>
+                    <p className="text-xl font-bold" style={{ color: TEXT }}>{currentCourse.totalLessons}</p>
                     <p className="text-xs font-medium" style={{ color: MUTED }}>bài học</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xl font-bold" style={{ color: GOLD }}>
-                      {ai.leaderboard.filter(e => e.progressPct === 100).length}
+                      {currentCourse.completedCount}
                     </p>
                     <p className="text-xs font-medium" style={{ color: MUTED }}>đã hoàn thành</p>
                   </div>
@@ -192,7 +219,7 @@ export default function ScoreboardPage() {
               </div>
 
               <div className="space-y-2.5">
-                {ai.leaderboard.map((entry, idx) => {
+                {currentCourse.leaderboard.map((entry, idx) => {
                   const rankStyle = entry.score > 0 ? RANK_STYLES[idx] : undefined
                   return (
                     <div key={entry.userId}
@@ -239,7 +266,7 @@ export default function ScoreboardPage() {
                           )}
                           {entry.aiBadgeCount > 0 && (
                             <span className="text-xs font-medium" style={{ color: GOLD }}>
-                              🏅 badge AI
+                              🏅 huy hiệu khóa
                             </span>
                           )}
                           {entry.daysToComplete !== null && (
