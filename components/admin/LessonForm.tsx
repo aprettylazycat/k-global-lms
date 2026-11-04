@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Branch } from '@/types'
+import { optionLabel } from '@/lib/option-label'
 
 type ModuleOption = { id: number; name: string }
 
@@ -295,7 +296,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
           {isCorrect && <i className="ti ti-check text-white" style={{fontSize:'11px'}} />}
         </span>
         <span className={`text-xs font-medium flex-shrink-0 ${isCorrect ? 'text-[#4ADE80]' : 'text-[#8FA9C6]'}`}>
-          {['A','B','C','D','E','F'][oi]}
+          {optionLabel(oi)}
         </span>
         <input
           className="flex-1 min-w-0 text-sm bg-transparent outline-none"
@@ -319,7 +320,7 @@ export default function LessonForm({ lessonId, onSaved }: { lessonId?: number; o
     )
   })}
 </div>
-{mcq.options.length < 6 && (
+{(
   <button
     onClick={() => {
       const u = [...mcqs]
