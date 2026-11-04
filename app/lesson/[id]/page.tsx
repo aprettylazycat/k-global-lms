@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Lesson, Progress } from '@/types'
 import Mascot from '@/components/Mascot'
+import { optionLabel } from '@/lib/option-label'
 import { SPACE, PANEL, CHIP, RAISED, TEXT, MUTED, FAINT, GOLD, GOLD_GLOW, GOLD_SOFT, NAVY, BLUE, BORDER, BORDER_STRONG, CREAM, OK, OK_BG, OK_BORDER, WARN, WARN_BG, WARN_BORDER, ERR, ERR_BG, ERR_BORDER, INFO, INFO_BG, INFO_BORDER, SHADOW } from '@/lib/theme'
 
 const DARK_ON_GOLD = '#0A0E1A'
@@ -588,7 +589,7 @@ function QuizSection({ lessonId, questions, tick1Done, userId, onDone }: {
                         ? <i className="ti ti-check" style={{ fontSize: '11px' }} />
                         : slideState === 'wrong' && isSelected
                         ? <i className="ti ti-x" style={{ fontSize: '11px' }} />
-                        : ['A', 'B', 'C', 'D', 'E', 'F'][i]}
+                        : optionLabel(i)}
                     </span>
                     <span className="flex-1 font-medium" style={{ color: TEXT }}>{opt}</span>
                   </button>
