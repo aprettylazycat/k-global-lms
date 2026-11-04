@@ -53,8 +53,9 @@ export async function GET() {
   // ── Xác định module AI trước, để loại badge AI khỏi điểm nhánh ──
   const { data: aiModules } = await supabaseAdmin
     .from('modules')
-    .select('id, name')
+    .select('id, name, order_index')
     .eq('category', 'ai')
+    .order('order_index')
 
   const aiModuleIds = new Set((aiModules || []).map(m => m.id))
   const aiBadgeTypes = new Set(Array.from(aiModuleIds).map(id => `module-${id}`))
@@ -68,13 +69,18 @@ export async function GET() {
     : { data: [] as any[] }
 
   const aiLessonIds = new Set((aiLessons || []).map(l => l.id))
-  const aiTotalLessons = aiLessonIds.size
 
   const TS_FIELDS = ['started_at', 'quiz_started_at', 'quiz_completed_at', 'practice_started_at', 'practice_submitted_at'] as const
 
   // Trả về { startedAt, lastActivityAt } của 1 học viên, chỉ tính trong phạm vi lessonIds cho trước
+  const tsByUser = new Map<string, any[]>()
+  ;(allTimestamps || []).forEach(t => {
+    if (!tsByUser.has(t.user_id)) tsByUser.set(t.user_id, [])
+    tsByUser.get(t.user_id)!.push(t)
+  })
+
   function getTimeStats(userId: string, lessonIds: Set<number>) {
-    const rows = (allTimestamps || []).filter(t => t.user_id === userId && lessonIds.has(t.lesson_id))
+    const rows = (tsByUser.get(userId) || []).filter(t => lessonIds.has(t.lesson_id))
     let startedAt: string | null = null
     let lastActivityAt: string | null = null
     rows.forEach(r => {
@@ -156,63 +162,83 @@ export async function GET() {
   })
 
   // ══════════════════════════════════════════════════════
-  //  BẢNG XẾP HẠNG MODULE AI (Kiến thức chung — mọi nhánh)
+  //  BẢNG XẾP HẠNG TỪNG KHÓA CHUNG — mỗi module category 'ai' là 1 bảng riêng
+  //  (AI K-Global, Content B2B, và mọi khóa chung thêm sau này đều tự có bảng)
   // ══════════════════════════════════════════════════════
   const branchNameById: Record<string, string> = {}
   branches.forEach(b => { branchNameById[b.id] = b.name })
 
-  // Toàn bộ học viên đã đăng ký (mọi nhánh), không chỉ nhánh có bài AI
-  const aiLeaderboard = (profiles || []).map(profile => {
-    const userProgress = (allProgress || []).filter(
-      p => p.user_id === profile.id && aiLessonIds.has(p.lesson_id)
-    )
-    const doneCount = userProgress.filter(p => p.tick1 && p.tick2).length
-    const perfectCount = userProgress.filter(p => p.perfect_score).length
+  const progressByUser = new Map<string, any[]>()
+  ;(allProgress || []).forEach(p => {
+    if (!progressByUser.has(p.user_id)) progressByUser.set(p.user_id, [])
+    progressByUser.get(p.user_id)!.push(p)
+  })
+  const badgesByUser = new Map<string, any[]>()
+  ;(allBadges || []).forEach(b => {
+    if (!badgesByUser.has(b.user_id)) badgesByUser.set(b.user_id, [])
+    badgesByUser.get(b.user_id)!.push(b)
+  })
 
-    const progressPct = aiTotalLessons > 0
-      ? Math.round((doneCount / aiTotalLessons) * 100)
-      : 0
+  const courses = (aiModules || []).map(mod => {
+    const lessonIds = new Set((aiLessons || []).filter(l => l.module_id === mod.id).map(l => l.id))
+    const totalLessons = lessonIds.size
+    // Khóa chưa xuất bản bài nào thì chưa hiện bảng xếp hạng
+    if (totalLessons === 0) return null
 
-    // Badge của riêng khóa AI (nếu có) — chỉ tính ở bảng này
-    const aiBadgeCount = (allBadges || []).filter(
-      b => b.user_id === profile.id && aiBadgeTypes.has(b.badge_type)
-    ).length
+    const badgeType = `module-${mod.id}`
 
-    const score = progressPct + perfectCount * 5 + aiBadgeCount * 7
+    // Toàn bộ học viên đã xác thực (mọi nhánh), kể cả người chưa học bài nào của khóa này
+    const entries = (profiles || []).map(profile => {
+      const userProgress = (progressByUser.get(profile.id) || []).filter(p => lessonIds.has(p.lesson_id))
+      const doneCount = userProgress.filter(p => p.tick1 && p.tick2).length
+      const perfectCount = userProgress.filter(p => p.perfect_score).length
 
-    const { startedAt, lastActivityAt } = getTimeStats(profile.id, aiLessonIds)
-    const allDone = aiTotalLessons > 0 && doneCount === aiTotalLessons
-    const completedAt = allDone
-      ? userProgress.filter(p => p.tick2 && p.completed_at).map(p => p.completed_at as string).sort().pop() ?? null
-      : null
-    const daysToComplete = daysBetween(startedAt, completedAt)
-    const daysSinceActive = lastActivityAt ? daysBetween(lastActivityAt, new Date().toISOString()) : null
+      const progressPct = Math.round((doneCount / totalLessons) * 100)
+
+      // Huy hiệu hoàn thành của RIÊNG khóa này
+      const aiBadgeCount = (badgesByUser.get(profile.id) || []).filter(b => b.badge_type === badgeType).length
+
+      const score = progressPct + perfectCount * 5 + aiBadgeCount * 7
+
+      const { startedAt, lastActivityAt } = getTimeStats(profile.id, lessonIds)
+      const allDone = doneCount === totalLessons
+      const completedAt = allDone
+        ? userProgress.filter(p => p.tick2 && p.completed_at).map(p => p.completed_at as string).sort().pop() ?? null
+        : null
+      const daysToComplete = daysBetween(startedAt, completedAt)
+      const daysSinceActive = lastActivityAt ? daysBetween(lastActivityAt, new Date().toISOString()) : null
+
+      return {
+        userId: profile.id,
+        name: profile.name || 'Học viên',
+        avatarUrl: profile.avatar_url || null,
+        branchName: branchNameById[profile.branch_id] || '—',
+        lessonsDone: doneCount,
+        totalLessons,
+        progressPct,
+        perfectCount,
+        aiBadgeCount,
+        score,
+        completedAt,
+        daysToComplete,
+        daysSinceActive,
+      }
+    })
+    // Xếp theo điểm; ai chưa học bài nào của khóa này thì xuống cuối
+    .sort((a, b) => b.score - a.score || b.lessonsDone - a.lessonsDone)
 
     return {
-      userId: profile.id,
-      name: profile.name || 'Học viên',
-      avatarUrl: profile.avatar_url || null,
-      branchName: branchNameById[profile.branch_id] || '—',
-      lessonsDone: doneCount,
-      totalLessons: aiTotalLessons,
-      progressPct,
-      perfectCount,
-      aiBadgeCount,
-      score,
-      completedAt,
-      daysToComplete,
-      daysSinceActive,
+      moduleId: mod.id,
+      moduleName: mod.name,
+      totalLessons,
+      // Đếm trên toàn bộ học viên, không bị cắt bởi giới hạn top 100 bên dưới
+      completedCount: entries.filter(e => e.progressPct === 100).length,
+      leaderboard: entries.slice(0, 100),
     }
-  })
-  // Xếp theo điểm; ai chưa học bài AI nào thì xuống cuối
-  .sort((a, b) => b.score - a.score || b.lessonsDone - a.lessonsDone)
+  }).filter(c => c !== null)
 
   return NextResponse.json({
     branches: result,
-    ai: {
-      moduleName: (aiModules || [])[0]?.name || 'Kiến thức chung',
-      totalLessons: aiTotalLessons,
-      leaderboard: aiLeaderboard.slice(0, 100),
-    },
+    courses,
   })
 }
