@@ -44,7 +44,7 @@ const NGHE_GROUPS: { key: string; label: string; slugs: string[]; locked?: boole
 
 export default function Home() {
   const [aiModules, setAiModules] = useState<ModuleItem[]>([])
-  const [aiLessons, setAiLessons] = useState<{ id: number; title: string; order_index: number }[]>([])
+  const [aiLessons, setAiLessons] = useState<{ id: number; title: string; order_index: number; module_id: number }[]>([])
   const [ngheGroups, setNgheGroups] = useState<{ key: string; label: string; locked: boolean; icon: string; modules: ModuleItem[] }[]>([])
   const [leaderModules, setLeaderModules] = useState<ModuleItem[]>([])
   const [learnerCount, setLearnerCount] = useState(0)
@@ -142,18 +142,20 @@ export default function Home() {
 
       const aiC = await withCount(ai)
 
-      // Lấy danh sách bài học AI để hiển thị chi tiết (track chỉ có 1 module nên show hết bài bên trong)
+      // Lấy danh sách bài học của các khóa chung để hiển thị chi tiết.
+      // Có nhiều khóa chung (AI, Content B2B, ...) nên giữ module_id để tách thành từng khối riêng.
       if (ai.length > 0) {
         const { data: aiLessonList } = await supabase
           .from('lessons')
-          .select('id, title, order_index')
+          .select('id, title, order_index, module_id')
           .in('module_id', ai.map((m: any) => m.id))
           .eq('is_published', true)
           .order('order_index')
         setAiLessons(aiLessonList ?? [])
       }
 
-      setAiModules(aiC.sort((a, b) => a.order_index - b.order_index))
+      // Chỉ hiện khóa chung đã có ít nhất 1 bài xuất bản (khóa mới import xong, chưa xuất bản thì chưa hiện)
+      setAiModules(aiC.filter(m => m.lessonCount > 0).sort((a, b) => a.order_index - b.order_index))
       setNgheGroups(builtGroups)
       const firstOpen = builtGroups.find(g => !g.locked && g.modules.length > 0)
       if (firstOpen) setOpenNghe([firstOpen.key])
@@ -404,29 +406,46 @@ export default function Home() {
                               <p className="text-xs tracking-[0.15em] uppercase mb-1 font-semibold" style={{ color: GOLD }}>
                                 AI Education
                               </p>
-                              <p className="text-lg font-bold mb-4" style={{ color: TEXT }}>
+                              <p className="text-lg font-bold mb-7" style={{ color: TEXT }}>
                                 Khóa học chung cho mọi nhân sự
                               </p>
-                              {aiModules[0]?.description && (
-                                <p className="text-sm leading-relaxed font-medium mb-7 max-w-3xl" style={{ color: MUTED }}>
-                                  {aiModules[0].description}
-                                </p>
-                              )}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {aiLessons.map((l, idx) => (
-                                  <div key={l.id} className="flex items-center gap-4 rounded-2xl p-4"
-                                    style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
-                                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                                      style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
-                                      {idx + 1}
+                              {/* Mỗi khóa chung là 1 khối riêng: tên khóa, mô tả, danh sách bài (đánh số lại từ 1) */}
+                              <div className="space-y-10">
+                                {aiModules.map((m, mi) => {
+                                  const moduleLessons = aiLessons
+                                    .filter(l => l.module_id === m.id)
+                                    .sort((a, b) => a.order_index - b.order_index)
+                                  if (moduleLessons.length === 0) return null
+                                  return (
+                                    <div key={m.id} style={mi > 0 ? { borderTop: `1px solid ${BORDER}`, paddingTop: '2.5rem' } : undefined}>
+                                      <p className="text-base font-bold" style={{ color: TEXT }}>{m.name}</p>
+                                      {m.description && (
+                                        <p className="text-sm leading-relaxed font-medium mt-1 max-w-3xl" style={{ color: MUTED }}>
+                                          {m.description}
+                                        </p>
+                                      )}
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                        {moduleLessons.map((l, idx) => (
+                                          <div key={l.id} className="flex items-center gap-4 rounded-2xl p-4"
+                                            style={{ backgroundColor: CREAM, border: `1px solid ${BORDER}` }}>
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                              style={{ backgroundColor: CHIP, color: GOLD, border: `1px solid ${BORDER}` }}>
+                                              {idx + 1}
+                                            </div>
+                                            <p className="text-sm font-semibold min-w-0" style={{ color: TEXT }}>
+                                              {l.title.replace(/^BÀI\s*\d+:\s*/i, '')}
+                                            </p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <p className="text-xs font-medium mt-3" style={{ color: MUTED }}>
+                                        {moduleLessons.length} bài học
+                                      </p>
                                     </div>
-                                    <p className="text-sm font-semibold min-w-0" style={{ color: TEXT }}>
-                                      {l.title.replace(/^BÀI\s*\d+:\s*/i, '')}
-                                    </p>
-                                  </div>
-                                ))}
+                                  )
+                                })}
                               </div>
-                              <p className="text-xs font-medium mt-6 text-center" style={{ color: MUTED }}>
+                              <p className="text-xs font-medium mt-8 text-center" style={{ color: MUTED }}>
                                 {aiLessons.length} bài học · Dành cho mọi nhân sự thuộc mọi nhánh
                               </p>
                             </div>
